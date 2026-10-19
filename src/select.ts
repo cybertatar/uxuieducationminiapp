@@ -1,4 +1,4 @@
-import type { Question } from '../content';
+import { isTextOnly, type Question } from '../content';
 import { isDue, type AnswerState } from './review';
 
 export const SESSION_SIZE = 10;
@@ -37,9 +37,9 @@ export function pickReviewSession(pool: Question[], answers: Answers, today: str
     .map((q) => q.id);
 }
 
-/** Вопрос дня для бота. Вопросы с картинками пропускаем: SVG в Telegram не отправить. */
+/** Вопрос дня для бота. Визуальные вопросы пропускаем: в чате их не показать. */
 export function pickDailyQuestion(pool: Question[], answers: Answers, today: string, rng: Rng = Math.random): string {
-  const textOnly = pool.filter((q) => !q.image);
+  const textOnly = pool.filter(isTextOnly);
   const groups = [
     textOnly.filter((q) => isDue(answers.get(q.id), today)),
     textOnly.filter((q) => !answers.has(q.id)),

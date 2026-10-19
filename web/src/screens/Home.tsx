@@ -1,7 +1,9 @@
 import { trackById } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import type { SessionMode } from '../App';
+import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, questionsWord, WEEKDAYS } from '../format';
+import { Wireframe } from '../Wireframe';
 
 interface Props {
   profile: Profile | null;
@@ -13,9 +15,15 @@ interface Props {
 export function Home({ profile, starting, onStart, onSettings }: Props) {
   if (!profile) return <HomeSkeleton />;
   const { streak } = profile;
+  const [mood, phrase] = catLine(profile);
 
   return (
     <div className="screen" aria-busy={starting}>
+      <section className="hello">
+        <Cat mood={mood} size={76} />
+        <p className="hello__bubble">{phrase}</p>
+      </section>
+
       <section className="streak card">
         <div className="streak__head">
           <div className={`streak__flame ${streak.todayDone ? 'is-lit' : ''}`} aria-hidden>
@@ -73,8 +81,8 @@ export function Home({ profile, starting, onStart, onSettings }: Props) {
               disabled={starting}
               onClick={() => onStart({ mode: 'track', track: t.id })}
             >
-              <span className="track__emoji" aria-hidden>
-                {track.emoji}
+              <span className="track__art" aria-hidden>
+                <Wireframe name={track.art} />
               </span>
               <span className="track__body">
                 <span className="track__title">{track.title}</span>
@@ -101,9 +109,19 @@ export function Home({ profile, starting, onStart, onSettings }: Props) {
   );
 }
 
+/** Что говорит кот на главной — по ситуации */
+function catLine(p: Profile): [CatMood, string] {
+  const name = p.firstName ? `, ${p.firstName}` : '';
+  if (p.streak.todayDone) return ['happy', `Сегодня всё засчитано${name}! Можно ещё — для удовольствия.`];
+  if (p.reviewDue > 0) return ['idle', `Есть ${p.reviewDue} ${questionsWord(p.reviewDue)} на повторение. Разберём?`];
+  if (p.streak.current > 0) return ['idle', `Стрик ${p.streak.current} ${days(p.streak.current)} — не дай ему сгореть!`];
+  return ['idle', `Мяу${name}! Я ${CAT_NAME}. Пройдём 10 вопросов?`];
+}
+
 function HomeSkeleton() {
   return (
     <div className="screen" aria-busy>
+      <div className="card skeleton" style={{ height: 76 }} />
       <div className="card skeleton" style={{ height: 148 }} />
       <div className="skeleton skeleton--text" style={{ width: 80, marginTop: 24 }} />
       <div className="card skeleton" style={{ height: 132 }} />

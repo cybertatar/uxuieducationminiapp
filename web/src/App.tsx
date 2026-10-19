@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
+import { Cat } from './Cat';
 import { Home } from './screens/Home';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
@@ -55,7 +56,7 @@ export function App() {
     return (
       <div className="screen screen--center">
         <div className="empty">
-          <div className="empty__emoji">😵‍💫</div>
+          <Cat mood="sleep" size={96} />
           <p>Не получилось загрузиться. Проверь интернет и попробуй ещё раз.</p>
           <button className="button button--secondary" onClick={refresh}>
             Повторить

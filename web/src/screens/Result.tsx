@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import type { CompleteResponse } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
+import { Cat, type CatMood } from '../Cat';
 import { days } from '../format';
 import { ExternalLink } from '../ExternalLink';
+import { Confetti } from '../quiz/Confetti';
 import { haptic } from '../tg';
 import type { QuizResult } from './Quiz';
 
@@ -15,16 +17,29 @@ interface Props {
   onAgain: () => void;
 }
 
-function headline(ratio: number) {
-  if (ratio === 1) return { emoji: '🏆', text: 'Без единой ошибки!' };
-  if (ratio >= 0.8) return { emoji: '🎉', text: 'Отличный результат' };
-  if (ratio >= 0.5) return { emoji: '💪', text: 'Хороший результат' };
-  return { emoji: '🌱', text: 'Есть над чем поработать' };
+function headline(ratio: number): { mood: CatMood; text: string } {
+  if (ratio === 1) return { mood: 'celebrate', text: 'Без единой ошибки!' };
+  if (ratio >= 0.8) return { mood: 'celebrate', text: 'Отличный результат' };
+  if (ratio >= 0.5) return { mood: 'happy', text: 'Хороший результат' };
+  return { mood: 'sad', text: 'Есть над чем поработать' };
+}
+
+/** Число, которое «докручивается» от from до to */
+function useCountUp(to: number, from: number, enabled: boolean) {
+  const [value, setValue] = useState(enabled ? from : to);
+  useEffect(() => {
+    if (!enabled) return setValue(to);
+    const t = setTimeout(() => setValue(to), 450);
+    return () => clearTimeout(t);
+  }, [to, enabled]);
+  return value;
 }
 
 export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
-  const { emoji, text } = headline(result.correct / result.total);
+  const ratio = result.correct / result.total;
+  const { mood, text } = headline(ratio);
+  const shownStreak = useCountUp(streak?.current ?? 0, Math.max(0, (streak?.current ?? 1) - 1), !!streak?.extended);
 
   useEffect(() => {
     api
@@ -41,10 +56,14 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
       <BackButton onClick={onHome} />
 
       <div className="result__hero">
-        <div className="result__emoji" aria-hidden>
-          {emoji}
-        </div>
+        {ratio >= 0.8 && <Confetti count={24} />}
+        <Cat mood={mood} size={112} />
         <h1 className="result__title">{text}</h1>
+        <ol className="result__dots" aria-label={`${result.correct} из ${result.total} правильно`}>
+          {result.answers.map((ok, i) => (
+            <li key={i} className={ok ? 'is-correct' : 'is-wrong'} style={{ animationDelay: `${i * 60}ms` }} />
+          ))}
+        </ol>
         <p className="result__score">
           {result.correct} из {result.total} правильно
         </p>
@@ -56,21 +75,11 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
             🔥
           </span>
           <span>
-            {streak.extended ? (
-              <>
-                <b>
-                  {streak.current} {days(streak.current)} подряд!
-                </b>
-                <br />
-                <span className="hint">Сегодняшний день засчитан</span>
-              </>
-            ) : (
-              <>
-                <b>Стрик: {streak.current} {days(streak.current)}</b>
-                <br />
-                <span className="hint">Сегодня уже засчитано — возвращайся завтра</span>
-              </>
-            )}
+            <b className="result__streak-count">
+              {shownStreak} {days(shownStreak)} подряд{streak.extended ? '!' : ''}
+            </b>
+            <br />
+            <span className="hint">{streak.extended ? 'Сегодняшний день засчитан' : 'Сегодня уже засчитано — возвращайся завтра'}</span>
           </span>
         </div>
       )}
@@ -83,10 +92,7 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
             {result.mistakes.map((q) => (
               <div key={q.id} className="card mistake">
                 <span className="chip">{q.topic}</span>
-                <p className="mistake__question">{q.text}</p>
-                <p className="mistake__answer">
-                  <span className="hint">Правильный ответ:</span> {q.options[q.correct]}
-                </p>
+                <p className="mistake__summary">{q.summary}</p>
                 <ExternalLink link={q.links[0]} />
               </div>
             ))}

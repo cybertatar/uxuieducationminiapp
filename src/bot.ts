@@ -1,5 +1,5 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
-import { questionById, questions, trackById, type Question } from '../content';
+import { isTextOnly, questionById, questions, trackById, type ChoiceQuestion } from '../content';
 import { getAnswers, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
@@ -59,20 +59,20 @@ function shuffledOrder(length: number): number[] {
   return order;
 }
 
-function questionText(q: Question, order: number[], title: string) {
+function questionText(q: ChoiceQuestion, order: number[], title: string) {
   const track = trackById.get(q.track)!;
   const options = order.map((orig, i) => `${LETTERS[i]}) ${escape(q.options[orig])}`).join('\n');
   return `<b>${title}</b> · ${track.emoji} ${escape(track.title)}\n\n${escape(q.text)}\n\n${options}`;
 }
 
 /** callback_data: a:<id вопроса>:<выбранный исходный индекс>:<порядок вариантов> */
-function questionKeyboard(q: Question, order: number[]) {
+function questionKeyboard(q: ChoiceQuestion, order: number[]) {
   const kb = new InlineKeyboard();
   order.forEach((orig, i) => kb.text(LETTERS[i], `a:${q.id}:${orig}:${order.join('')}`));
   return kb;
 }
 
-async function sendQuestion(api: Api, chatId: number, q: Question, title: string) {
+async function sendQuestion(api: Api, chatId: number, q: ChoiceQuestion, title: string) {
   const order = shuffledOrder(q.options.length);
   await api.sendMessage(chatId, questionText(q, order, title), {
     parse_mode: 'HTML',
@@ -82,7 +82,7 @@ async function sendQuestion(api: Api, chatId: number, q: Question, title: string
 
 async function nextQuestionFor(db: D1Database, user: UserRow, now: number) {
   const answers = await getAnswers(db, user.id);
-  return questionById.get(pickDailyQuestion(questions, answers, today(user, now)))!;
+  return questionById.get(pickDailyQuestion(questions, answers, today(user, now))) as ChoiceQuestion;
 }
 
 // ---------- Настройки ----------
@@ -218,8 +218,9 @@ export function getBot(env: Env): Bot {
     const [, questionId, chosenRaw, orderRaw] = ctx.match;
     const now = Date.now();
     const result = await recordAnswer(db, user, questionId, Number(chosenRaw), now);
-    if (!result) return ctx.answerCallbackQuery({ text: 'Этот вопрос больше не доступен' });
-    const { correct, question: q } = result;
+    if (!result || !isTextOnly(result.question)) return ctx.answerCallbackQuery({ text: 'Этот вопрос больше не доступен' });
+    const { correct } = result;
+    const q = result.question;
     const streak = await recordActivity(db, user, now);
 
     const order = [...orderRaw].map(Number);
@@ -231,7 +232,9 @@ export function getBot(env: Env): Bot {
     const streakLine = streak.extended ? `\n\n🔥 Стрик: ${days(streak.current)}` : '';
 
     await ctx.editMessageText(
-      `${questionText(q, order, 'Вопрос')}\n\n${verdict}\n\n${escape(q.explanation)}\n\n${links}${streakLine}`,
+      `${questionText(q, order, 'Вопрос')}\n\n${verdict}\n<b>${escape(q.summary)}</b>\n\n` +
+        // Полный разбор свёрнут: раскрывается по тапу
+        `<blockquote expandable>${escape(q.explanation)}</blockquote>\n${links}${streakLine}`,
       {
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },
