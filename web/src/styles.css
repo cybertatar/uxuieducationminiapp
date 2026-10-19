@@ -701,6 +701,16 @@ button.card:active:not(:disabled) {
   gap: 10px;
 }
 
+/* A/B — друг под другом: каждый макет получает всю ширину экрана, детали лучше видны */
+.image-options--ab {
+  grid-template-columns: 1fr;
+}
+
+.image-options--ab .wf {
+  max-width: 360px;
+  margin: 0 auto;
+}
+
 .image-option {
   position: relative;
   padding: 26px 8px 8px;
