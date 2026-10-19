@@ -1,20 +1,21 @@
-/* Слайды 1080×1350 (4:5). Палитра — светлая тема приложения, чтобы карусель узнавалась. */
+/* Слайды 1080×1350 (4:5). Палитра — тёмная тема приложения: в ленте контрастнее и выглядит презентационнее. */
 :root {
-  --bg: #efeff4;
-  --surface: #ffffff;
-  --text: #17171c;
-  --hint: #6b6b76;
-  --accent: #2481cc;
+  --bg: #0e0e11;
+  --surface: #1b1b21;
+  --text: #f4f4f6;
+  --hint: #a2a2ad;
+  --accent: #4a9df8;
   --accent-text: #ffffff;
-  --flame: #ff8a00;
-  --success: #2f9e44;
-  --danger: #e5484d;
-  --link: #2481cc;
+  --flame: #ff9a1f;
+  --success: #3fbf5f;
+  --danger: #ff5a5f;
+  --link: #4a9df8;
+  --line: #2c2c34;
 }
 
 body {
   margin: 0;
-  background: #d9d9e0;
+  background: #26262c;
   font-family: 'Manrope', -apple-system, sans-serif;
 }
 
@@ -51,6 +52,15 @@ body {
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* Без одиноких слов в последней строке абзаца */
+.slide p,
+.slide span,
+.slide li,
+.slide b {
+  text-wrap: pretty;
 }
 
 .slide h2 {
@@ -63,7 +73,7 @@ body {
   padding: 14px 20px;
   border-radius: 12px;
   background: var(--text);
-  color: #fff;
+  color: var(--bg);
   font-size: 18px;
   line-height: 1;
 }
@@ -120,11 +130,11 @@ body {
   flex: none;
   width: 300px;
   aspect-ratio: 1170 / 2532;
-  border: 10px solid var(--text);
+  border: 10px solid #2e2e36;
   border-radius: 52px;
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 30px 60px rgba(23, 23, 28, 0.18);
+  background: #000;
+  box-shadow: 0 0 0 1px #45454f, 0 30px 80px rgba(0, 0, 0, 0.55);
 }
 
 .phone img {
@@ -138,7 +148,7 @@ body {
 
 /* 1. Обложка */
 .cover {
-  background: radial-gradient(circle at 80% 85%, #cfe5f7 0, transparent 55%), var(--bg);
+  background: radial-gradient(circle at 80% 80%, rgba(74, 157, 248, 0.28) 0, transparent 55%), var(--bg);
 }
 
 .cover__title {
@@ -176,7 +186,16 @@ body {
 .cards {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+}
+
+.cards .card {
+  padding: 26px 32px;
+  gap: 6px;
+}
+
+.cards .card span {
+  font-size: 27px;
 }
 
 .goal {
@@ -184,7 +203,7 @@ body {
   display: flex;
   gap: 28px;
   align-items: center;
-  padding: 36px;
+  padding: 30px 36px;
   border-radius: 32px;
   background: var(--accent);
   color: #fff;
@@ -196,7 +215,7 @@ body {
 
 .goal p {
   margin: 0;
-  font-size: 34px;
+  font-size: 31px;
   font-weight: 700;
   line-height: 1.3;
 }
@@ -372,7 +391,7 @@ body {
 .iterations {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .iteration {
@@ -382,23 +401,23 @@ body {
   gap: 16px;
   background: var(--surface);
   border-radius: 28px;
-  padding: 34px 32px;
+  padding: 32px 32px;
 }
 
 .iteration__was {
-  font-size: 29px;
+  font-size: 27px;
   line-height: 1.3;
   color: var(--hint);
 }
 
 .iteration__arrow {
-  font-size: 22px;
+  font-size: 30px;
   color: var(--flame);
   text-align: center;
 }
 
 .iteration__now {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.3;
   font-weight: 700;
 }
@@ -511,7 +530,7 @@ body {
 
 /* 11. Призыв */
 .cta {
-  background: radial-gradient(circle at 85% 90%, #ffe2c2 0, transparent 50%), var(--bg);
+  background: radial-gradient(circle at 80% 88%, rgba(255, 154, 31, 0.22) 0, transparent 50%), var(--bg);
 }
 
 .cta__body {
@@ -527,6 +546,10 @@ body {
   width: 300px;
   height: 300px;
   flex: none;
+  padding: 22px;
+  box-sizing: border-box;
+  border-radius: 24px;
+  background: #fff;
 }
 
 .qr svg {

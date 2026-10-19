@@ -19,6 +19,33 @@ import avatarYellow from '../../../brand/avatar-yellow.png';
 
 const BOT_URL = 't.me/uxuitrainer_bot';
 
+const NBSP = '\u00A0';
+
+/**
+ * Типографика: короткие слова (предлоги, союзы, частицы) и числа не остаются в конце строки,
+ * тире не переносится в начало следующей строки.
+ */
+export function typograf(text: string): string {
+  let out = text;
+  for (let i = 0; i < 2; i++) {
+    out = out.replace(/(^|[\s(«„"])([А-Яа-яЁёA-Za-z]{1,3})[ ]+/gu, `$1$2${NBSP}`);
+  }
+  return out
+    .replace(/[ ]+(—|–)/g, `${NBSP}$1`)
+    .replace(/(\d)[ ]+(?=\S)/g, `$1${NBSP}`);
+}
+
+/** Прогоняет все текстовые узлы слайдов через typograf */
+function applyTypograf(root: HTMLElement) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement?.closest('pre, svg') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const fixed = typograf(n.textContent ?? '');
+    if (fixed !== n.textContent) n.textContent = fixed;
+  }
+}
+
 const visualCount = questions.filter((q) => q.kind === 'hotspot' || q.kind === 'image-choice' || ('image' in q && q.image)).length;
 const TOTAL = 11;
 
@@ -47,7 +74,12 @@ const Tag = ({ children }: { children: ReactNode }) => <span className="tag pixe
 export function Carousel() {
   const [qr, setQr] = useState('');
   useEffect(() => {
-    QRCode.toString(`https://${BOT_URL}`, { type: 'svg', margin: 0, color: { dark: '#17171c', light: '#ffffff' } }).then(setQr);
+    const deck = document.querySelector<HTMLElement>('.deck');
+    if (deck) applyTypograf(deck);
+  });
+
+  useEffect(() => {
+    QRCode.toString(`https://${BOT_URL}`, { type: 'svg', margin: 0, color: { dark: '#0e0e11', light: '#ffffff' } }).then(setQr);
   }, []);
 
   const moods: [CatMood, string][] = [
