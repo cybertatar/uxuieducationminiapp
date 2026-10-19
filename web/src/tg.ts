@@ -30,16 +30,33 @@ export function openLink(url: string) {
   else window.open(url, '_blank', 'noopener');
 }
 
+/** Telegram автора: подпись на главной и экран ошибки */
+export const AUTHOR_URL = 'https://t.me/everlastinghate';
+
 /** Ссылки t.me открываем внутри Telegram, а не во внешнем браузере */
 export function openTelegramLink(url: string) {
   if (inTelegram) tg!.openTelegramLink(url);
   else window.open(url, '_blank', 'noopener');
 }
 
-/** Просит разрешение, чтобы бот мог писать пользователю. Вне Telegram считаем, что разрешено. */
+let writeAccessRequest: Promise<boolean> | null = null;
+
+/**
+ * Просит разрешение, чтобы бот мог писать пользователю. Вне Telegram считаем, что разрешено.
+ * Повторный вызов, пока ждём ответа, получает тот же запрос: второй запрос Telegram отклоняет исключением.
+ */
 export function requestWriteAccess(): Promise<boolean> {
   if (!inTelegram || !tg!.isVersionAtLeast('6.9')) return Promise.resolve(true);
-  return new Promise((resolve) => tg!.requestWriteAccess((ok) => resolve(ok)));
+  writeAccessRequest ??= new Promise<boolean>((resolve) => {
+    try {
+      tg!.requestWriteAccess((ok) => resolve(ok));
+    } catch {
+      resolve(false);
+    }
+  }).finally(() => {
+    writeAccessRequest = null;
+  });
+  return writeAccessRequest;
 }
 
 export function setClosingConfirmation(enabled: boolean) {

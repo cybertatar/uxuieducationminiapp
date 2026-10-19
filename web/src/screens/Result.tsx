@@ -28,7 +28,10 @@ function headline(ratio: number): { mood: CatMood; text: string } {
 function useCountUp(to: number, from: number, enabled: boolean) {
   const [value, setValue] = useState(enabled ? from : to);
   useEffect(() => {
-    if (!enabled) return setValue(to);
+    if (!enabled) {
+      setValue(to);
+      return;
+    }
     const t = setTimeout(() => setValue(to), 450);
     return () => clearTimeout(t);
   }, [to, enabled]);

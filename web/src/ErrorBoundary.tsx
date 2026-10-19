@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { Cat } from './Cat';
+import { AUTHOR_URL, openTelegramLink } from './tg';
 
 interface Props {
   children: ReactNode;
@@ -39,6 +40,12 @@ export class ErrorBoundary extends Component<Props, { error: Error | null }> {
           >
             На главную
           </button>
+          <footer className="author">
+            Автор —{' '}
+            <button className="link" onClick={() => openTelegramLink(AUTHOR_URL)}>
+              Daniil Tyncherov
+            </button>
+          </footer>
         </div>
       </div>
     );

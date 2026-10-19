@@ -3,10 +3,8 @@ import type { Profile } from '../../../src/api-types';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, questionsWord, WEEKDAYS } from '../format';
-import { openTelegramLink } from '../tg';
+import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { Wireframe } from '../Wireframe';
-
-const AUTHOR_URL = 'https://t.me/everlastinghate';
 
 interface Props {
   profile: Profile | null;
