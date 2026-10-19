@@ -1,4 +1,6 @@
 import { heuristics } from './heuristics';
+import { higQuestions } from './hig';
+import { materialQuestions } from './material';
 import { uxLaws } from './ux-laws';
 import type { ChoiceQuestion, Question, Track, TrackId } from './types';
 
@@ -19,9 +21,23 @@ export const tracks: Track[] = [
     art: 'track-ux-laws',
     emoji: '🧠',
   },
+  {
+    id: 'hig',
+    title: 'Apple HIG',
+    description: 'Гайдлайны Apple для iOS: контролы, навигация, типографика, Liquid Glass.',
+    art: 'track-hig',
+    emoji: '🍏',
+  },
+  {
+    id: 'material',
+    title: 'Material Design 3',
+    description: 'Гайдлайны Google для Android: компоненты, цвет, типографика, адаптивность.',
+    art: 'track-material',
+    emoji: '🤖',
+  },
 ];
 
-export const questions: Question[] = [...heuristics, ...uxLaws];
+export const questions: Question[] = [...heuristics, ...uxLaws, ...higQuestions, ...materialQuestions];
 
 export const questionById = new Map(questions.map((q) => [q.id, q]));
 

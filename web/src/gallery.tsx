@@ -18,7 +18,9 @@ function Gallery() {
       ))}
     </div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, padding: 16 }}>
-      {Object.keys(illustrations).map((name) => (
+      {Object.keys(illustrations)
+        .filter((name) => name.startsWith(new URLSearchParams(location.search).get('prefix') ?? ''))
+        .map((name) => (
         <figure key={name} style={{ margin: 0, background: 'var(--surface)', borderRadius: 14, padding: 12 }}>
           <Wireframe name={name} />
           <figcaption className="hint" style={{ marginTop: 8 }}>{name}</figcaption>
