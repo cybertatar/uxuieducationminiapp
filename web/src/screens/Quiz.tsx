@@ -37,7 +37,10 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
     return () => setClosingConfirmation(false);
   }, []);
 
-  useEffect(() => window.scrollTo({ top: 0 }), [index]);
+  // Фигурные скобки нужны: в новых Chromium scrollTo возвращает Promise, а React принял бы его за функцию очистки
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [index]);
 
   // После проверки прокручиваем к разбору, чтобы он не оказался под кнопкой
   useEffect(() => {
