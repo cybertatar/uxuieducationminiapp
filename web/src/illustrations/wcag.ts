@@ -1,4 +1,4 @@
-import { button, card, circle, field, icon, ill, lines, path, rect, screen, text, title, type Illustration } from './kit';
+import { button, card, circle, field, icon, ill, lines, path, rect, screen, scrim, text, title, type Illustration } from './kit';
 
 const tile = (w: number, h: number) => rect(0, 0, w, h, 'tile', 12);
 
@@ -27,6 +27,43 @@ const chart = (labeled: boolean) =>
       text(214, 57, 'Онлайн', { size: 9, cls: 'accent', anchor: 'end' }) +
       text(214, 103, 'Офлайн', { size: 9, cls: 'danger', anchor: 'end' })
     : rect(24, 40, 8, 8, 'accent', 2) + rect(60, 40, 8, 8, 'danger', 2) + text(36, 47, '2024', { size: 8 }) + text(72, 47, '2025', { size: 8 }));
+
+/** Поле поиска на белом фоне с заданным цветом рамки — для вопроса про контраст рамки (1.4.11) */
+const borderForm = (border: string) =>
+  `<rect x="0" y="0" width="300" height="170" rx="12" fill="#ffffff"/>` +
+  `<text x="24" y="34" font-size="13" font-weight="700" fill="#1f1f1f">Подписка на новости</text>` +
+  `<text x="24" y="60" font-size="9" fill="#595959">E-mail</text>` +
+  `<rect x="24" y="66" width="252" height="30" rx="6" fill="#ffffff" stroke="${border}" stroke-width="1"/>` +
+  `<text x="34" y="85" font-size="11" fill="#1f1f1f">anna@mail.ru</text>` +
+  `<rect x="24" y="108" width="14" height="14" rx="3" fill="#ffffff" stroke="#595959" stroke-width="1.4"/>` +
+  `<text x="46" y="119" font-size="10" fill="#1f1f1f">Согласен получать письма</text>` +
+  `<rect x="24" y="132" width="252" height="28" rx="8" fill="#2b6fd6"/>` +
+  `<text x="150" y="150" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">Подписаться</text>`;
+
+/** Телефон в альбомной ориентации */
+const landscape = (inner: string) => screen(10, 10, 260, 140) + inner;
+
+/** Банковский экран под диалогом про окончание сессии */
+const sessionDialog = (heading: string, body: string, buttons: [string, 'primary' | 'outline'][]) =>
+  screen(20, 10, 200, 170) +
+  title(34, 34, 'Перевод', 12) +
+  field(34, 56, 172, 22, { label: 'Сумма', value: '15 000 ₽' }) +
+  scrim(20, 10, 200, 170) +
+  card(32, 56, 176, 108, 14) +
+  text(120, 82, heading, { size: 11, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  body.split('\n').map((l, i) => text(120, 100 + i * 13, l, { size: 9, anchor: 'middle' })).join('') +
+  buttons.map(([label, v], i) => button(buttons.length === 1 ? 48 : 44 + i * 80, 130, buttons.length === 1 ? 144 : 72, 24, label, v)).join('');
+
+/** Шапка сайта с меню из ссылок и статьёй под ней */
+const siteHeader = (skip: boolean) =>
+  screen(10, 10, 300, 170) +
+  ([['Главная', 24], ['Каталог', 72], ['Акции', 120], ['Доставка', 158], ['Блог', 210], ['Контакты', 244]] as const).map(([s, x]) => text(x, 34, s, { size: 9, cls: 'accent' })).join('') +
+  path('M10 46H310', 'divider') +
+  title(24, 72, 'Как выбрать велосипед') +
+  lines(24, 84, [260, 240, 250, 180], 11, 5) +
+  (skip
+    ? rect(16, 14, 150, 30, 'focus-ring', 10) + button(20, 18, 142, 22, 'Перейти к содержимому', 'secondary', 8)
+    : rect(18, 22, 46, 18, 'focus-ring', 5) + text(296, 160, 'ещё 11 нажатий Tab до статьи', { size: 9, anchor: 'end' }));
 
 export const wcagArt: Record<string, Illustration> = {
   'w-color-only': ill(
@@ -148,6 +185,78 @@ export const wcagArt: Record<string, Illustration> = {
       text(48, 118, 'Казань, 420000', { size: 9 }) +
       button(36, 138, 248, 30, 'Оплатить'),
   ),
+  'w-border-faint': ill(
+    300,
+    170,
+    'Форма подписки на белом фоне: рамка поля e-mail очень светло-серая и почти не видна, у чекбокса и кнопки контраст нормальный',
+    borderForm('#e0e0e0'),
+    { field: [20, 62, 260, 38] },
+  ),
+  'w-border-ok': ill(300, 170, 'Та же форма: рамка поля e-mail тёмно-серая (#767676) и хорошо видна на белом', borderForm('#767676')),
+  'w-orient-lock': ill(
+    280,
+    160,
+    'Телефон в альбомной ориентации: вместо контента экран «Поверните устройство вертикально»',
+    landscape(path('M126 52h28v44h-28z', 'outline-shape') + path('M168 60a20 20 0 0 1 0 28', 'stroke-accent', 'fill="none"') + text(140, 120, 'Поверните устройство вертикально', { size: 10, cls: 'ink', anchor: 'middle' })),
+  ),
+  'w-orient-ok': ill(
+    280,
+    160,
+    'Телефон в альбомной ориентации: приложение перестроилось в две колонки — список слева, детали справа',
+    landscape(
+      title(24, 34, 'Счета', 12) +
+        [44, 72, 100].map((y, i) => (i === 0 ? rect(20, y, 100, 24, 'tonal', 6) : '') + lines(28, y + 6, [70, 46], 8, 4)).join('') +
+        path('M130 20V140', 'divider') +
+        title(144, 34, 'Основной счёт', 12) +
+        text(144, 60, '48 200 ₽', { size: 16, weight: 700, cls: 'ink' }) +
+        lines(144, 74, [110, 90], 10, 5) +
+        button(144, 104, 110, 26, 'Перевести'),
+    ),
+  ),
+  'w-timeout-warn': ill(
+    240,
+    190,
+    'Диалог «Сессия скоро закончится»: осталось 1:45, кнопки «Выйти» и «Продлить»',
+    sessionDialog('Сессия скоро закончится', 'Осталось 1:45. Продлить, чтобы\nне потерять введённые данные?', [
+      ['Выйти', 'outline'],
+      ['Продлить', 'primary'],
+    ]),
+  ),
+  'w-timeout-expired': ill(
+    240,
+    190,
+    'Диалог «Сессия истекла»: введённые данные не сохранены, единственная кнопка «Войти заново»',
+    sessionDialog('Сессия истекла', 'Вы были неактивны 5 минут.\nВведённые данные не сохранены.', [['Войти заново', 'primary']]),
+  ),
+  'w-link-vague': ill(
+    320,
+    200,
+    'Раздел «Полезное»: ссылки «Как подключить автоплатёж», «Тарифы для бизнеса» и «Нажмите здесь»',
+    screen(20, 10, 280, 180) +
+      title(36, 38, 'Полезное') +
+      ['Как подключить автоплатёж', 'Тарифы для бизнеса', 'Нажмите здесь']
+        .map((s, i) => {
+          const y = 52 + i * 42;
+          return card(32, y, 256, 34, 8) + icon('link', 44, y + 9, 14, 'stroke-accent') + text(66, y + 21, s, { size: 11, cls: 'accent' }) + icon('chevron', 266, y + 11, 12);
+        })
+        .join(''),
+    { link: [32, 136, 256, 34] },
+  ),
+  'w-link-clear': ill(
+    320,
+    200,
+    'Тот же раздел: третья ссылка называется «Условия акции „Кешбэк 5%“»',
+    screen(20, 10, 280, 180) +
+      title(36, 38, 'Полезное') +
+      ['Как подключить автоплатёж', 'Тарифы для бизнеса', 'Условия акции «Кешбэк 5%»']
+        .map((s, i) => {
+          const y = 52 + i * 42;
+          return card(32, y, 256, 34, 8) + icon('link', 44, y + 9, 14, 'stroke-accent') + text(66, y + 21, s, { size: 11, cls: 'accent' }) + icon('chevron', 266, y + 11, 12);
+        })
+        .join(''),
+  ),
+  'w-skip-link': ill(320, 190, 'Первое нажатие Tab показывает поверх меню кнопку «Перейти к содержимому» с обводкой фокуса', siteHeader(true)),
+  'w-skip-none': ill(320, 190, 'Первое нажатие Tab ставит фокус на первую ссылку меню; до статьи ещё 11 нажатий', siteHeader(false)),
 };
 
 export const wcagTrackArt: Record<string, Illustration> = {

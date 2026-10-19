@@ -33,6 +33,58 @@ const toast = (x: number, y: number, w: number, msg: string, action: string) =>
 const settingsRow = (x: number, y: number, w: number, label: string, cls: 'ink' | 'accent' = 'ink') =>
   text(x + 12, y + 22, label, { size: 11, cls }) + icon('chevron', x + w - 22, y + 10, 12) + path(`M${x + 12} ${y + 34}H${x + w}`, 'divider');
 
+/** Товар в корзине: превью, название, размер и цена */
+const cartItem = (x: number, y: number) =>
+  card(x, y, 256, 50, 8) + rect(x + 8, y + 8, 34, 34, 'block', 6) + text(x + 52, y + 22, 'Футболка оверсайз', { size: 11, cls: 'ink' }) + text(x + 52, y + 37, 'Размер M', { size: 9 }) + text(x + 244, y + 22, '1 990 ₽', { size: 11, weight: 700, cls: 'ink', anchor: 'end' });
+
+/** Нижняя панель с иконками, с подписями или без */
+const toolbar = (x: number, y: number, w: number, icons: string[], labels: string[]) => {
+  const step = w / icons.length;
+  return (
+    path(`M${x} ${y}H${x + w}`, 'divider') +
+    icons
+      .map((n, i) => {
+        const cx = x + step * i + step / 2;
+        return labels[i]
+          ? icon(n, cx - 7, y + 6, 14) + text(cx, y + 34, labels[i], { size: 8, anchor: 'middle' })
+          : icon(n, cx - 8, y + 12, 16);
+      })
+      .join('')
+  );
+};
+
+/** Степпер из трёх шагов: с подписями и галочками или безымянные точки */
+const checkoutSteps = (x: number, y: number, labeled: boolean) =>
+  labeled
+    ? ['Доставка', 'Адрес', 'Оплата']
+        .map((s, i) => {
+          const cx = x + i * 70;
+          const done = i < 2;
+          return (
+            circle(cx + 7, y + 7, 7, done ? 'success' : 'accent') +
+            (done ? icon('check', cx + 1, y + 1, 12, 'stroke-on-accent') : text(cx + 7, y + 10.5, '3', { size: 9, weight: 700, cls: 'on-accent', anchor: 'middle' })) +
+            text(cx + 18, y + 11, s, { size: 9, cls: done ? 'accent' : 'ink', weight: done ? 400 : 700 })
+          );
+        })
+        .join('')
+    : [0, 1, 2].map((i) => circle(x + 6 + i * 16, y + 7, 4, i === 2 ? 'accent' : 'block')).join('');
+
+/** Переписка: входящее сообщение и два исходящих, со статусами доставки или без */
+const chatBubbles = (status: boolean) =>
+  rect(22, 46, 120, 24, 'block', 10) +
+  text(32, 62, 'Ты сегодня в офисе?', { size: 9, cls: 'ink' }) +
+  rect(84, 78, 134, 24, 'accent', 10) +
+  text(94, 94, 'Да, буду к обеду', { size: 9, cls: 'on-accent' }) +
+  rect(114, 110, 104, 24, 'accent', 10) +
+  text(124, 126, 'Захвачу кофе', { size: 9, cls: 'on-accent' }) +
+  (status
+    ? text(210, 94, '12:40 ✓✓', { size: 7, cls: 'on-accent', anchor: 'end' }) +
+      // Часики «ещё отправляется»
+      `<circle cx="205" cy="122" r="4" fill="none" class="wf-stroke-on-accent-thin"/>` +
+      path('M205 119.5V122h2', 'stroke-on-accent-thin', 'fill="none"') +
+      text(218, 148, 'отправляется…', { size: 8, cls: 'muted', anchor: 'end' })
+    : '');
+
 export const heuristicsArt: Record<string, Illustration> = {
   'h-pay-double': ill(
     320,
@@ -425,4 +477,84 @@ export const heuristicsArt: Record<string, Illustration> = {
   'h-icon-xcircle': ill(120, 90, 'Иконка крестика в круге', rect(0, 0, 120, 90, 'tile', 12) + icon('xcircle', 40, 25, 40)),
   'h-icon-minus': ill(120, 90, 'Иконка минуса', rect(0, 0, 120, 90, 'tile', 12) + icon('minus', 40, 25, 40)),
   'h-icon-bolt': ill(120, 90, 'Иконка молнии', rect(0, 0, 120, 90, 'tile', 12) + icon('bolt', 40, 25, 40)),
+  'h-stock-vague': ill(
+    320,
+    200,
+    'Корзина с футболкой размера M. Внизу тост «Не удалось оформить заказ» без объяснения причины',
+    phone(20, 10, 280, 180, 'Корзина') +
+      cartItem(32, 44) +
+      button(32, 104, 256, 30, 'Оформить заказ') +
+      toast(32, 146, 256, 'Не удалось оформить заказ', 'OK'),
+  ),
+  'h-stock-clear': ill(
+    320,
+    200,
+    'Корзина: под футболкой красная надпись «Размер M закончился» и кнопки «Выбрать другой» и «Удалить»',
+    phone(20, 10, 280, 180, 'Корзина') +
+      cartItem(32, 44) +
+      icon('info', 32, 102, 11, 'stroke-danger') +
+      text(48, 111, 'Размер M закончился', { size: 10, cls: 'danger' }) +
+      button(32, 120, 124, 26, 'Выбрать другой', 'outline') +
+      button(164, 120, 124, 26, 'Удалить', 'ghost') +
+      button(32, 156, 256, 26, 'Оформить заказ', 'disabled'),
+  ),
+  'h-toolbar-icons': ill(
+    320,
+    150,
+    'Панель редактора из пяти иконок без подписей: ссылка, звезда, пазл, искра, молния',
+    phone(20, 10, 280, 130, 'Документ') + lines(36, 48, [220, 248, 190], 12, 6) + toolbar(20, 98, 280, ['link', 'star', 'puzzle', 'sparkle', 'bolt'], []),
+  ),
+  'h-toolbar-labeled': ill(
+    320,
+    150,
+    'Та же панель, у каждой иконки подпись: Ссылка, Избранное, Плагины, ИИ, Действия',
+    phone(20, 10, 280, 130, 'Документ') + lines(36, 48, [220, 248, 190], 12, 6) + toolbar(20, 98, 280, ['link', 'star', 'puzzle', 'sparkle', 'bolt'], ['Ссылка', 'Избранное', 'Плагины', 'ИИ', 'Действия']),
+  ),
+  'h-order-iso': ill(
+    320,
+    190,
+    'Карточка заказа №4821: дата создания записана как 2026-10-19T21:39:56Z, статус «Доставляется»',
+    phone(20, 10, 280, 170, 'Заказ №4821') +
+      text(36, 64, 'Создан', { size: 9 }) +
+      text(36, 80, '2026-10-19T21:39:56Z', { size: 11, cls: 'ink' }) +
+      text(36, 104, 'Статус', { size: 9 }) +
+      text(36, 120, 'Доставляется', { size: 11, cls: 'ink' }) +
+      button(36, 136, 248, 30, 'Где мой заказ?', 'outline'),
+    { date: [28, 66, 200, 22] },
+  ),
+  'h-order-human': ill(
+    320,
+    190,
+    'Та же карточка заказа: дата создания записана как «19 октября в 21:39»',
+    phone(20, 10, 280, 170, 'Заказ №4821') +
+      text(36, 64, 'Создан', { size: 9 }) +
+      text(36, 80, '19 октября в 21:39', { size: 11, cls: 'ink' }) +
+      text(36, 104, 'Статус', { size: 9 }) +
+      text(36, 120, 'Доставляется', { size: 11, cls: 'ink' }) +
+      button(36, 136, 248, 30, 'Где мой заказ?', 'outline'),
+  ),
+  'h-steps-back': ill(
+    240,
+    170,
+    'Третий шаг оформления «Оплата»: есть кнопка «назад», пройденные шаги «Доставка» и «Адрес» отмечены галочками и кликабельны',
+    phone(10, 10, 220, 150, 'Оплата') + checkoutSteps(24, 48, true) + field(24, 92, 192, 24, { label: 'Номер карты', value: '4276 •••• 1234' }) + button(24, 126, 192, 26, 'Оплатить'),
+  ),
+  'h-steps-noback': ill(
+    240,
+    170,
+    'Третий шаг оформления «Оплата»: нет кнопки «назад», шаги — просто серые точки без подписей',
+    screen(10, 10, 220, 150) + title(24, 34, 'Оплата') + checkoutSteps(24, 48, false) + field(24, 92, 192, 24, { label: 'Номер карты', value: '4276 •••• 1234' }) + button(24, 126, 192, 26, 'Оплатить'),
+  ),
+  'h-chat-status': ill(
+    240,
+    170,
+    'Чат: у отправленных сообщений справа время и две галочки «прочитано», у последнего — часики «отправляется»',
+    phone(10, 10, 220, 150, 'Анна') + chatBubbles(true),
+  ),
+  'h-chat-nostatus': ill(
+    240,
+    170,
+    'Тот же чат: у отправленных сообщений нет ни времени, ни отметок о доставке',
+    phone(10, 10, 220, 150, 'Анна') + chatBubbles(false),
+  ),
 };
