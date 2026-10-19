@@ -24,6 +24,17 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      - name: База данных (найти или создать)
+        run: |
+          find_id() { npx wrangler d1 list --json | node -e 'const l = JSON.parse(require("fs").readFileSync(0, "utf8")); console.log((l.find((d) => d.name === "ux-quiz") || {}).uuid || "")'; }
+          ID=$(find_id)
+          if [ -z "$ID" ]; then
+            npx wrangler d1 create ux-quiz
+            ID=$(find_id)
+          fi
+          echo "D1 database id: $ID"
+          sed -i "s/^database_id = .*/database_id = \"$ID\"/" wrangler.toml
+
       - name: Миграции базы
         run: npx wrangler d1 migrations apply ux-quiz --remote
 
