@@ -232,8 +232,7 @@ export function getBot(env: Env): Bot {
 
     await ctx.editMessageText(
       `${questionText(q, order, 'Вопрос')}\n\n${verdict}\n<b>${escape(q.summary)}</b>\n\n` +
-        // Полный разбор свёрнут: раскрывается по тапу
-        `<blockquote expandable>${escape(q.explanation)}</blockquote>\n${links}${streakLine}`,
+        `${escape(q.explanation)}\n\n${links}${streakLine}`,
       {
         parse_mode: 'HTML',
         link_preview_options: { is_disabled: true },

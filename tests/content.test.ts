@@ -35,3 +35,16 @@ describe('контент', () => {
     for (const t of trackById.values()) expect(illustrations[t.art]).toBeDefined();
   });
 });
+
+describe('суть и разбор', () => {
+  const words = (s: string) => new Set(s.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, ' ').split(/\s+/).filter((w) => w.length > 3));
+
+  // Суть и полный разбор показываются рядом, поэтому разбор не должен начинаться с того же, что уже сказано в сути
+  it.each(questions.map((q) => [q.id, q] as const))('%s: разбор не повторяет суть', (_, q) => {
+    const first = q.explanation.split(/(?<=[.!?])\s/)[0];
+    const summary = words(q.summary);
+    const overlap = [...summary].filter((w) => words(first).has(w)).length / Math.max(1, summary.size);
+    expect(q.explanation).not.toContain(q.summary.replace(/\.$/, ''));
+    expect(overlap).toBeLessThan(0.75);
+  });
+});
