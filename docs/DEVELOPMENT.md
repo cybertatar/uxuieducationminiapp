@@ -99,3 +99,9 @@ tests/        vitest
 Описание бота (в пустом чате) и короткое описание (в профиле) задаются в `src/texts.ts` и применяются при каждом деплое через `/bot/setup`. Количество тем и вопросов подставляется автоматически.
 
 Аватарки с котом лежат в `brand/`. Поставить аватарку можно только вручную: в @BotFather → `/setuserpic` → выбрать бота → отправить PNG.
+
+## Карусель для Instagram
+
+Слайды — dev-страница `http://localhost:5173/carousel.html` (`web/src/carousel/`): они собираются из настоящих компонентов приложения, поэтому числа тем, вопросов и иллюстраций всегда актуальны. Скриншоты экранов лежат в `web/src/carousel/shots/`.
+
+Снять PNG 1080×1350 в `brand/instagram/`: запустить `npm run dev:web` и выполнить `node scripts/render-carousel.mjs` (нужен Playwright с Chromium). Текст поста — `brand/instagram/caption.md`.

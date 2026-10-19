@@ -1,0 +1,565 @@
+/* Слайды 1080×1350 (4:5). Палитра — светлая тема приложения, чтобы карусель узнавалась. */
+:root {
+  --bg: #efeff4;
+  --surface: #ffffff;
+  --text: #17171c;
+  --hint: #6b6b76;
+  --accent: #2481cc;
+  --accent-text: #ffffff;
+  --flame: #ff8a00;
+  --success: #2f9e44;
+  --danger: #e5484d;
+  --link: #2481cc;
+}
+
+body {
+  margin: 0;
+  background: #d9d9e0;
+  font-family: 'Manrope', -apple-system, sans-serif;
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  padding: 40px;
+}
+
+.pixel {
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 0;
+}
+
+.slide {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  box-sizing: border-box;
+  padding: 88px 88px 120px;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.slide h1,
+.slide h2 {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+.slide h2 {
+  font-size: 68px;
+  max-width: 900px;
+}
+
+.tag {
+  align-self: flex-start;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: var(--text);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.lead {
+  margin: 0;
+  font-size: 36px;
+  line-height: 1.3;
+  color: var(--hint);
+  max-width: 860px;
+}
+
+.note {
+  margin: auto 0 0;
+  font-size: 26px;
+  line-height: 1.35;
+  color: var(--hint);
+}
+
+.slide__footer {
+  position: absolute;
+  left: 88px;
+  right: 88px;
+  bottom: 52px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  color: var(--hint);
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 32px;
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card b {
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.card span,
+.card li {
+  font-size: 30px;
+  line-height: 1.35;
+  color: var(--hint);
+}
+
+/* Телефон: нейтральная рамка без бренда */
+.phone {
+  flex: none;
+  width: 300px;
+  aspect-ratio: 1170 / 2532;
+  border: 10px solid var(--text);
+  border-radius: 52px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 30px 60px rgba(23, 23, 28, 0.18);
+}
+
+.phone img {
+  width: 100%;
+  display: block;
+}
+
+.phone--tall {
+  width: 360px;
+}
+
+/* 1. Обложка */
+.cover {
+  background: radial-gradient(circle at 80% 85%, #cfe5f7 0, transparent 55%), var(--bg);
+}
+
+.cover__title {
+  font-size: 104px;
+}
+
+.cover__art {
+  position: relative;
+  flex: 1;
+}
+
+.cover__art .cat {
+  position: absolute;
+  left: -30px;
+  bottom: 70px;
+}
+
+.cover__phone {
+  position: absolute;
+  right: 24px;
+  top: 0;
+  width: 290px;
+  transform: rotate(4deg);
+}
+
+.swipe {
+  position: absolute;
+  left: 88px;
+  bottom: 110px;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+/* 2. Задача */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.goal {
+  margin-top: auto;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  padding: 36px;
+  border-radius: 32px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.goal .pixel {
+  font-size: 22px;
+}
+
+.goal p {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* 3. Решение */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.card ul {
+  margin: 8px 0 0;
+  padding-left: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stats {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.stats div {
+  background: var(--surface);
+  border-radius: 32px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stats b {
+  font-size: 96px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.stats span {
+  font-size: 28px;
+  color: var(--hint);
+}
+
+/* 4. Темы */
+.tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.track-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 16px 32px 16px 16px;
+}
+
+.track-row__art {
+  width: 250px;
+  flex: none;
+  border-radius: 20px;
+  background: var(--bg);
+  padding: 4px 8px;
+}
+
+.track-row b {
+  display: block;
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.track-row span {
+  font-size: 26px;
+  color: var(--hint);
+}
+
+/* 5. Форматы */
+.phones {
+  margin-top: 12px;
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+}
+
+.phones figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.phones .phone {
+  width: 270px;
+}
+
+.phones figcaption {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.phones figcaption b {
+  font-size: 32px;
+}
+
+.phones figcaption span {
+  font-size: 24px;
+  color: var(--hint);
+}
+
+/* 6. Разбор */
+.explain__body,
+.habit__body {
+  display: flex;
+  gap: 44px;
+  align-items: flex-start;
+}
+
+.callouts {
+  list-style: none;
+  counter-reset: c;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.callouts li {
+  counter-increment: c;
+  position: relative;
+  padding: 26px 28px 26px 92px;
+  background: var(--surface);
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.callouts li::before {
+  content: counter(c);
+  position: absolute;
+  left: 26px;
+  top: 26px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--flame);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+}
+
+.callouts b {
+  font-size: 32px;
+}
+
+.callouts span {
+  font-size: 25px;
+  line-height: 1.3;
+  color: var(--hint);
+}
+
+/* 7. Итерации */
+.iterations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.iteration {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 34px 32px;
+}
+
+.iteration__was {
+  font-size: 29px;
+  line-height: 1.3;
+  color: var(--hint);
+}
+
+.iteration__arrow {
+  font-size: 22px;
+  color: var(--flame);
+  text-align: center;
+}
+
+.iteration__now {
+  font-size: 30px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+/* 8. Привычка */
+.habit__list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+.spaced {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.spaced__step {
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--flame);
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 24px !important;
+}
+
+/* 9. Маскот */
+.moods {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.moods figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 28px 0 24px;
+}
+
+.moods figcaption {
+  font-size: 14px;
+  color: var(--hint);
+}
+
+.avatars {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatars img {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+}
+
+.avatars span {
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--hint);
+}
+
+.sprite {
+  margin-top: auto;
+}
+
+.sprite pre {
+  margin: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre;
+}
+
+/* 10. Под капотом */
+.tech {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tech__row {
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 36px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tech__row b {
+  font-size: 38px;
+}
+
+.tech__row span {
+  font-size: 29px;
+  line-height: 1.3;
+  color: var(--hint);
+}
+
+
+
+/* 11. Призыв */
+.cta {
+  background: radial-gradient(circle at 85% 90%, #ffe2c2 0, transparent 50%), var(--bg);
+}
+
+.cta__body {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 40px;
+  padding: 44px;
+}
+
+.qr {
+  width: 300px;
+  height: 300px;
+  flex: none;
+}
+
+.qr svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cta__link {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cta__link .pixel {
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.cta__link b {
+  font-size: 40px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.cta__link span:last-child {
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--hint);
+}
+
+.cta__cat {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
