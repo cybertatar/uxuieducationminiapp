@@ -193,9 +193,15 @@ button.card:active:not(:disabled) {
   background: linear-gradient(transparent, var(--bg) 30%);
 }
 
-.main-button-dock .button {
+.main-button-dock__row {
+  display: flex;
+  gap: 8px;
   max-width: 528px;
   margin: 0 auto;
+}
+
+.main-button-dock__row .button {
+  flex: 1;
 }
 
 .dev-back {
@@ -679,10 +685,6 @@ button.card:active:not(:disabled) {
 
 .mistake__question {
   font-weight: 500;
-}
-
-.result__home {
-  margin-top: 8px;
 }
 
 @keyframes pop {

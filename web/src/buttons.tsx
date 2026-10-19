@@ -6,15 +6,22 @@ interface MainButtonProps {
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
+  /** Второстепенное действие рядом с главным, например «На главную». */
+  secondary?: { text: string; onClick: () => void };
 }
+
+/** SecondaryButton появилась в Bot API 7.10. В старых клиентах второстепенную кнопку рисуем сами. */
+export const hasNativeSecondary = inTelegram && tg!.isVersionAtLeast('7.10');
 
 /**
  * Главная кнопка экрана. В Telegram управляет нативной MainButton,
  * в браузере рисует такую же кнопку внизу страницы.
  */
-export function MainButton({ text, onClick, disabled = false, loading = false }: MainButtonProps) {
+export function MainButton({ text, onClick, disabled = false, loading = false, secondary }: MainButtonProps) {
   const handler = useRef(onClick);
   handler.current = onClick;
+  const secondaryHandler = useRef(secondary?.onClick);
+  secondaryHandler.current = secondary?.onClick;
 
   useEffect(() => {
     if (!inTelegram) return;
@@ -43,12 +50,40 @@ export function MainButton({ text, onClick, disabled = false, loading = false }:
     else mb.hideProgress();
   }, [text, disabled, loading]);
 
-  if (inTelegram) return null;
+  const secondaryText = secondary?.text;
+  useEffect(() => {
+    if (!hasNativeSecondary || !secondaryText) return;
+    const sb = tg!.SecondaryButton;
+    const listener = () => secondaryHandler.current?.();
+    // Слева от главной: основное действие остаётся справа, под большим пальцем
+    sb.setParams({ text: secondaryText, position: 'left', is_visible: true, is_active: true });
+    sb.onClick(listener);
+    return () => {
+      sb.offClick(listener);
+      sb.hide();
+    };
+  }, [secondaryText]);
+
+  if (inTelegram) {
+    // Старый клиент без SecondaryButton: второстепенное действие остаётся кнопкой на странице
+    return secondary && !hasNativeSecondary ? (
+      <button className="button button--secondary" onClick={secondary.onClick}>
+        {secondary.text}
+      </button>
+    ) : null;
+  }
   return (
     <div className="main-button-dock">
-      <button className="button button--primary" disabled={disabled || loading} onClick={onClick}>
-        {loading ? '…' : text}
-      </button>
+      <div className="main-button-dock__row">
+        {secondary && (
+          <button className="button button--secondary" onClick={secondary.onClick}>
+            {secondary.text}
+          </button>
+        )}
+        <button className="button button--primary" disabled={disabled || loading} onClick={onClick}>
+          {loading ? '…' : text}
+        </button>
+      </div>
     </div>
   );
 }

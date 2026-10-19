@@ -95,12 +95,12 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
       )}
 
       {canRepeat ? (
-        <>
-          <button className="button button--secondary result__home" onClick={onHome}>
-            На главную
-          </button>
-          <MainButton text="Ещё 10 вопросов" onClick={onAgain} loading={starting} />
-        </>
+        <MainButton
+          text="Ещё 10 вопросов"
+          onClick={onAgain}
+          loading={starting}
+          secondary={{ text: 'На главную', onClick: onHome }}
+        />
       ) : (
         <MainButton text="На главную" onClick={onHome} />
       )}
