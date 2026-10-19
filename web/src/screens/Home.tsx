@@ -3,7 +3,10 @@ import type { Profile } from '../../../src/api-types';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, questionsWord, WEEKDAYS } from '../format';
+import { openTelegramLink } from '../tg';
 import { Wireframe } from '../Wireframe';
+
+const AUTHOR_URL = 'https://t.me/everlastinghate';
 
 interface Props {
   profile: Profile | null;
@@ -105,6 +108,13 @@ export function Home({ profile, starting, onStart, onSettings }: Props) {
           {profile.settings.dailyEnabled ? `Вопрос дня в ${profile.settings.dailyTime}` : 'Выключены'} ›
         </span>
       </button>
+
+      <footer className="author">
+        Автор —{' '}
+        <button className="link" onClick={() => openTelegramLink(AUTHOR_URL)}>
+          Daniil Tyncherov
+        </button>
+      </footer>
     </div>
   );
 }
