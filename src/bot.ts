@@ -1,10 +1,11 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
-import { isTextOnly, questionById, questions, trackById, type ChoiceQuestion } from '../content';
+import { isTextOnly, questionById, questions, trackById, tracks, type ChoiceQuestion } from '../content';
 import { getAnswers, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
+import { welcomeText } from './texts';
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -154,9 +155,7 @@ export function getBot(env: Env): Bot {
   bot.command('start', async (ctx) => {
     const user = await loadUser(ctx);
     await ctx.reply(
-      `Привет, ${escape(user.first_name ?? 'дизайнер')}! 👋\n\n` +
-        'Это тренажёр для UX/UI-дизайнеров: короткие тесты по эвристикам Нильсена, законам UX, Apple HIG и Material Design 3. ' +
-        'Если ошибёшься — покажу разбор и ссылку, где почитать подробнее.',
+      welcomeText(escape(user.first_name ?? 'дизайнер')),
       { parse_mode: 'HTML', reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
     );
     if (!user.daily_enabled) {
@@ -190,7 +189,7 @@ export function getBot(env: Env): Bot {
     ctx.reply(
       '/question — получить вопрос прямо сейчас\n' +
         '/settings — вопрос дня, напоминания, часовой пояс, пауза\n\n' +
-        'Все тесты и прогресс — в приложении.',
+        `Все темы (${tracks.map((t) => t.title).join(', ')}), прогресс и повторение ошибок — в приложении.`,
       { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
     ),
   );
