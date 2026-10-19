@@ -30,6 +30,9 @@ export function openLink(url: string) {
   else window.open(url, '_blank', 'noopener');
 }
 
+/** Telegram автора: подпись на главной и экран ошибки */
+export const AUTHOR_URL = 'https://t.me/everlastinghate';
+
 /** Ссылки t.me открываем внутри Telegram, а не во внешнем браузере */
 export function openTelegramLink(url: string) {
   if (inTelegram) tg!.openTelegramLink(url);
