@@ -32,7 +32,7 @@ export const botDescription = () =>
   ].join('\n');
 
 /** Короткое описание в профиле бота (до 120 символов) */
-export const botShortDescription = () => 'Тесты для UX/UI-дизайнеров: эвристики, законы UX, Apple HIG и Material 3. С разбором ошибок 🐈';
+export const botShortDescription = () => 'Тесты для UX/UI-дизайнеров: эвристики, законы UX, Apple HIG, Material 3 и WCAG. С разбором ошибок 🐈';
 
 /** Приветствие на /start */
 export const welcomeText = (name: string) =>

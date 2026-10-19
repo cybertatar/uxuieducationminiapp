@@ -1,6 +1,7 @@
 import { heuristics } from './heuristics';
 import { higQuestions } from './hig';
 import { materialQuestions } from './material';
+import { wcagQuestions } from './wcag';
 import { uxLaws } from './ux-laws';
 import type { ChoiceQuestion, Question, Track, TrackId } from './types';
 
@@ -35,9 +36,16 @@ export const tracks: Track[] = [
     art: 'track-material',
     emoji: '🤖',
   },
+  {
+    id: 'wcag',
+    title: 'Доступность (WCAG)',
+    description: 'WCAG 2.2, уровень AA: контраст, цвет, размеры целей, фокус, формы, анимации.',
+    art: 'track-wcag',
+    emoji: '♿',
+  },
 ];
 
-export const questions: Question[] = [...heuristics, ...uxLaws, ...higQuestions, ...materialQuestions];
+export const questions: Question[] = [...heuristics, ...uxLaws, ...higQuestions, ...materialQuestions, ...wcagQuestions];
 
 export const questionById = new Map(questions.map((q) => [q.id, q]));
 
