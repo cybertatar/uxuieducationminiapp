@@ -678,27 +678,8 @@ button.card:active:not(:disabled) {
   color: var(--success);
 }
 
-.feedback__more {
-  align-self: flex-start;
-  color: var(--link);
-  font-weight: 500;
-}
-
-.feedback__chevron {
-  display: inline-block;
-  transition: transform 0.2s;
-}
-
-.feedback__chevron.is-open {
-  transform: rotate(90deg);
-}
-
-.feedback__details {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.feedback__explanation {
   color: color-mix(in srgb, var(--text) 85%, var(--surface));
-  animation: rise 0.2s ease-out;
 }
 
 .feedback__links {

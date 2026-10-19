@@ -58,7 +58,7 @@ export const materialQuestions: Question[] = [
     correct: 0,
     summary: 'Compact < 600 dp, Medium 600–839 dp, Expanded 840–1199 dp.',
     explanation:
-      'Классы ширины окна: Compact — меньше 600 dp (почти все телефоны в портрете), Medium — от 600 до 840 dp (планшеты в портрете, раскрытые складные), Expanded — от 840 до 1200 dp, дальше Large и Extra-large.',
+      'Это официальные брейкпоинты Android для адаптивной вёрстки. Compact — меньше 600 dp (почти все телефоны в портрете), Medium — от 600 до 840 dp (планшеты в портрете, раскрытые складные), Expanded — от 840 до 1200 dp, дальше Large и Extra-large.',
     links: [L.windowSizes],
   },
   {
