@@ -95,6 +95,77 @@ const chip = (x: number, y: number, w: number, label: string, opts: { lead?: 'ic
 const mdTopBar = (x: number, y: number, w: number, heading: string) =>
   icon('back', x + 10, y + 12, 14) + path(`M${x + 11} ${y + 19}h12`, 'stroke') + title(x + 38, y + 24, heading) + circle(x + w - 16, y + 13, 1.6, 'ink-shape') + circle(x + w - 16, y + 19, 1.6, 'ink-shape') + circle(x + w - 16, y + 25, 1.6, 'ink-shape');
 
+// ---------- Новые сценарии ----------
+
+/** Системный запрос разрешения iOS: заголовок, пояснение и две кнопки */
+const iosPermission = (x: number, y: number, heading: string, purpose: string) =>
+  card(x, y, 180, 104, 14) +
+  text(x + 90, y + 24, heading, { size: 10, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  text(x + 90, y + 38, 'к камере', { size: 10, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  text(x + 90, y + 56, purpose, { size: 8.5, anchor: 'middle' }) +
+  path(`M${x} ${y + 72}H${x + 180}M${x + 90} ${y + 72}V${y + 104}`, 'divider') +
+  text(x + 45, y + 92, 'Не разрешать', { size: 10, cls: 'accent', anchor: 'middle' }) +
+  text(x + 135, y + 92, 'Разрешить', { size: 10, weight: 600, cls: 'accent', anchor: 'middle' });
+
+/** Строка настроек крупным шрифтом Dynamic Type: переносится или обрезается */
+const bigRow = (y: number, label: string[], truncated: string | null) =>
+  (truncated
+    ? text(36, y + 22, truncated, { size: 16, cls: 'ink' })
+    : label.map((l, i) => text(36, y + 22 + i * 20, l, { size: 16, cls: 'ink' })).join('')) +
+  icon('chevron', 196, y + 10 + (truncated ? 0 : (label.length - 1) * 10), 14);
+
+/** Экран заметок в iOS: крупный заголовок, список, таб-бар */
+const iosNotes = (extra: string) =>
+  screen(20, 10, 200, 200) +
+  text(34, 52, 'Заметки', { size: 18, weight: 800, cls: 'ink' }) +
+  [66, 94, 122].map((y) => lines(34, y, [150, 100], 9, 5) + path(`M34 ${y + 22}H206`, 'divider')).join('') +
+  iosTabbar(21, 168, 198, [['folder', 'Папки'], ['search', 'Поиск'], ['gear', 'Настройки']]) +
+  extra;
+
+/** Снэкбар Material: одна или две строки, одно или два действия */
+const snack = (x: number, y: number, w: number, msg: string, actions: string[], second?: string) => {
+  // Длинный снэкбар: текст в две строки, действия — отдельным рядом под ним
+  const h = second ? 56 : 28;
+  return (
+    rect(x, y, w, h, 'toast', 4) +
+    text(x + 10, y + 18, msg, { size: 10, cls: 'inverse' }) +
+    (second ? text(x + 10, y + 32, second, { size: 10, cls: 'inverse' }) : '') +
+    actions.map((a, i) => text(x + w - 10 - i * 64, y + (second ? 49 : 18), a, { size: 10, weight: 700, cls: 'accent-inverse', anchor: 'end' })).join('')
+  );
+};
+
+const inbox = () => screen(20, 10, 200, 150) + mdTopBar(20, 10, 200, 'Входящие') + [44, 72, 100].map((y) => circle(38, y + 8, 8) + lines(54, y + 2, [90, 140])).join('');
+
+/** Диалог Material поверх списка с двумя текстовыми кнопками */
+const mdDialog = (heading: string, left: string, right: string) =>
+  screen(20, 10, 200, 150) +
+  [44, 72, 100].map((y) => circle(38, y + 8, 8) + lines(54, y + 2, [90, 140])).join('') +
+  scrim(20, 10, 200, 150) +
+  card(40, 38, 160, 94, 20) +
+  text(56, 64, heading, { size: 12, weight: 600, cls: 'ink' }) +
+  text(56, 82, 'Это действие нельзя отменить.', { size: 9 }) +
+  text(128, 116, left, { size: 11, weight: 700, cls: 'accent', anchor: 'end' }) +
+  text(184, 116, right, { size: 11, weight: 700, cls: 'accent', anchor: 'end' });
+
+/** Галерея фото: под системными панелями или в чёрных рамках */
+const gallery = (edge: boolean) => {
+  const photos = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    .map((i) => rect(22 + (i % 3) * 52, (edge ? 12 : 34) + Math.floor(i / 3) * 52, 50, 50, i % 2 ? 'accent-soft' : 'tonal', 2))
+    .join('');
+  const bars = edge ? '' : rect(21, 11, 158, 22, 'toast', 0) + rect(21, 196, 158, 23, 'toast', 0);
+  const ink = edge ? 'ink' : 'inverse';
+  return (
+    screen(20, 10, 160, 210) +
+    `<clipPath id="g${edge ? 1 : 0}"><rect x="21" y="11" width="158" height="208" rx="13"/></clipPath><g clip-path="url(#g${edge ? 1 : 0})">` +
+    photos +
+    bars +
+    '</g>' +
+    text(34, 26, '12:30', { size: 9, weight: 600, cls: ink }) +
+    rect(150, 19, 16, 8, edge ? 'ink-shape' : 'card', 2) +
+    rect(76, 208, 48, 4, edge ? 'ink-shape' : 'card', 2)
+  );
+};
+
 export const platformsArt: Record<string, Illustration> = {
   // ---------- HIG ----------
   'a-alert-order-good': ill(240, 150, 'Алерт «Удалить фото?»: «Отменить» слева, «Удалить» красным справа', backdrop(240, 150) + iosAlert(26, 28, 188, 'Удалить фото?', 'Это действие нельзя отменить.', ['Отменить', 'accent'], ['Удалить', 'danger'])),
@@ -295,6 +366,93 @@ export const platformsArt: Record<string, Illustration> = {
       path('M196 68L232 92', 'stroke-muted') +
       text(294, 104, 'текст: ?', { size: 10, weight: 700, cls: 'ink', anchor: 'end' }),
   ),
+  // ---------- HIG: новые ----------
+  'a-btn-hierarchy-good': ill(
+    240,
+    170,
+    'Предложение подписки: одна залитая кнопка «Подписаться» и под ней текстовая кнопка «Не сейчас»',
+    screen(20, 10, 200, 150) + text(120, 46, 'Пробный месяц бесплатно', { size: 12, weight: 700, cls: 'ink', anchor: 'middle' }) + lines(50, 58, [140, 110], 10, 5) + button(36, 94, 168, 30, 'Подписаться', 'primary', 15) + button(36, 128, 168, 24, 'Не сейчас', 'ghost'),
+  ),
+  'a-btn-hierarchy-bad': ill(
+    240,
+    170,
+    'То же предложение: две одинаковые залитые кнопки «Подписаться» и «Не сейчас»',
+    screen(20, 10, 200, 150) + text(120, 46, 'Пробный месяц бесплатно', { size: 12, weight: 700, cls: 'ink', anchor: 'middle' }) + lines(50, 58, [140, 110], 10, 5) + button(36, 88, 168, 28, 'Подписаться', 'primary', 14) + button(36, 122, 168, 28, 'Не сейчас', 'primary', 14),
+  ),
+  'a-perm-launch': ill(
+    240,
+    200,
+    'Первый запуск: поверх экрана «Добро пожаловать» сразу появляется системный запрос доступа к камере без объяснения зачем',
+    screen(20, 10, 200, 180) + text(120, 50, 'Добро пожаловать!', { size: 13, weight: 700, cls: 'ink', anchor: 'middle' }) + scrim(20, 10, 200, 180) + iosPermission(30, 66, '«Кошелёк» запрашивает доступ', 'Приложение использует камеру.'),
+  ),
+  'a-perm-context': ill(
+    240,
+    200,
+    'Пользователь нажал «Оплатить по QR» — и только тогда появляется запрос доступа к камере с понятным объяснением',
+    screen(20, 10, 200, 180) + text(120, 50, 'Оплатить по QR', { size: 13, weight: 700, cls: 'ink', anchor: 'middle' }) + scrim(20, 10, 200, 180) + iosPermission(30, 66, '«Кошелёк» запрашивает доступ', 'Чтобы считать QR-код счёта.'),
+  ),
+  'a-dyntype-wrap': ill(
+    240,
+    200,
+    'Настройки крупным шрифтом: длинные названия пунктов переносятся на вторую строку и читаются целиком',
+    screen(20, 10, 200, 180) +
+      bigRow(20, ['Уведомления'], null) +
+      path('M36 52H206', 'divider') +
+      bigRow(56, ['Пароли', 'и безопасность'], null) +
+      path('M36 110H206', 'divider') +
+      bigRow(114, ['Экранное время'], null),
+  ),
+  'a-dyntype-truncate': ill(
+    240,
+    200,
+    'Те же настройки крупным шрифтом: названия обрезаны многоточием — «Пароли и без…», «Экранное вре…»',
+    screen(20, 10, 200, 180) +
+      bigRow(20, [], 'Уведомления') +
+      path('M36 52H206', 'divider') +
+      bigRow(56, [], 'Пароли и без…') +
+      path('M36 88H206', 'divider') +
+      bigRow(92, [], 'Экранное вре…'),
+  ),
+  'a-ios-fab': ill(
+    240,
+    220,
+    'iOS-приложение заметок с таб-баром, над которым в правом нижнем углу висит круглая плавающая кнопка «+»',
+    iosNotes(circle(184, 140, 18, 'accent') + icon('plus', 176, 132, 16, 'stroke-on-accent')),
+    { fab: [162, 118, 44, 44] },
+  ),
+  'a-ios-add-toolbar': ill(
+    240,
+    220,
+    'То же iOS-приложение: кнопка новой заметки — иконка в правом верхнем углу, рядом с заголовком',
+    iosNotes(circle(194, 36, 13, 'glass') + icon('plus', 187, 29, 14, 'stroke-accent')),
+  ),
+  // ---------- Material: новые ----------
+  'm-snack-one': ill(240, 170, 'Снэкбар «Письмо в архиве» с одним действием «Отменить»', inbox() + snack(28, 124, 184, 'Письмо в архиве', ['Отменить'])),
+  'm-snack-two': ill(
+    240,
+    170,
+    'Снэкбар в две строки с двумя действиями «Отменить» и «Настройки» и крестиком',
+    inbox() + snack(28, 98, 184, 'Письмо в архиве. Архив', ['Настройки', 'Отменить'], 'очищается раз в 30 дней') + icon('close', 194, 106, 10, 'stroke-on-accent'),
+  ),
+  'm-fab-extended': ill(130, 90, 'Кнопка с иконкой карандаша и подписью «Написать», скругление 16 dp', tile(130, 90) + rect(16, 23, 98, 44, 'tonal', 14) + icon('plus', 28, 37, 16, 'stroke-on-tonal') + text(52, 49.5, 'Написать', { size: 11, weight: 600, cls: 'on-tonal' as never })),
+  'm-fab-regular': ill(130, 90, 'Квадратная кнопка со скруглёнными углами и иконкой «+» без подписи', tile(130, 90) + fab(43, 23, 44)),
+  'm-dialog-yesno': ill(240, 170, 'Диалог «Удалить черновик?» с кнопками «Нет» и «Да»', mdDialog('Удалить черновик?', 'Нет', 'Да')),
+  'm-dialog-named': ill(240, 170, 'Диалог «Удалить черновик?» с кнопками «Отмена» и «Удалить»', mdDialog('Удалить черновик?', 'Отмена', 'Удалить')),
+  'm-snack-over-fab': ill(
+    240,
+    200,
+    'Список заметок с плавающей кнопкой «+» в правом нижнем углу; снэкбар «Заметка удалена» появился поверх неё и закрыл её',
+    screen(20, 10, 200, 180) + mdTopBar(20, 10, 200, 'Заметки') + lines(34, 50, [150, 110, 160, 120, 140, 100], 16, 6) + fab(164, 142) + snack(28, 150, 184, 'Заметка удалена', ['Отменить']),
+    { snack: [28, 146, 184, 36] },
+  ),
+  'm-snack-above-fab': ill(
+    240,
+    200,
+    'Тот же экран: снэкбар «Заметка удалена» показан над плавающей кнопкой и не перекрывает её',
+    screen(20, 10, 200, 180) + mdTopBar(20, 10, 200, 'Заметки') + lines(34, 50, [150, 110, 160, 120, 140, 100], 16, 6) + fab(164, 142) + snack(28, 106, 184, 'Заметка удалена', ['Отменить']),
+  ),
+  'm-edge-to-edge': ill(200, 230, 'Галерея фото на весь экран: снимки видны и под прозрачной строкой состояния, и под полоской жестов внизу', gallery(true)),
+  'm-edge-boxed': ill(200, 230, 'Та же галерея в рамках: сверху и снизу глухие чёрные полосы системных панелей', gallery(false)),
 };
 
 export const platformTrackArt: Record<string, Illustration> = {
