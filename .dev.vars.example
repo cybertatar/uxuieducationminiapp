@@ -1,0 +1,5 @@
+BOT_TOKEN=123456:ABC-your-bot-token
+# Секрет для проверки, что вебхук пришёл от Telegram (любая длинная строка из A-Z, a-z, 0-9, _ и -)
+WEBHOOK_SECRET=change-me
+# Только для локальной разработки: пускает в API без Telegram под тестовым пользователем
+DEV_AUTH=1

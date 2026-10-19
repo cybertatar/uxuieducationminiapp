@@ -1,0 +1,36 @@
+{
+  "name": "ux-quiz",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run db:migrate:local && concurrently -n api,web \"wrangler dev --port 8787\" \"vite\"",
+    "dev:web": "vite",
+    "dev:api": "wrangler dev --port 8787",
+    "build": "vite build",
+    "deploy": "vite build && wrangler d1 migrations apply ux-quiz --remote && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply ux-quiz --local",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
+    "test": "vitest run",
+    "content:check": "vitest run tests/content.test.ts"
+  },
+  "dependencies": {
+    "grammy": "^1.46.0",
+    "hono": "^4.13.13",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/telegram-web-app": "^10.1.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.2"
+  }
+}

@@ -1,0 +1,22 @@
+name = "ux-quiz"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Собранный Vite фронтенд. /api/* и /bot/* обрабатывает воркер.
+[assets]
+directory = "./dist"
+run_worker_first = ["/api/*", "/bot/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ux-quiz"
+database_id = "REPLACE_WITH_YOUR_D1_ID"
+migrations_dir = "migrations"
+
+# Раз в минуту: вопросы дня и напоминания о стрике
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+WEBAPP_URL = "https://ux-quiz.example.workers.dev"
