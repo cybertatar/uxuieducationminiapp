@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" font-family="-apple-system, 'SF Pro Text', Roboto, 'Segoe UI', sans-serif">
+  <rect width="320" height="240" rx="20" fill="#e9ebef"/>
+  <rect x="30" y="40" width="260" height="160" rx="16" fill="#fff"/>
+  <circle cx="160" cy="78" r="16" fill="#ffe1e1"/>
+  <text x="160" y="84" text-anchor="middle" font-size="18" font-weight="700" fill="#e5484d">!</text>
+  <text x="160" y="120" text-anchor="middle" font-size="16" font-weight="700" fill="#14161a">Ошибка</text>
+  <text x="160" y="142" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace" fill="#5d636e">Error 0x80070057</text>
+  <line x1="30" y1="160" x2="290" y2="160" stroke="#e3e6ea"/>
+  <text x="160" y="186" text-anchor="middle" font-size="15" font-weight="600" fill="#2f6bff">OK</text>
+</svg>
