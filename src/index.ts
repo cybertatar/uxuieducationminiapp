@@ -3,6 +3,7 @@ import { webhookCallback } from 'grammy';
 import { api } from './api';
 import { getBot, runScheduled } from './bot';
 import type { Env } from './env';
+import { botDescription, botShortDescription } from './texts';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -13,7 +14,7 @@ app.post('/bot/webhook', (c) =>
 );
 
 /**
- * Одноразовая настройка бота после деплоя: вебхук, команды и кнопка меню.
+ * Настройка бота после деплоя: вебхук, команды, описание и кнопка меню.
  * Открыть в браузере: https://<домен>/bot/setup?secret=<WEBHOOK_SECRET>
  */
 app.get('/bot/setup', async (c) => {
@@ -29,10 +30,12 @@ app.get('/bot/setup', async (c) => {
     { command: 'settings', description: 'Вопрос дня, напоминания, пауза' },
     { command: 'help', description: 'Что умеет бот' },
   ]);
+  await bot.api.setMyDescription(botDescription());
+  await bot.api.setMyShortDescription(botShortDescription());
   await bot.api.setChatMenuButton({
     menu_button: { type: 'web_app', text: 'Тренажёр', web_app: { url: c.env.WEBAPP_URL } },
   });
-  return c.text(`Готово: вебхук ${origin}/bot/webhook, команды и кнопка меню настроены.`);
+  return c.text(`Готово: вебхук ${origin}/bot/webhook, команды, описание и кнопка меню настроены.`);
 });
 
 export default {

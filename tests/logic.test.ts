@@ -131,3 +131,12 @@ describe('plural', () => {
     ]);
   });
 });
+
+describe('тексты бота', () => {
+  it('укладываются в лимиты Telegram', async () => {
+    const { botDescription, botShortDescription, welcomeText } = await import('../src/texts');
+    expect(botDescription().length).toBeLessThanOrEqual(512);
+    expect(botShortDescription().length).toBeLessThanOrEqual(120);
+    expect(welcomeText('Аня').length).toBeLessThanOrEqual(4096);
+  });
+});
