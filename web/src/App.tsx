@@ -3,6 +3,7 @@ import type { TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Home } from './screens/Home';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
@@ -66,36 +67,40 @@ export function App() {
     );
   }
 
-  switch (screen.name) {
-    case 'quiz':
-      return (
-        <Quiz
-          key={screen.questionIds.join()}
-          questionIds={screen.questionIds}
-          onExit={goHome}
-          onFinish={(result) => setScreen({ name: 'result', session: screen.session, result })}
-        />
-      );
-    case 'result':
-      return (
-        <Result
-          result={screen.result}
-          onHome={goHome}
-          onAgain={() => start(screen.session)}
-          canRepeat={screen.session.mode === 'track'}
-          starting={starting}
-        />
-      );
-    case 'settings':
-      return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
-    default:
-      return (
-        <Home
-          profile={profile}
-          starting={starting}
-          onStart={start}
-          onSettings={() => setScreen({ name: 'settings' })}
-        />
-      );
+  return <ErrorBoundary onReset={goHome}>{renderScreen()}</ErrorBoundary>;
+
+  function renderScreen() {
+    switch (screen.name) {
+      case 'quiz':
+        return (
+          <Quiz
+            key={screen.questionIds.join()}
+            questionIds={screen.questionIds}
+            onExit={goHome}
+            onFinish={(result) => setScreen({ name: 'result', session: screen.session, result })}
+          />
+        );
+      case 'result':
+        return (
+          <Result
+            result={screen.result}
+            onHome={goHome}
+            onAgain={() => start(screen.session)}
+            canRepeat={screen.session.mode === 'track'}
+            starting={starting}
+          />
+        );
+      case 'settings':
+        return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
+      default:
+        return (
+          <Home
+            profile={profile}
+            starting={starting}
+            onStart={start}
+            onSettings={() => setScreen({ name: 'settings' })}
+          />
+        );
+    }
   }
 }
