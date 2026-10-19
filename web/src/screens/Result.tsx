@@ -87,7 +87,7 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
                   <span className="hint">Правильный ответ:</span> {q.options[q.correct]}
                 </p>
                 <button className="link" onClick={() => openLink(q.links[0].url)}>
-                  {q.links[0].title} ↗
+                  {q.links[0].title}{"\u00A0↗"}
                 </button>
               </div>
             ))}

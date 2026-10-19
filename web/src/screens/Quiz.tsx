@@ -134,7 +134,7 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
             <span className="hint">{isCorrect ? 'Подробнее' : 'Изучить тему'}</span>
             {q.links.map((l) => (
               <button key={l.url} className="link" onClick={() => openLink(l.url)}>
-                {l.title} ↗
+                {l.title}{"\u00A0↗"}
               </button>
             ))}
           </div>
