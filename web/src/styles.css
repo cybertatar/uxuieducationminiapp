@@ -1056,6 +1056,10 @@ button.card:active:not(:disabled) {
 .wf .wf-glass { fill: color-mix(in srgb, var(--wf-card) 70%, transparent); stroke: var(--wf-line); stroke-width: 1; }
 .wf .wf-line-shape { fill: var(--wf-line); }
 .wf .wf-t-faint { fill: color-mix(in srgb, var(--wf-ink) 14%, var(--wf-screen)); }
+/* WCAG: обводка фокуса и линии графика */
+.wf .wf-focus-ring { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.wf .wf-stroke-danger-bold { stroke: var(--danger); stroke-width: 3; }
+.wf .wf-stroke-danger-dash { stroke: var(--danger); stroke-width: 3; stroke-dasharray: 6 4; }
 /* SF Symbols: режимы отрисовки */
 .wf .wf-sym-ink { fill: var(--wf-ink); }
 .wf .wf-sym-ink-stroke { stroke: var(--wf-ink); stroke-width: 3; stroke-linecap: round; fill: none; }
