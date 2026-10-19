@@ -24,6 +24,12 @@ export function openLink(url: string) {
   else window.open(url, '_blank', 'noopener');
 }
 
+/** Ссылки t.me открываем внутри Telegram, а не во внешнем браузере */
+export function openTelegramLink(url: string) {
+  if (inTelegram) tg!.openTelegramLink(url);
+  else window.open(url, '_blank', 'noopener');
+}
+
 /** Просит разрешение, чтобы бот мог писать пользователю. Вне Telegram считаем, что разрешено. */
 export function requestWriteAccess(): Promise<boolean> {
   if (!inTelegram || !tg!.isVersionAtLeast('6.9')) return Promise.resolve(true);

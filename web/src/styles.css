@@ -420,6 +420,19 @@ button.card:active:not(:disabled) {
   transition: width 0.4s ease;
 }
 
+/* ---------- Подпись автора ---------- */
+
+.author {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--hint);
+}
+
+.author .link {
+  font-size: 13px;
+}
+
 /* ---------- Ячейки и настройки ---------- */
 
 .group {
