@@ -1,4 +1,4 @@
-export type TrackId = 'heuristics' | 'ux-laws';
+export type TrackId = 'heuristics' | 'ux-laws' | 'hig' | 'material';
 
 export interface Link {
   title: string;

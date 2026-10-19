@@ -155,7 +155,7 @@ export function getBot(env: Env): Bot {
     const user = await loadUser(ctx);
     await ctx.reply(
       `Привет, ${escape(user.first_name ?? 'дизайнер')}! 👋\n\n` +
-        'Это тренажёр для UX/UI-дизайнеров: короткие тесты по эвристикам Нильсена и законам UX. ' +
+        'Это тренажёр для UX/UI-дизайнеров: короткие тесты по эвристикам Нильсена, законам UX, Apple HIG и Material Design 3. ' +
         'Если ошибёшься — покажу разбор и ссылку, где почитать подробнее.',
       { parse_mode: 'HTML', reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
     );

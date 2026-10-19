@@ -10,68 +10,11 @@ interface MainButtonProps {
   secondary?: { text: string; onClick: () => void };
 }
 
-/** SecondaryButton появилась в Bot API 7.10. В старых клиентах второстепенную кнопку рисуем сами. */
-export const hasNativeSecondary = inTelegram && tg!.isVersionAtLeast('7.10');
-
 /**
- * Главная кнопка экрана. В Telegram управляет нативной MainButton,
- * в браузере рисует такую же кнопку внизу страницы.
+ * Главная кнопка экрана — своя, а не нативная MainButton Telegram:
+ * так мы сами задаём отступы от краёв и от скруглённых углов экрана.
  */
 export function MainButton({ text, onClick, disabled = false, loading = false, secondary }: MainButtonProps) {
-  const handler = useRef(onClick);
-  handler.current = onClick;
-  const secondaryHandler = useRef(secondary?.onClick);
-  secondaryHandler.current = secondary?.onClick;
-
-  useEffect(() => {
-    if (!inTelegram) return;
-    const mb = tg!.MainButton;
-    const listener = () => handler.current();
-    mb.onClick(listener);
-    return () => {
-      mb.offClick(listener);
-      mb.hide();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!inTelegram) return;
-    const mb = tg!.MainButton;
-    const theme = tg!.themeParams;
-    // Telegram не меняет цвет неактивной кнопки сам — делаем это явно, чтобы состояние было видно
-    mb.setParams({
-      text,
-      is_active: !disabled,
-      is_visible: true,
-      color: disabled ? theme.secondary_bg_color : theme.button_color,
-      text_color: disabled ? theme.hint_color : theme.button_text_color,
-    });
-    if (loading) mb.showProgress(false);
-    else mb.hideProgress();
-  }, [text, disabled, loading]);
-
-  const secondaryText = secondary?.text;
-  useEffect(() => {
-    if (!hasNativeSecondary || !secondaryText) return;
-    const sb = tg!.SecondaryButton;
-    const listener = () => secondaryHandler.current?.();
-    // Слева от главной: основное действие остаётся справа, под большим пальцем
-    sb.setParams({ text: secondaryText, position: 'left', is_visible: true, is_active: true });
-    sb.onClick(listener);
-    return () => {
-      sb.offClick(listener);
-      sb.hide();
-    };
-  }, [secondaryText]);
-
-  if (inTelegram) {
-    // Старый клиент без SecondaryButton: второстепенное действие остаётся кнопкой на странице
-    return secondary && !hasNativeSecondary ? (
-      <button className="button button--secondary" onClick={secondary.onClick}>
-        {secondary.text}
-      </button>
-    ) : null;
-  }
   return (
     <div className="main-button-dock">
       <div className="main-button-dock__row">
@@ -81,7 +24,7 @@ export function MainButton({ text, onClick, disabled = false, loading = false, s
           </button>
         )}
         <button className="button button--primary" disabled={disabled || loading} onClick={onClick}>
-          {loading ? '…' : text}
+          {loading ? <span className="button__spinner" aria-label="Загрузка" /> : text}
         </button>
       </div>
     </div>
