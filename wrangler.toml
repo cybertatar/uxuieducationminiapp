@@ -19,4 +19,4 @@ migrations_dir = "migrations"
 crons = ["* * * * *"]
 
 [vars]
-WEBAPP_URL = "https://ux-quiz.example.workers.dev"
+WEBAPP_URL = "https://ux-quiz.tyncherovmail.workers.dev"
