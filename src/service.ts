@@ -1,4 +1,4 @@
-import { questionById } from '../content';
+import { correctOption, optionCount, questionById } from '../content';
 import { addActivity, getAnswer, saveAnswer, updateUser, type UserRow } from './db';
 import { applyAnswer } from './review';
 import { applyActivity } from './streak';
@@ -6,11 +6,14 @@ import { addDays, localDate, nextOccurrence } from './time';
 
 export const today = (user: UserRow, now: number) => localDate(user.tz, now);
 
-/** Записывает ответ и обновляет очередь повторения. option — индекс в исходном массиве options. */
+/**
+ * Записывает ответ и обновляет очередь повторения.
+ * option — индекс в исходном массиве options (для «тапни на проблему»: 0 — попал, 1 — нет).
+ */
 export async function recordAnswer(db: D1Database, user: UserRow, questionId: string, option: number, now: number) {
   const question = questionById.get(questionId);
-  if (!question || !Number.isInteger(option) || option < 0 || option >= question.options.length) return null;
-  const correct = option === question.correct;
+  if (!question || !Number.isInteger(option) || option < 0 || option >= optionCount(question)) return null;
+  const correct = option === correctOption(question);
   const prev = await getAnswer(db, user.id, questionId);
   await saveAnswer(db, user.id, questionId, applyAnswer(prev, correct, today(user, now)), now);
   return { correct, question };

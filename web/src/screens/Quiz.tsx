@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { questionById, type Question } from '../../../content';
+import { correctOption, questionById, type Question } from '../../../content';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
-import { ExternalLink } from '../ExternalLink';
+import { ChoiceAnswers, HotspotAnswer, ImageAnswers, type Answer } from '../quiz/answers';
+import { Feedback } from '../quiz/Feedback';
 import { haptic, setClosingConfirmation } from '../tg';
+import { Wireframe } from '../Wireframe';
 
 export interface QuizResult {
   total: number;
   correct: number;
+  /** Верно или нет — по порядку вопросов */
+  answers: boolean[];
   mistakes: Question[];
 }
 
@@ -17,27 +21,16 @@ interface Props {
   onFinish: (r: QuizResult) => void;
 }
 
-function shuffle<T>(items: T[]): T[] {
-  const a = [...items];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 export function Quiz({ questionIds, onExit, onFinish }: Props) {
   const questions = useMemo(() => questionIds.map((id) => questionById.get(id)!).filter(Boolean), [questionIds]);
   const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [answer, setAnswer] = useState<Answer | null>(null);
   const [checked, setChecked] = useState(false);
   const [results, setResults] = useState<boolean[]>([]);
 
   const q = questions[index];
-  // Перемешиваем варианты, чтобы правильный ответ не был всегда первым. Храним исходные индексы.
-  const order = useMemo(() => shuffle(q.options.map((_, i) => i)), [q]);
   const isLast = index === questions.length - 1;
-  const isCorrect = selected === q.correct;
+  const isCorrect = answer?.option === correctOption(q);
 
   useEffect(() => {
     setClosingConfirmation(true);
@@ -46,13 +39,18 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
 
   useEffect(() => window.scrollTo({ top: 0 }), [index]);
 
+  // После проверки прокручиваем к разбору, чтобы он не оказался под кнопкой
+  useEffect(() => {
+    if (checked) document.querySelector('.feedback')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [checked]);
+
   const check = () => {
-    if (selected === null) return;
+    if (!answer) return;
     setChecked(true);
     setResults((r) => [...r, isCorrect]);
     if (isCorrect) haptic.success();
     else haptic.error();
-    api.answer(q.id, selected).catch(() => {
+    api.answer(q.id, answer.option).catch(() => {
       // Прогресс по одному вопросу не критичен — не прерываем сессию из-за сети
     });
   };
@@ -62,14 +60,17 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
       onFinish({
         total: questions.length,
         correct: results.filter(Boolean).length,
+        answers: results,
         mistakes: questions.filter((_, i) => !results[i]),
       });
       return;
     }
     setIndex(index + 1);
-    setSelected(null);
+    setAnswer(null);
     setChecked(false);
   };
+
+  const answerProps = { answer, checked, onAnswer: setAnswer };
 
   return (
     <div className="screen quiz">
@@ -95,55 +96,29 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
         </div>
       </div>
 
-      {q.image && <img className="quiz__image" src={q.image} alt="Иллюстрация к вопросу" />}
+      {q.kind !== 'hotspot' && q.image && (
+        <div className="quiz__image">
+          <Wireframe name={q.image} />
+        </div>
+      )}
       <h1 className="quiz__question">{q.text}</h1>
 
-      <div className="options" role="radiogroup">
-        {order.map((orig) => {
-          let state = '';
-          if (checked) {
-            if (orig === q.correct) state = 'is-correct';
-            else if (orig === selected) state = 'is-wrong';
-            else state = 'is-dimmed';
-          } else if (orig === selected) state = 'is-selected';
-          return (
-            <button
-              key={orig}
-              role="radio"
-              aria-checked={orig === selected}
-              className={`option ${state}`}
-              disabled={checked}
-              onClick={() => {
-                haptic.tap();
-                setSelected(orig);
-              }}
-            >
-              <span className="option__mark" aria-hidden>
-                {checked && orig === q.correct ? '✓' : checked && orig === selected ? '✕' : ''}
-              </span>
-              <span>{q.options[orig]}</span>
-            </button>
-          );
-        })}
+      <div key={q.id} className={`answers ${checked && !isCorrect ? 'is-wrong' : ''}`}>
+        {q.kind === 'hotspot' ? (
+          <HotspotAnswer q={q} {...answerProps} />
+        ) : q.kind === 'image-choice' ? (
+          <ImageAnswers q={q} {...answerProps} />
+        ) : (
+          <ChoiceAnswers q={q} {...answerProps} />
+        )}
       </div>
 
-      {checked && (
-        <section className={`feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`} aria-live="polite">
-          <h2 className="feedback__title">{isCorrect ? 'Верно!' : 'Не совсем'}</h2>
-          <p className="feedback__text">{q.explanation}</p>
-          <div className="feedback__links">
-            <span className="hint">{isCorrect ? 'Подробнее' : 'Изучить тему'}</span>
-            {q.links.map((l) => (
-              <ExternalLink key={l.url} link={l} />
-            ))}
-          </div>
-        </section>
-      )}
+      {checked && <Feedback key={`feedback-${q.id}`} q={q} correct={isCorrect} />}
 
       {checked ? (
         <MainButton text={isLast ? 'Завершить' : 'Дальше'} onClick={next} />
       ) : (
-        <MainButton text="Проверить" onClick={check} disabled={selected === null} />
+        <MainButton text="Проверить" onClick={check} disabled={!answer} />
       )}
     </div>
   );

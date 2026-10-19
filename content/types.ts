@@ -5,27 +5,56 @@ export interface Link {
   url: string;
 }
 
-export interface Question {
+interface BaseQuestion {
   /** Стабильный id: по нему хранится прогресс, менять нельзя. */
   id: string;
   track: TrackId;
   /** Тема внутри трека, например «Видимость состояния системы». */
   topic: string;
   text: string;
-  /** Путь к картинке из web/public, например /images/h-modal.svg */
+  /** Суть разбора в одну строку — её видят сразу после ответа. */
+  summary: string;
+  /** Полный разбор, раскрывается по «Подробнее». */
+  explanation: string;
+  /** Иллюстрация «как правильно» из web/src/illustrations. */
+  fix?: string;
+  /** Куда идти изучать тему. Первая ссылка — основная. */
+  links: Link[];
+}
+
+/** Классический вопрос: текстовые варианты, опционально картинка-сценарий. */
+export interface ChoiceQuestion extends BaseQuestion {
+  kind?: 'choice';
   image?: string;
   options: string[];
   /** Индекс правильного варианта в options. */
   correct: number;
-  /** Короткий разбор: почему правильный ответ правильный. */
-  explanation: string;
-  /** Куда идти изучать тему. Первая ссылка — основная. */
-  links: Link[];
 }
+
+/** Варианты-картинки. Два варианта показываются как A/B, больше — сеткой. */
+export interface ImageChoiceQuestion extends BaseQuestion {
+  kind: 'image-choice';
+  /** Картинка к самому вопросу, если нужна. */
+  image?: string;
+  options: string[];
+  correct: number;
+}
+
+/** «Тапни на проблему»: правильный ответ — попасть в зону `zone` иллюстрации `image`. */
+export interface HotspotQuestion extends BaseQuestion {
+  kind: 'hotspot';
+  image: string;
+  zone: string;
+}
+
+export type Question = ChoiceQuestion | ImageChoiceQuestion | HotspotQuestion;
 
 export interface Track {
   id: TrackId;
   title: string;
   description: string;
+  /** Иллюстрация обложки из web/src/illustrations. */
+  art: string;
+  /** Для сообщений бота, где картинок нет. */
   emoji: string;
 }
