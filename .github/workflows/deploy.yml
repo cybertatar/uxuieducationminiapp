@@ -1,0 +1,52 @@
+name: Deploy
+
+# Выкладка в Cloudflare при каждом пуше в main. Можно запустить вручную: Actions → Deploy → Run workflow.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Миграции базы
+        run: npx wrangler d1 migrations apply ux-quiz --remote
+
+      - name: Деплой воркера
+        run: npx wrangler deploy
+
+      - name: Секреты бота
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          node -e 'console.log(JSON.stringify({ BOT_TOKEN: process.env.BOT_TOKEN, WEBHOOK_SECRET: process.env.WEBHOOK_SECRET }))' > secrets.json
+          npx wrangler secret bulk secrets.json
+          rm secrets.json
+
+      - name: Настройка бота (вебхук, команды, кнопка меню)
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          URL=$(grep -E '^WEBAPP_URL' wrangler.toml | cut -d'"' -f2)
+          # Новой версии воркера нужно несколько секунд, чтобы разойтись по сети
+          for i in 1 2 3 4 5 6; do
+            curl -fsS "$URL/bot/setup?secret=$WEBHOOK_SECRET" && exit 0
+            sleep 10
+          done
+          exit 1
