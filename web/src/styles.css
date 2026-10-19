@@ -1160,3 +1160,17 @@ button.card:active:not(:disabled) {
 @keyframes cat-zzz {
   50% { transform: translateY(-1px); opacity: 0.5; }
 }
+
+.error-details {
+  max-width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--hint);
+  font-size: 12px;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
