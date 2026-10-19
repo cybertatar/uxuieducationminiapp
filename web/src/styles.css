@@ -147,6 +147,10 @@ button.card:active:not(:disabled) {
   text-align: left;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 .chevron {
   color: var(--hint);
   font-size: 22px;

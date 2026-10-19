@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { questionById, type Question } from '../../../content';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
-import { haptic, openLink, setClosingConfirmation } from '../tg';
+import { ExternalLink } from '../ExternalLink';
+import { haptic, setClosingConfirmation } from '../tg';
 
 export interface QuizResult {
   total: number;
@@ -133,9 +134,7 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
           <div className="feedback__links">
             <span className="hint">{isCorrect ? 'Подробнее' : 'Изучить тему'}</span>
             {q.links.map((l) => (
-              <button key={l.url} className="link" onClick={() => openLink(l.url)}>
-                {l.title}{"\u00A0↗"}
-              </button>
+              <ExternalLink key={l.url} link={l} />
             ))}
           </div>
         </section>

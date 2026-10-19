@@ -3,7 +3,8 @@ import type { CompleteResponse } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { days } from '../format';
-import { haptic, openLink } from '../tg';
+import { ExternalLink } from '../ExternalLink';
+import { haptic } from '../tg';
 import type { QuizResult } from './Quiz';
 
 interface Props {
@@ -86,9 +87,7 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
                 <p className="mistake__answer">
                   <span className="hint">Правильный ответ:</span> {q.options[q.correct]}
                 </p>
-                <button className="link" onClick={() => openLink(q.links[0].url)}>
-                  {q.links[0].title}{"\u00A0↗"}
-                </button>
+                <ExternalLink link={q.links[0]} />
               </div>
             ))}
           </div>
