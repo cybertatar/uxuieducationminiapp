@@ -66,6 +66,35 @@ const states = (full: boolean) =>
   stateField(170, 64, full ? 'focus' : 'error') +
   (full ? stateField(26, 128, 'error') + stateField(170, 128, 'disabled') : '');
 
+/** Экран в тёмной теме с фиксированными цветами; в «зашитом» варианте карточка и заголовок не перекрасились */
+const darkScreen = (hardcoded: boolean) =>
+  `<rect x="20" y="10" width="200" height="170" rx="14" fill="#1c1c1e"/>` +
+  `<text x="34" y="38" font-size="13" font-weight="700" fill="${hardcoded ? '#1f1f1f' : '#f2f2f7'}">Мои заказы</text>` +
+  `<rect x="32" y="52" width="176" height="56" rx="10" fill="${hardcoded ? '#ffffff' : '#2c2c2e'}"/>` +
+  `<text x="44" y="74" font-size="11" font-weight="600" fill="${hardcoded ? '#1f1f1f' : '#f2f2f7'}">Заказ №1042</text>` +
+  `<text x="44" y="92" font-size="9" fill="${hardcoded ? '#6b6b6b' : '#a1a1a6'}">Передан в доставку</text>` +
+  `<rect x="32" y="118" width="176" height="20" rx="6" fill="#2c2c2e"/>` +
+  `<rect x="40" y="126" width="110" height="4" rx="2" fill="#48484a"/>` +
+  `<rect x="32" y="146" width="176" height="24" rx="8" fill="#4c8dff"/>` +
+  `<text x="120" y="162" font-size="10" font-weight="600" text-anchor="middle" fill="#ffffff">Отследить</text>`;
+
+/** Панель свойств выделенной кнопки, как в Dev Mode */
+const inspectRow = (y: number, prop: string, value: string, linked: boolean) =>
+  text(36, y, prop, { size: 10 }) +
+  (linked ? rect(118, y - 12, 162, 18, 'tonal', 5) + icon('link', 124, y - 10, 12, 'stroke-accent') : '') +
+  text(linked ? 142 : 124, y, value, { size: 10, weight: 600, cls: 'ink' });
+
+const inspect = () =>
+  screen(20, 10, 280, 200) +
+  title(36, 36, 'Кнопка · primary', 12) +
+  button(196, 22, 84, 24, 'Оплатить') +
+  path('M20 56H300', 'divider') +
+  inspectRow(80, 'Заливка', 'color/action/primary', true) +
+  inspectRow(108, 'Текст', 'color/text/on-action', true) +
+  inspectRow(136, 'Скругление', 'radius/m', true) +
+  inspectRow(164, 'Отступы', 'spacing/s', true) +
+  inspectRow(192, 'Обводка', '#3A7BD5', false);
+
 export const systemsArt: Record<string, Illustration> = {
   'ds-atom': ill(140, 100, 'Отдельная кнопка «Найти»', tile(140, 100) + button(30, 38, 80, 26, 'Найти')),
   'ds-molecule': ill(140, 100, 'Форма поиска: подпись «Поиск по сайту», поле и кнопка с лупой', tile(140, 100) + searchForm(12, 44, 116)),
@@ -119,6 +148,27 @@ export const systemsArt: Record<string, Illustration> = {
   }),
   'ds-rogue-fixed': ill(320, 230, 'Те же тарифы: все кнопки одинаковые, средняя карточка выделена тональным фоном и бейджем «Популярный»', plans(false)),
   'ds-states-full': ill(320, 190, 'Спецификация поля ввода: состояния «по умолчанию», «фокус», «ошибка» с подсказкой и «неактивно»', states(true)),
+  'ds-dark-tokens': ill(240, 190, 'Тёмная тема: фон, карточка заказа и текст перекрасились, всё читается', darkScreen(false)),
+  'ds-dark-hardcoded': ill(240, 190, 'Тёмная тема: фон тёмный, но карточка заказа осталась белой, а заголовок «Мои заказы» — чёрным и почти не виден', darkScreen(true)),
+  'ds-inspect': ill(
+    320,
+    220,
+    'Свойства кнопки: заливка, текст, скругление и отступы связаны с переменными, а обводка задана значением #3A7BD5',
+    inspect(),
+    { hex: [30, 176, 260, 24] },
+  ),
+  'ds-card-product': ill(
+    240,
+    170,
+    'Карточка: фото, название «Кеды Classic», цена 4 990 ₽ и кнопка «В корзину»',
+    screen(10, 10, 220, 150) +
+      card(60, 20, 120, 132, 10) +
+      rect(68, 28, 104, 56, 'block', 6) +
+      path('M84 74l18-22 14 16 10-10 14 16', 'stroke-muted', 'fill="none"') +
+      text(70, 100, 'Кеды Classic', { size: 10, weight: 600, cls: 'ink' }) +
+      text(70, 114, '4 990 ₽', { size: 10 }) +
+      button(70, 122, 100, 22, 'В корзину'),
+  ),
   'ds-states-partial': ill(320, 190, 'Спецификация поля ввода: только состояния «по умолчанию» и «ошибка»', states(false)),
 };
 
