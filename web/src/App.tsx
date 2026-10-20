@@ -56,7 +56,7 @@ export function App() {
 
   if (error && !profile) {
     return (
-      <div className="screen screen--center">
+      <main className="screen screen--center">
         <div className="empty">
           <Cat mood="sleep" size={96} />
           <p>Не получилось загрузиться. Проверь интернет и попробуй ещё раз.</p>
@@ -64,7 +64,7 @@ export function App() {
             Повторить
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -77,6 +77,7 @@ export function App() {
           <Quiz
             key={screen.questionIds.join()}
             questionIds={screen.questionIds}
+            streakCounted={profile?.streak.todayDone ?? false}
             onExit={goHome}
             onFinish={(result) => setScreen({ name: 'result', session: screen.session, result })}
           />
