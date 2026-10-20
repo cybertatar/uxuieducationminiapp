@@ -105,6 +105,11 @@ export async function addActivity(db: D1Database, userId: number, date: string) 
   await db.prepare('INSERT OR IGNORE INTO activity (user_id, date) VALUES (?, ?)').bind(userId, date).run();
 }
 
+export async function activityCount(db: D1Database, userId: number): Promise<number> {
+  const row = await db.prepare('SELECT COUNT(*) AS n FROM activity WHERE user_id = ?').bind(userId).first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
 export async function activityDates(db: D1Database, userId: number, fromDate: string): Promise<Set<string>> {
   const { results } = await db
     .prepare('SELECT date FROM activity WHERE user_id = ? AND date >= ?')

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { questions, questionsByTrack, trackById, type TrackId } from '../content';
 import type { CompleteResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
-import { activityDates, getAnswers, upsertUser, type UserRow } from './db';
+import { activityCount, activityDates, getAnswers, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession } from './select';
@@ -47,7 +47,7 @@ api.get('/me', async (c) => {
   // Неделя с понедельника, как в календаре
   const weekday = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
   const monday = addDays(date, -weekday);
-  const active = await activityDates(c.env.DB, user.id, monday);
+  const [active, activeDays] = await Promise.all([activityDates(c.env.DB, user.id, monday), activityCount(c.env.DB, user.id)]);
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(monday, i);
     return { date: d, active: active.has(d), isToday: d === date };
@@ -61,14 +61,18 @@ api.get('/me', async (c) => {
       best: user.streak_best,
       todayDone: user.last_active_date === date,
       week,
+      activeDays,
     },
     tracks: [...trackById.keys()].map((id) => {
       const pool = questionsByTrack(id);
+      const states = pool.map((q) => answers.get(q.id)).filter((a) => a !== undefined);
       return {
         id,
         total: pool.length,
-        answered: pool.filter((q) => answers.has(q.id)).length,
-        mastered: pool.filter((q) => answers.get(q.id)?.lastCorrect).length,
+        answered: states.length,
+        mastered: states.filter((a) => a.lastCorrect).length,
+        attempts: states.reduce((n, a) => n + a.attempts, 0),
+        correct: states.reduce((n, a) => n + a.correctTotal, 0),
       };
     }),
     reviewDue: questions.filter((q) => isDue(answers.get(q.id), date)).length,

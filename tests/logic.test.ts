@@ -6,7 +6,8 @@ import { pickDailyQuestion, pickTrackSession } from '../src/select';
 import { applyActivity, streakAtRisk, visibleStreak } from '../src/streak';
 import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
-import { questionsByTrack } from '../content';
+import { questionsByTrack, type TrackId } from '../content';
+import { accuracy, trackHighlights } from '../src/stats';
 
 describe('time', () => {
   it('считает локальную дату в поясе пользователя', () => {
@@ -138,5 +139,22 @@ describe('тексты бота', () => {
     expect(botDescription().length).toBeLessThanOrEqual(512);
     expect(botShortDescription().length).toBeLessThanOrEqual(120);
     expect(welcomeText('Аня').length).toBeLessThanOrEqual(4096);
+  });
+});
+
+describe('статистика', () => {
+  it('сильная и слабая темы — только при достаточном числе ответов', () => {
+    const t = (id: TrackId, attempts: number, correct: number) => ({ id, attempts, correct });
+    expect(trackHighlights([t('wcag', 9, 9), t('hig', 20, 5)])).toEqual({ strongest: null, weakest: null });
+    expect(trackHighlights([t('wcag', 10, 9), t('hig', 20, 5), t('material', 10, 7)])).toEqual({
+      strongest: { id: 'wcag', accuracy: 0.9 },
+      weakest: { id: 'hig', accuracy: 0.25 },
+    });
+    expect(trackHighlights([t('wcag', 10, 8), t('hig', 20, 16)])).toEqual({ strongest: null, weakest: null });
+  });
+
+  it('точность без ответов не считается', () => {
+    expect(accuracy({ attempts: 0, correct: 0 })).toBeNull();
+    expect(accuracy({ attempts: 4, correct: 3 })).toBe(0.75);
   });
 });
