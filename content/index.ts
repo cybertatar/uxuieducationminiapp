@@ -1,8 +1,11 @@
+import { designSystemsQuestions } from './design-systems';
 import { heuristics } from './heuristics';
 import { higQuestions } from './hig';
 import { materialQuestions } from './material';
+import { usabilityTestingQuestions } from './usability-testing';
 import { wcagQuestions } from './wcag';
 import { uxLaws } from './ux-laws';
+import { uxWritingQuestions } from './ux-writing';
 import type { ChoiceQuestion, Question, Track, TrackId } from './types';
 
 export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Link, Question, Track, TrackId } from './types';
@@ -43,9 +46,30 @@ export const tracks: Track[] = [
     art: 'track-wcag',
     emoji: '♿',
   },
+  {
+    id: 'design-systems',
+    title: 'Дизайн-системы',
+    description: 'Токены, компоненты, варианты и atomic design: как собрать систему и поддерживать её.',
+    art: 'track-design-systems',
+    emoji: '🧩',
+  },
+  {
+    id: 'ux-writing',
+    title: 'UX-райтинг',
+    description: 'Тексты интерфейса: кнопки, ошибки, пустые экраны, тон и ясность.',
+    art: 'track-ux-writing',
+    emoji: '✍️',
+  },
+  {
+    id: 'usability-testing',
+    title: 'Юзабилити-тестирование',
+    description: 'Задания, модерация, выборка, метрики SUS и SEQ, приоритеты проблем.',
+    art: 'track-usability-testing',
+    emoji: '🔬',
+  },
 ];
 
-export const questions: Question[] = [...heuristics, ...uxLaws, ...higQuestions, ...materialQuestions, ...wcagQuestions];
+export const questions: Question[] = [...heuristics, ...uxLaws, ...higQuestions, ...materialQuestions, ...wcagQuestions, ...designSystemsQuestions, ...uxWritingQuestions, ...usabilityTestingQuestions];
 
 export const questionById = new Map(questions.map((q) => [q.id, q]));
 
