@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react';
 import { questions, trackById } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
-import { AUTHOR_URL, openTelegramLink } from '../tg';
+import { AUTHOR_URL, haptic, openTelegramLink } from '../tg';
 import { Wireframe } from '../Wireframe';
 
 export type HomeTab = 'progress' | 'tracks';
@@ -220,17 +221,32 @@ function Stats({ profile, starting, onStart }: TabProps) {
   );
 }
 
-const TAB_ICONS: Record<HomeTab, string> = {
-  progress: 'M4 20V11M10 20V5M16 20v-6M22 20H2',
-  tracks: 'M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5C4.7 20 4 19.3 4 18.5zM13 4h5.5c.8 0 1.5.7 1.5 1.5v13c0 .8-.7 1.5-1.5 1.5H13z',
+/** Иконки вкладок 24×24: столбики прогресса и стопка карточек тем */
+const TAB_ICONS: Record<HomeTab, ReactNode> = {
+  progress: (
+    <>
+      <rect x="3.5" y="12" width="4.5" height="8.5" rx="2" />
+      <rect x="9.75" y="7" width="4.5" height="13.5" rx="2" />
+      <rect x="16" y="3.5" width="4.5" height="17" rx="2" />
+    </>
+  ),
+  tracks: (
+    <>
+      <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2.5" />
+      <rect x="13" y="3.5" width="7.5" height="7.5" rx="2.5" />
+      <rect x="3.5" y="13" width="7.5" height="7.5" rx="2.5" />
+      <rect x="13" y="13" width="7.5" height="7.5" rx="2.5" />
+    </>
+  ),
 };
 
 const TAB_LABELS: Record<HomeTab, string> = { progress: 'Прогресс', tracks: 'Темы' };
 
+/** Плавающий таббар-капсула над контентом */
 function TabBar({ tab, onTab }: Pick<Props, 'tab' | 'onTab'>) {
   return (
     <nav className="tabbar" aria-label="Разделы">
-      <div className="tabbar__row" role="tablist">
+      <div className="tabbar__pill" role="tablist">
         {(Object.keys(TAB_LABELS) as HomeTab[]).map((t) => (
           <button
             key={t}
@@ -239,12 +255,13 @@ function TabBar({ tab, onTab }: Pick<Props, 'tab' | 'onTab'>) {
             className={`tabbar__item ${tab === t ? 'is-active' : ''}`}
             onClick={() => {
               if (t === tab) return;
+              haptic.tap();
               onTab(t);
               window.scrollTo({ top: 0 });
             }}
           >
             <svg viewBox="0 0 24 24" aria-hidden>
-              <path d={TAB_ICONS[t]} />
+              {TAB_ICONS[t]}
             </svg>
             <span>{TAB_LABELS[t]}</span>
           </button>
