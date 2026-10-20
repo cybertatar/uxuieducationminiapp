@@ -332,31 +332,17 @@ button.card:active:not(:disabled) {
 
 /* ---------- Главная: статистика ---------- */
 
-.stats__level {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.stats__badge {
-  flex: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  font-size: 26px;
-}
-
-.stats__level-body {
-  min-width: 0;
-}
-
-.stats__title {
-  font-size: 20px;
+.stats__big {
+  font-size: 28px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats__big span {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--hint);
 }
 
 .stats__grid {
@@ -399,7 +385,6 @@ button.card:active:not(:disabled) {
   gap: 12px;
   width: 100%;
   padding: 8px 0;
-  font-size: 22px;
 }
 
 .stats__row + .stats__row {
@@ -417,6 +402,54 @@ button.card:active:not(:disabled) {
 
 .stats__note {
   margin-top: 12px;
+}
+
+/* ---------- Главная: таббар ---------- */
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  padding-bottom: var(--safe-bottom-device);
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--separator);
+}
+
+.tabbar__row {
+  display: flex;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0 6px;
+  color: var(--hint);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.tabbar__item svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tabbar__item.is-active {
+  color: var(--accent);
 }
 
 /* ---------- Главная: повторение и треки ---------- */

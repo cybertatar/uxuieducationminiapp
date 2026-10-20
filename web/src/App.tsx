@@ -4,7 +4,7 @@ import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
-import { Home } from './screens/Home';
+import { Home, type HomeTab } from './screens/Home';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
 import { Settings } from './screens/Settings';
@@ -22,6 +22,7 @@ export function App() {
   const [error, setError] = useState(false);
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [starting, setStarting] = useState(false);
+  const [tab, setTab] = useState<HomeTab>('progress');
 
   const refresh = useCallback(() => {
     api
@@ -97,6 +98,8 @@ export function App() {
           <Home
             profile={profile}
             starting={starting}
+            tab={tab}
+            onTab={setTab}
             onStart={start}
             onSettings={() => setScreen({ name: 'settings' })}
           />

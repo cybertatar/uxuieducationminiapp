@@ -7,7 +7,7 @@ import { applyActivity, streakAtRisk, visibleStreak } from '../src/streak';
 import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
 import { questionsByTrack, type TrackId } from '../content';
-import { accuracy, LEVELS, levelFor, trackHighlights } from '../src/stats';
+import { accuracy, trackHighlights } from '../src/stats';
 
 describe('time', () => {
   it('считает локальную дату в поясе пользователя', () => {
@@ -143,17 +143,6 @@ describe('тексты бота', () => {
 });
 
 describe('статистика', () => {
-  it('уровень по числу освоенных вопросов', () => {
-    expect(levelFor(0)).toMatchObject({ level: { title: 'Стажёр' }, next: { title: 'Джун' }, left: 10, progress: 0 });
-    expect(levelFor(25)).toMatchObject({ level: { title: 'Джун' }, left: 15, progress: 0.5 });
-    expect(levelFor(40).level.title).toBe('Мидл');
-    expect(levelFor(390)).toMatchObject({ level: { title: 'Арт-директор' }, next: null, left: 0, progress: 1 });
-  });
-
-  it('уровни идут по возрастанию', () => {
-    for (let i = 1; i < LEVELS.length; i++) expect(LEVELS[i].from).toBeGreaterThan(LEVELS[i - 1].from);
-  });
-
   it('сильная и слабая темы — только при достаточном числе ответов', () => {
     const t = (id: TrackId, attempts: number, correct: number) => ({ id, attempts, correct });
     expect(trackHighlights([t('wcag', 9, 9), t('hig', 20, 5)])).toEqual({ strongest: null, weakest: null });
