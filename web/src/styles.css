@@ -6,7 +6,9 @@
   --bg: var(--tg-theme-secondary-bg-color, #efeff4);
   --surface: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
   --text: var(--tg-theme-text-color, #000000);
-  --hint: var(--tg-theme-hint-color, #8e8e93);
+  --hint-raw: var(--tg-theme-hint-color, #8e8e93);
+  /* Серый из темы Telegram даёт 2,4–3,3:1 — подмешиваем цвет текста, чтобы мелкие подписи дотягивали до 4,5:1 (WCAG AA) */
+  --hint: color-mix(in srgb, var(--hint-raw) 60%, var(--text));
   --link: var(--tg-theme-link-color, #2481cc);
   --accent: var(--tg-theme-button-color, #2481cc);
   --accent-text: var(--tg-theme-button-text-color, #ffffff);
@@ -33,7 +35,7 @@
     --bg: #000000;
     --surface: #1c1c1e;
     --text: #ffffff;
-    --hint: #98989e;
+    --hint-raw: #98989e;
     --link: #5eb5f7;
     --accent: #3e88f7;
     --separator: rgba(255, 255, 255, 0.1);
@@ -137,7 +139,8 @@ button.card:active:not(:disabled) {
   padding: 3px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
+  /* Чистый акцент на светлой подложке даёт ~3:1 — затемняем текстом темы до 4,5:1 */
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
   font-size: 12px;
   font-weight: 600;
 }
@@ -146,6 +149,16 @@ button.card:active:not(:disabled) {
   color: var(--link);
   font-size: 15px;
   text-align: left;
+}
+
+/* Текст только для скринридеров */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .nowrap {
@@ -470,13 +483,6 @@ button.card:active:not(:disabled) {
 
 .tabbar__item:active {
   transform: scale(0.94);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tabbar__item,
-  .tabbar__item svg {
-    transition: none;
-  }
 }
 
 /* ---------- Главная: повторение и треки ---------- */

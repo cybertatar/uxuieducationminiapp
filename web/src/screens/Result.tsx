@@ -55,7 +55,7 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
   }, []);
 
   return (
-    <div className="screen result">
+    <main className="screen result">
       <BackButton onClick={onHome} />
 
       <div className="result__hero">
@@ -113,6 +113,6 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
       ) : (
         <MainButton text="На главную" onClick={onHome} />
       )}
-    </div>
+    </main>
   );
 }

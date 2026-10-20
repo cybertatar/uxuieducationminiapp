@@ -59,6 +59,12 @@ export function requestWriteAccess(): Promise<boolean> {
   return writeAccessRequest;
 }
 
+/** Нативное окно «ОК / Отмена» Telegram; в браузере — window.confirm. */
+export function confirmDialog(message: string): Promise<boolean> {
+  if (inTelegram && tg!.isVersionAtLeast('6.2')) return new Promise((resolve) => tg!.showConfirm(message, resolve));
+  return Promise.resolve(window.confirm(message));
+}
+
 export function setClosingConfirmation(enabled: boolean) {
   if (!inTelegram) return;
   if (enabled) tg!.enableClosingConfirmation();

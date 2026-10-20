@@ -43,7 +43,7 @@ export function Settings({ profile, onBack, onChange }: Props) {
   const pausedUntil = s.pausedUntil;
 
   return (
-    <div className="screen settings">
+    <main className="screen settings">
       <BackButton onClick={onBack} />
       <h1 className="page-title">Уведомления</h1>
 
@@ -105,7 +105,7 @@ export function Settings({ profile, onBack, onChange }: Props) {
       )}
 
       <p className="hint section-hint">Часовой пояс: {s.tz} — определяется по телефону автоматически.</p>
-    </div>
+    </main>
   );
 }
 

@@ -4,7 +4,7 @@ import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { ChoiceAnswers, HotspotAnswer, ImageAnswers, type Answer } from '../quiz/answers';
 import { Feedback } from '../quiz/Feedback';
-import { haptic, setClosingConfirmation } from '../tg';
+import { confirmDialog, haptic, setClosingConfirmation } from '../tg';
 import { Wireframe } from '../Wireframe';
 
 export interface QuizResult {
@@ -17,11 +17,13 @@ export interface QuizResult {
 
 interface Props {
   questionIds: string[];
+  /** День уже засчитан в стрик — тогда выход посреди сессии ничего не стоит и спрашивать не нужно */
+  streakCounted: boolean;
   onExit: () => void;
   onFinish: (r: QuizResult) => void;
 }
 
-export function Quiz({ questionIds, onExit, onFinish }: Props) {
+export function Quiz({ questionIds, streakCounted, onExit, onFinish }: Props) {
   const questions = useMemo(() => questionIds.map((id) => questionById.get(id)!).filter(Boolean), [questionIds]);
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<Answer | null>(null);
@@ -73,11 +75,21 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
     setChecked(false);
   };
 
+  // Ответы сохраняются сразу, а день в стрик засчитывается только в конце сессии — предупреждаем об этом
+  const exit = async () => {
+    const started = results.length > 0 || answer !== null;
+    if (started && !streakCounted) {
+      const ok = await confirmDialog('Выйти из сессии? Ответы сохранятся, но день засчитается в стрик, только если дойти до конца.');
+      if (!ok) return;
+    }
+    onExit();
+  };
+
   const answerProps = { answer, checked, onAnswer: setAnswer };
 
   return (
-    <div className="screen quiz">
-      <BackButton onClick={onExit} />
+    <main className="screen quiz">
+      <BackButton onClick={exit} />
 
       <div className="quiz__top">
         <ol className="segments" aria-label={`Вопрос ${index + 1} из ${questions.length}`}>
@@ -123,6 +135,6 @@ export function Quiz({ questionIds, onExit, onFinish }: Props) {
       ) : (
         <MainButton text="Проверить" onClick={check} disabled={!answer} />
       )}
-    </div>
+    </main>
   );
 }

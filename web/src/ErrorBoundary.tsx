@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<Props, { error: Error | null }> {
     const { error } = this.state;
     if (!error) return this.props.children;
     return (
-      <div className="screen screen--center">
+      <main className="screen screen--center">
         <div className="empty">
           <Cat mood="sad" size={96} />
           <p>Что-то сломалось. Пришли скриншот автору, а пока вернись на главную.</p>
@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<Props, { error: Error | null }> {
             </button>
           </footer>
         </div>
-      </div>
+      </main>
     );
   }
 }

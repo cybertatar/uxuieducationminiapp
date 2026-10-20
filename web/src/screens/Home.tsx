@@ -36,7 +36,8 @@ function ProgressTab({ profile, starting, onStart, onSettings }: TabProps & Pick
   const [mood, phrase] = catLine(profile);
 
   return (
-    <div className="screen" aria-busy={starting}>
+    <main className="screen" aria-busy={starting}>
+      <h1 className="visually-hidden">Прогресс</h1>
       <section className="hello">
         <Cat mood={mood} size={76} />
         <p className="hello__bubble">{phrase}</p>
@@ -103,13 +104,13 @@ function ProgressTab({ profile, starting, onStart, onSettings }: TabProps & Pick
           Daniil Tyncherov
         </button>
       </footer>
-    </div>
+    </main>
   );
 }
 
 function TracksTab({ profile, starting, onStart }: TabProps) {
   return (
-    <div className="screen" aria-busy={starting}>
+    <main className="screen" aria-busy={starting}>
       <h1 className="page-title">Темы</h1>
       <p className="hint section-hint">
         {profile.tracks.length} {plural(profile.tracks.length, 'тема', 'темы', 'тем')} · {questions.length} {questionsWord(questions.length)}
@@ -142,7 +143,7 @@ function TracksTab({ profile, starting, onStart }: TabProps) {
           );
         })}
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -282,11 +283,11 @@ function catLine(p: Profile): [CatMood, string] {
 
 function HomeSkeleton() {
   return (
-    <div className="screen" aria-busy>
+    <main className="screen" aria-busy>
       <div className="card skeleton" style={{ height: 76 }} />
       <div className="card skeleton" style={{ height: 148 }} />
       <div className="skeleton skeleton--text" style={{ width: 100, marginTop: 24 }} />
       <div className="card skeleton" style={{ height: 260 }} />
-    </div>
+    </main>
   );
 }
