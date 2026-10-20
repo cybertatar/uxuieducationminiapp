@@ -64,11 +64,14 @@ api.get('/me', async (c) => {
     },
     tracks: [...trackById.keys()].map((id) => {
       const pool = questionsByTrack(id);
+      const states = pool.map((q) => answers.get(q.id)).filter((a) => a !== undefined);
       return {
         id,
         total: pool.length,
-        answered: pool.filter((q) => answers.has(q.id)).length,
-        mastered: pool.filter((q) => answers.get(q.id)?.lastCorrect).length,
+        answered: states.length,
+        mastered: states.filter((a) => a.lastCorrect).length,
+        attempts: states.reduce((n, a) => n + a.attempts, 0),
+        correct: states.reduce((n, a) => n + a.correctTotal, 0),
       };
     }),
     reviewDue: questions.filter((q) => isDue(answers.get(q.id), date)).length,

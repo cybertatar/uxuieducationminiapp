@@ -2,7 +2,8 @@ import { trackById } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
-import { days, questionsWord, WEEKDAYS } from '../format';
+import { accuracy, levelFor, trackHighlights } from '../../../src/stats';
+import { days, plural, questionsWord, WEEKDAYS } from '../format';
 import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { Wireframe } from '../Wireframe';
 
@@ -70,6 +71,9 @@ export function Home({ profile, starting, onStart, onSettings }: Props) {
         </button>
       )}
 
+      <h2 className="section-title">Твой прогресс</h2>
+      <Stats profile={profile} starting={starting} onStart={onStart} />
+
       <h2 className="section-title">Темы</h2>
       <div className="tracks">
         {profile.tracks.map((t) => {
@@ -117,6 +121,89 @@ export function Home({ profile, starting, onStart, onSettings }: Props) {
   );
 }
 
+const percent = (x: number) => `${Math.round(x * 100)}%`;
+
+/** Уровень, цифры, которыми можно гордиться, и тема, которую стоит подтянуть */
+function Stats({ profile, starting, onStart }: Pick<Props, 'starting' | 'onStart'> & { profile: Profile }) {
+  const sum = (key: 'total' | 'mastered' | 'attempts' | 'correct') => profile.tracks.reduce((n, t) => n + t[key], 0);
+  const total = sum('total');
+  const mastered = sum('mastered');
+  const attempts = sum('attempts');
+  const acc = accuracy({ attempts, correct: sum('correct') });
+  const { level, next, left, progress } = levelFor(mastered);
+  const { strongest, weakest } = trackHighlights(profile.tracks);
+  const best = profile.streak.best;
+
+  const tiles: [string, string][] = [
+    [`${mastered}`, `освоено из ${total}`],
+    [acc === null ? '—' : percent(acc), 'верных ответов'],
+    [`${attempts}`, plural(attempts, 'ответ', 'ответа', 'ответов')],
+    [`${best}`, `${days(best)} — рекорд стрика`],
+  ];
+
+  return (
+    <section className="card stats">
+      <div className="stats__level">
+        <span className="stats__badge" aria-hidden>
+          {level.emoji}
+        </span>
+        <div className="stats__level-body">
+          <div className="stats__title">{level.title}</div>
+          <div className="hint">
+            {next
+              ? `Ещё ${left} ${plural(left, 'освоенный вопрос', 'освоенных вопроса', 'освоенных вопросов')} до уровня «${next.title}» ${next.emoji}`
+              : 'Высший уровень. Кегль снимает шляпу!'}
+          </div>
+        </div>
+      </div>
+      <span className="progress" role="progressbar" aria-label="До следующего уровня" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
+        <span className="progress__fill" style={{ width: percent(progress) }} />
+      </span>
+
+      <dl className="stats__grid">
+        {tiles.map(([value, label]) => (
+          <div key={label} className="stats__tile">
+            <dt className="hint">{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      {strongest && weakest ? (
+        <div className="stats__tracks">
+          <div className="stats__row">
+            <span aria-hidden>💪</span>
+            <span className="stats__row-body">
+              <span className="hint">Сильная сторона</span>
+              <span>
+                {trackById.get(strongest.id)!.title} · {percent(strongest.accuracy)}
+              </span>
+            </span>
+          </div>
+          <button className="stats__row" disabled={starting} onClick={() => onStart({ mode: 'track', track: weakest.id })}>
+            <span aria-hidden>🎯</span>
+            <span className="stats__row-body">
+              <span className="hint">Есть куда расти</span>
+              <span>
+                {trackById.get(weakest.id)!.title} · {percent(weakest.accuracy)}
+              </span>
+            </span>
+            <span className="chevron" aria-hidden>
+              ›
+            </span>
+          </button>
+        </div>
+      ) : (
+        <p className="hint stats__note">
+          {attempts === 0
+            ? 'Ответь на первые вопросы — здесь появится твоя статистика.'
+            : 'Порешай пару тем — покажу твою сильную сторону и где есть куда расти.'}
+        </p>
+      )}
+    </section>
+  );
+}
+
 /** Что говорит кот на главной — по ситуации */
 function catLine(p: Profile): [CatMood, string] {
   const name = p.firstName ? `, ${p.firstName}` : '';
@@ -131,6 +218,8 @@ function HomeSkeleton() {
     <div className="screen" aria-busy>
       <div className="card skeleton" style={{ height: 76 }} />
       <div className="card skeleton" style={{ height: 148 }} />
+      <div className="skeleton skeleton--text" style={{ width: 120, marginTop: 24 }} />
+      <div className="card skeleton" style={{ height: 260 }} />
       <div className="skeleton skeleton--text" style={{ width: 80, marginTop: 24 }} />
       <div className="card skeleton" style={{ height: 132 }} />
       <div className="card skeleton" style={{ height: 132 }} />

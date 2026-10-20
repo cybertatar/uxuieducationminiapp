@@ -330,6 +330,95 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
+/* ---------- Главная: статистика ---------- */
+
+.stats__level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats__badge {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 26px;
+}
+
+.stats__level-body {
+  min-width: 0;
+}
+
+.stats__title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stats__grid {
+  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stats__tile {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.stats__tile dd {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats__tile dt {
+  font-size: 12px;
+}
+
+.stats__tracks {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stats__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 0;
+  font-size: 22px;
+}
+
+.stats__row + .stats__row {
+  border-top: 1px solid var(--separator);
+}
+
+.stats__row-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.stats__note {
+  margin-top: 12px;
+}
+
 /* ---------- Главная: повторение и треки ---------- */
 
 .review {

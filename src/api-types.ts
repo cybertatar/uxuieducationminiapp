@@ -21,7 +21,8 @@ export interface WeekDay {
 export interface Profile {
   firstName: string | null;
   streak: { current: number; best: number; todayDone: boolean; week: WeekDay[] };
-  tracks: { id: TrackId; total: number; answered: number; mastered: number }[];
+  /** attempts и correct — все ответы в теме, включая повторные: по ним считается точность. */
+  tracks: { id: TrackId; total: number; answered: number; mastered: number; attempts: number; correct: number }[];
   reviewDue: number;
   settings: Settings;
 }
