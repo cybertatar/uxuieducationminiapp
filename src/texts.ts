@@ -3,7 +3,7 @@ import { questions, tracks } from '../content';
 /** «больше 130» — круглое число вопросов вниз до десятка, чтобы текст не устаревал с каждым новым вопросом */
 const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1);
 
-const questionsRounded = () => Math.floor(questions.length / 10) * 10;
+const questionsRounded = () => Math.floor((questions.length - 1) / 10) * 10;
 
 /** Названия тем внутри фразы: «эвристики Нильсена», но «Apple HIG» остаётся как есть */
 const topicList = () => {

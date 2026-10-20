@@ -1,4 +1,4 @@
-import { button, card, field, icon, ill, lines, path, rect, screen, scrim, tabbar, text, title, type Illustration } from './kit';
+import { button, card, circle, cursor, field, icon, ill, lines, path, rect, screen, scrim, tabbar, text, title, type Illustration } from './kit';
 
 /** Переключатель во включённом состоянии */
 const toggle = (x: number, y: number, on = true) => rect(x, y, 34, 20, on ? 'accent' : 'block', 10) + `<circle cx="${on ? x + 24 : x + 10}" cy="${y + 10}" r="8" class="wf-card"/>`;
@@ -57,6 +57,63 @@ const privacySettings = (clear: boolean) =>
   path('M36 138H284', 'divider') +
   setting(146, ['Показывать, что я в сети']);
 
+/** Регистрация: требования к паролю списком под полем или спрятаны в тултип */
+const passwordForm = (tooltip: boolean) =>
+  screen(20, 10, 280, 200) +
+  title(36, 38, 'Новый пароль') +
+  field(36, 64, 248, 28, { label: 'Пароль', value: '••••••' }) +
+  (tooltip
+    ? icon('info', 262, 70, 16, 'stroke-muted') +
+      rect(150, 98, 140, 52, 'toast', 8) +
+      text(160, 115, 'От 8 символов, цифра', { size: 9, cls: 'inverse' }) +
+      text(160, 128, 'и заглавная буква. Без', { size: 9, cls: 'inverse' }) +
+      text(160, 141, 'пробелов', { size: 9, cls: 'inverse' }) +
+      path('M262 92l-6 6h12z', 'stroke-muted', 'fill="none"') +
+      cursor(266, 80)
+    : ([['check', 'От 8 символов', true], ['close', 'Цифра', false], ['check', 'Заглавная буква', true]] as const)
+        .map(([ic, label, ok], i) => icon(ic, 36, 100 + i * 16, 12, ok ? 'stroke-success' : 'stroke-danger') + text(54, 110 + i * 16, label, { size: 10, cls: ok ? 'text' : 'danger' }))
+        .join('')) +
+  button(36, 166, 248, 30, 'Сохранить');
+
+const helpScreen = (structured: boolean) =>
+  screen(20, 10, 280, 210) +
+  title(36, 38, 'Возврат денег') +
+  (structured
+    ? [
+        ['Сроки', 'До 10 рабочих дней на карту'],
+        ['Как оформить', 'Заказы → Вернуть товар'],
+        ['Деньги не пришли', 'Напишите в чат поддержки'],
+      ]
+        .map(([h, t], i) => {
+          const y = 64 + i * 46;
+          return text(36, y, h, { size: 11, weight: 700, cls: 'ink' }) + circle(40, y + 14, 2, 'ink-shape') + text(48, y + 18, t, { size: 10 }) + lines(48, y + 24, [150], 8, 4);
+        })
+        .join('')
+    : [
+        'Возврат денежных средств осуществляется после',
+        'получения товара на склад и проведения проверки',
+        'его состояния, после чего в течение срока, который',
+        'может составлять до 10 рабочих дней в зависимости',
+        'от банка, выпустившего карту, денежные средства',
+        'будут зачислены. Для оформления возврата перейдите',
+        'в раздел заказов и выберите соответствующий пункт,',
+        'а если средства не поступили, обратитесь в службу',
+        'поддержки через чат в приложении или по телефону.',
+      ]
+        .map((l, i) => text(36, 62 + i * 15, l, { size: 9, cls: 'ink' }))
+        .join(''));
+
+const transferError = (clear: boolean) =>
+  screen(20, 10, 280, 190) +
+  title(36, 38, 'Перевод') +
+  field(36, 62, 248, 26, { label: 'Получатель', value: 'Анна К. · •• 4821' }) +
+  field(36, 108, 248, 26, { label: 'Сумма', value: '5 000 ₽' }) +
+  rect(36, 142, 248, 40, 'danger-soft', 8) +
+  icon('xcircle', 44, 146, 14, 'stroke-danger') +
+  (clear
+    ? text(64, 157, 'Банк получателя не принял перевод.', { size: 9.5, cls: 'ink' }) + text(64, 171, 'Попробуйте позже или по номеру карты', { size: 9.5, cls: 'ink' })
+    : text(64, 157, 'Ошибка 0x1F: транзакция отклонена', { size: 9.5, cls: 'ink' }) + text(64, 171, 'эквайером (RC 05, do not honor)', { size: 9.5, cls: 'ink' }));
+
 export const writingArt: Record<string, Illustration> = {
   'uw-toggle-short': ill(320, 180, 'Настройки уведомлений: переключатель «Скидки и акции» с пояснением «Не чаще раза в неделю»', toggles(false)),
   'uw-toggle-long': ill(
@@ -92,6 +149,18 @@ export const writingArt: Record<string, Illustration> = {
   ),
   'uw-success-clear': ill(320, 210, 'Экран «Перевод отправлен»: 5 000 ₽, получатель Анна К., деньги придут в течение минуты, кнопка «На главную»', transferResult(true)),
   'uw-success-vague': ill(320, 210, 'Экран с галочкой, словом «Готово» и кнопкой «ОК»', transferResult(false)),
+  'uw-pass-rules': ill(320, 220, 'Новый пароль: под полем список требований с отметками — от 8 символов (выполнено), цифра (нет), заглавная буква (выполнено)', passwordForm(false)),
+  'uw-pass-tooltip': ill(320, 220, 'Новый пароль: требования спрятаны во всплывающей подсказке у иконки «i» и видны только при наведении', passwordForm(true)),
+  'uw-help-structured': ill(320, 230, 'Справка «Возврат денег»: три подзаголовка — «Сроки», «Как оформить», «Деньги не пришли» — с короткими пунктами', helpScreen(true)),
+  'uw-help-wall': ill(320, 230, 'Справка «Возврат денег»: один сплошной абзац из девяти строк канцелярского текста', helpScreen(false)),
+  'uw-transfer-jargon': ill(
+    320,
+    210,
+    'Экран перевода с ошибкой: «Ошибка 0x1F: транзакция отклонена эквайером (RC 05, do not honor)»',
+    transferError(false),
+    { error: [30, 136, 260, 52] },
+  ),
+  'uw-transfer-clear': ill(320, 210, 'Тот же экран: «Банк получателя не принял перевод. Попробуйте позже или по номеру карты»', transferError(true)),
   'uw-settings-negation': ill(
     320,
     210,
