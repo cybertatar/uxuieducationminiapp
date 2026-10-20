@@ -343,6 +343,34 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
+/* ---------- Главная: первый запуск ---------- */
+
+.first-run {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.first-run .track__art {
+  margin-bottom: 4px;
+}
+
+.first-run__title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.first-run .button {
+  margin-top: 8px;
+}
+
+.first-run__other {
+  align-self: center;
+  padding: 8px 12px;
+  text-align: center;
+}
+
 /* ---------- Главная: статистика ---------- */
 
 .stats__big {

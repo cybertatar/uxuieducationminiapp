@@ -23,7 +23,7 @@ interface Props {
 export function Home({ profile, starting, tab, onTab, onStart, onSettings }: Props) {
   return (
     <>
-      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} />}
+      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} />}
       <TabBar tab={tab} onTab={onTab} />
     </>
   );
@@ -31,8 +31,11 @@ export function Home({ profile, starting, tab, onTab, onStart, onSettings }: Pro
 
 type TabProps = Pick<Props, 'starting' | 'onStart'> & { profile: Profile };
 
-function ProgressTab({ profile, starting, onStart, onSettings }: TabProps & Pick<Props, 'onSettings'>) {
+function ProgressTab({ profile, starting, onStart, onSettings, onTab }: TabProps & Pick<Props, 'onSettings' | 'onTab'>) {
   const { streak } = profile;
+  // Новичок ещё не прошёл ни одной сессии — сразу предлагаем начать, а не искать тесты на соседней вкладке
+  const firstRun = streak.activeDays === 0;
+  const answered = profile.tracks.some((t) => t.attempts > 0);
   const [mood, phrase] = catLine(profile);
 
   return (
@@ -42,6 +45,8 @@ function ProgressTab({ profile, starting, onStart, onSettings }: TabProps & Pick
         <Cat mood={mood} size={76} />
         <p className="hello__bubble">{phrase}</p>
       </section>
+
+      {firstRun && <FirstRun starting={starting} onStart={onStart} onTab={onTab} />}
 
       <section className="streak card">
         <div className="streak__head">
@@ -88,8 +93,12 @@ function ProgressTab({ profile, starting, onStart, onSettings }: TabProps & Pick
         </button>
       )}
 
-      <h2 className="section-title">Статистика</h2>
-      <Stats profile={profile} starting={starting} onStart={onStart} />
+      {answered && (
+        <>
+          <h2 className="section-title">Статистика</h2>
+          <Stats profile={profile} starting={starting} onStart={onStart} />
+        </>
+      )}
 
       <button className="cell" onClick={onSettings}>
         <span>🔔 Уведомления</span>
@@ -105,6 +114,36 @@ function ProgressTab({ profile, starting, onStart, onSettings }: TabProps & Pick
         </button>
       </footer>
     </main>
+  );
+}
+
+/** С чего начать: первая тема и короткий путь к выбору другой */
+const FIRST_TRACK = 'heuristics';
+
+function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStart' | 'onTab'>) {
+  const track = trackById.get(FIRST_TRACK)!;
+  return (
+    <section className="card first-run">
+      <span className="track__art" aria-hidden>
+        <Wireframe name={track.art} />
+      </span>
+      <h2 className="first-run__title">Начни с первой сессии</h2>
+      <p className="hint">
+        10 вопросов по теме «{track.title}» — база любого дизайн-ревью. Это займёт около 5 минут.
+      </p>
+      <button className="button button--primary" disabled={starting} onClick={() => onStart({ mode: 'track', track: FIRST_TRACK })}>
+        Начать
+      </button>
+      <button
+        className="link first-run__other"
+        onClick={() => {
+          onTab('tracks');
+          window.scrollTo({ top: 0 });
+        }}
+      >
+        Выбрать другую тему
+      </button>
+    </section>
   );
 }
 
