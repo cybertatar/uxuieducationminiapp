@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { correctOption, questionById, type Question } from '../../../content';
+import { correctOption, questionById, trackById, type Question } from '../../../content';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { ChoiceAnswers, HotspotAnswer, ImageAnswers, type Answer } from '../quiz/answers';
@@ -104,7 +104,8 @@ export function Quiz({ questionIds, streakCounted, onExit, onFinish }: Props) {
           ))}
         </ol>
         <div className="quiz__meta">
-          <span className="chip">{q.topic}</span>
+          {/* Тема часто совпадает с ответом («Узнавание вместо припоминания»), поэтому до проверки показываем только трек */}
+          <span className="chip">{checked ? q.topic : trackById.get(q.track)!.title}</span>
           <span className="hint">
             {index + 1} / {questions.length}
           </span>
