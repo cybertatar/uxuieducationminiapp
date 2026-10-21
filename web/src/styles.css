@@ -582,10 +582,40 @@ button.card:active:not(:disabled) {
   transform: scale(0.96);
 }
 
-.tracks-section {
+/* Лента разделов: страница на всю ширину, листается свайпом и встаёт ровно на раздел */
+.section-pager {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 calc(-1 * var(--side));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.section-pager::-webkit-scrollbar {
+  display: none;
+}
+
+.section-page,
+.section-page__group {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+}
+
+.section-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: 0 var(--side) 2px;
+  scroll-snap-align: start;
+  /* Один свайп — один раздел, даже резкий */
+  scroll-snap-stop: always;
+}
+
+.section-page__group {
+  margin-top: 4px;
 }
 
 .tracks {

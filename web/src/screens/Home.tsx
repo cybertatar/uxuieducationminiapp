@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { questionsByTrack, sections, trackById, type SectionId, type TrackId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
@@ -155,35 +155,115 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
 
 const FILTERS: { id: SectionFilter; title: string }[] = [{ id: 'all', title: 'Все' }, ...sections.map((s) => ({ id: s.id, title: s.title }))];
 
+/**
+ * Темы по разделам. Разделы — страницы горизонтальной ленты со scroll-snap:
+ * на телефоне их листают свайпом, как папки в Telegram, а пилюли сверху следуют за лентой.
+ */
 function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
-  const active = FILTERS.some((f) => f.id === section) ? section : 'all';
-  const shown = active === 'all' ? sections : sections.filter((s) => s.id === active);
-  const trackCount = shown.reduce((n, s) => n + s.tracks.length, 0);
-  const count = shown.reduce((n, s) => n + s.tracks.reduce((m, id) => m + questionsByTrack(id).length, 0), 0);
+  const tabRow = useRef<HTMLDivElement>(null);
+  const pager = useRef<HTMLDivElement>(null);
+  const pages = useRef<(HTMLDivElement | null)[]>([]);
+  /** Куда лента едет после тапа по пилюле: промежуточные страницы по пути не выбираем */
+  const target = useRef<number | null>(null);
+  const activeIndex = Math.max(0, FILTERS.findIndex((f) => f.id === section));
+  const active = FILTERS[activeIndex].id;
   const progress = new Map(profile.tracks.map((t) => [t.id, t]));
 
-  const select = (id: SectionFilter) => {
-    if (id === active) return;
+  // Лента по высоте равна текущей странице, иначе под короткими разделами осталась бы пустота от «Все»
+  useLayoutEffect(() => {
+    const page = pages.current[activeIndex];
+    const el = pager.current;
+    if (!page || !el) return;
+    const fit = () => (el.style.height = `${page.offsetHeight}px`);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(page);
+    return () => ro.disconnect();
+  }, [activeIndex]);
+
+  // При открытии и смене ширины экрана встаём ровно на текущую страницу.
+  // На смену раздела не реагируем: во время свайпа это дёрнуло бы ленту под пальцем.
+  const indexRef = useRef(activeIndex);
+  indexRef.current = activeIndex;
+  useLayoutEffect(() => {
+    const el = pager.current;
+    if (!el) return;
+    const snap = () => {
+      if (target.current === null) el.scrollLeft = indexRef.current * el.clientWidth;
+    };
+    snap();
+    window.addEventListener('resize', snap);
+    return () => window.removeEventListener('resize', snap);
+  }, []);
+
+  // Палец перехватил ленту на полпути после тапа или анимация закончилась — снова слушаем свайпы
+  useEffect(() => {
+    const el = pager.current;
+    if (!el) return;
+    const release = () => (target.current = null);
+    el.addEventListener('scrollend', release);
+    el.addEventListener('touchstart', release, { passive: true });
+    return () => {
+      el.removeEventListener('scrollend', release);
+      el.removeEventListener('touchstart', release);
+    };
+  }, []);
+
+  // Активная пилюля всегда видна, даже если ряд не влез в узкий экран
+  useEffect(() => {
+    const row = tabRow.current;
+    const tab = tabs.current[activeIndex];
+    if (!row || !tab) return;
+    const left = tab.offsetLeft - row.offsetLeft;
+    if (left < row.scrollLeft || left + tab.offsetWidth > row.scrollLeft + row.clientWidth) {
+      row.scrollTo({ left: left - (row.clientWidth - tab.offsetWidth) / 2, behavior: 'smooth' });
+    }
+  }, [activeIndex]);
+
+  const change = (i: number) => {
+    if (i === activeIndex) return;
     haptic.tap();
-    onSection(id);
+    onSection(FILTERS[i].id);
+    // Раздел сменился, а страница прокручена ниже начала ленты — возвращаемся к пилюлям
+    const top = (tabRow.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 12;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: 'smooth' });
+  };
+
+  const go = (i: number) => {
+    const el = pager.current;
+    if (!el || i === activeIndex) return;
+    target.current = i;
+    change(i);
+    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
+  };
+
+  const onScroll = () => {
+    const el = pager.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (target.current !== null) {
+      if (i === target.current && Math.abs(el.scrollLeft - i * el.clientWidth) < 2) target.current = null;
+      return;
+    }
+    // Пилюля переключается, как только страница перевалила за середину — как в Telegram
+    if (i !== activeIndex && i >= 0 && i < FILTERS.length) change(i);
   };
 
   // Стрелки переключают вкладки, как положено у role="tablist"
   const onKeyDown = (e: KeyboardEvent) => {
-    const i = FILTERS.findIndex((f) => f.id === active);
-    const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: FILTERS.length - 1 }[e.key];
+    const next = { ArrowRight: activeIndex + 1, ArrowLeft: activeIndex - 1, Home: 0, End: FILTERS.length - 1 }[e.key];
     if (next === undefined) return;
     e.preventDefault();
     const j = (next + FILTERS.length) % FILTERS.length;
-    select(FILTERS[j].id);
+    go(j);
     tabs.current[j]?.focus();
   };
 
   return (
     <main className="screen" aria-busy={starting}>
       <h1 className="page-title">Темы</h1>
-      <div className="section-tabs" role="tablist" aria-label="Разделы тем" onKeyDown={onKeyDown}>
+      <div className="section-tabs" role="tablist" aria-label="Разделы тем" onKeyDown={onKeyDown} ref={tabRow}>
         {FILTERS.map((f, i) => (
           <button
             key={f.id}
@@ -193,32 +273,52 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
             id={`section-${f.id}`}
             role="tab"
             aria-selected={f.id === active}
-            aria-controls="section-panel"
+            aria-controls={`section-panel-${f.id}`}
             tabIndex={f.id === active ? 0 : -1}
             className={`section-tab ${f.id === active ? 'is-active' : ''}`}
-            onClick={() => select(f.id)}
+            onClick={() => go(i)}
           >
             {f.title}
           </button>
         ))}
       </div>
-      <section id="section-panel" role="tabpanel" aria-labelledby={`section-${active}`} className="tracks-section">
-        <p className="hint section-hint">
-          {trackCount} {plural(trackCount, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
-        </p>
-        {shown.map((s) =>
-          active === 'all' ? (
-            <section key={s.id} className="tracks-section" aria-labelledby={`group-${s.id}`}>
-              <h2 id={`group-${s.id}`} className="section-title">
-                {s.title}
-              </h2>
-              <TrackList ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
-            </section>
-          ) : (
-            <TrackList key={s.id} ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
-          ),
-        )}
-      </section>
+      <div className="section-pager" ref={pager} onScroll={onScroll}>
+        {FILTERS.map((f, i) => {
+          const shown = f.id === 'all' ? sections : sections.filter((s) => s.id === f.id);
+          const trackCount = shown.reduce((n, s) => n + s.tracks.length, 0);
+          const count = shown.reduce((n, s) => n + s.tracks.reduce((m, id) => m + questionsByTrack(id).length, 0), 0);
+          return (
+            <div
+              key={f.id}
+              ref={(el) => {
+                pages.current[i] = el;
+              }}
+              id={`section-panel-${f.id}`}
+              role="tabpanel"
+              aria-labelledby={`section-${f.id}`}
+              // Соседние страницы видны только во время свайпа — ни фокусу, ни скринридеру они не нужны
+              inert={f.id !== active}
+              className="section-page"
+            >
+              <p className="hint section-hint">
+                {trackCount} {plural(trackCount, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
+              </p>
+              {shown.map((s) =>
+                f.id === 'all' ? (
+                  <section key={s.id} className="section-page__group" aria-labelledby={`group-${s.id}`}>
+                    <h2 id={`group-${s.id}`} className="section-title">
+                      {s.title}
+                    </h2>
+                    <TrackList ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
+                  </section>
+                ) : (
+                  <TrackList key={s.id} ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
+                ),
+              )}
+            </div>
+          );
+        })}
+      </div>
     </main>
   );
 }
