@@ -544,35 +544,57 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
-/* Переключатель разделов на вкладке «Темы»: iOS-подобный сегментированный контрол */
-.segmented {
+/* Разделы на вкладке «Темы»: ряд пилюль, активная залита акцентом, как основная кнопка */
+.section-tabs {
   display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--text) 8%, var(--surface));
+  gap: 8px;
+  margin: 0 calc(-1 * var(--side));
+  padding: 2px var(--side);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.segmented__item {
-  flex: 1;
-  min-height: 34px;
-  padding: 6px 8px;
-  border-radius: 9px;
-  color: var(--text);
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s, box-shadow 0.2s, transform 0.12s;
+.section-tabs::-webkit-scrollbar {
+  display: none;
 }
 
-.segmented__item.is-active {
+.section-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
   background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
   font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12), inset 0 0 0 0.5px color-mix(in srgb, var(--text) 10%, transparent);
+  transition: background-color 0.2s, color 0.2s, transform 0.12s;
 }
 
-.segmented__item:active {
-  transform: scale(0.97);
+.section-tab__count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--hint);
+  font-size: 12px;
+  text-align: center;
+}
+
+.section-tab.is-active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.section-tab.is-active .section-tab__count {
+  background: color-mix(in srgb, var(--accent-text) 22%, transparent);
+  color: var(--accent-text);
+}
+
+.section-tab:active {
+  transform: scale(0.96);
 }
 
 .tracks-section {

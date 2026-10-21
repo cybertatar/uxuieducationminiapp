@@ -158,7 +158,7 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
   return (
     <main className="screen" aria-busy={starting}>
       <h1 className="page-title">Темы</h1>
-      <div className="segmented" role="tablist" aria-label="Разделы тем">
+      <div className="section-tabs" role="tablist" aria-label="Разделы тем">
         {sections.map((s) => (
           <button
             key={s.id}
@@ -166,7 +166,7 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
             role="tab"
             aria-selected={s.id === current.id}
             aria-controls="section-panel"
-            className={`segmented__item ${s.id === current.id ? 'is-active' : ''}`}
+            className={`section-tab ${s.id === current.id ? 'is-active' : ''}`}
             onClick={() => {
               if (s.id === current.id) return;
               haptic.tap();
@@ -174,12 +174,15 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
             }}
           >
             {s.title}
+            <span className="section-tab__count" aria-hidden>
+              {s.tracks.length}
+            </span>
           </button>
         ))}
       </div>
       <section id="section-panel" role="tabpanel" aria-labelledby={`section-${current.id}`} className="tracks-section">
         <p className="hint section-hint">
-          {current.tracks.length} {plural(current.tracks.length, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
+          {count} {questionsWord(count)} в разделе «{current.title}»
         </p>
         <div className="tracks">
           {current.tracks.map((id) => {
