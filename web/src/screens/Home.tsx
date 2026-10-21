@@ -213,7 +213,6 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
 
   const change = (i: number) => {
     if (i === activeIndex) return;
-    haptic.tap();
     onSection(FILTERS[i].id);
   };
 
