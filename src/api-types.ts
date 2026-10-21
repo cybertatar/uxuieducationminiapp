@@ -28,6 +28,19 @@ export interface Profile {
   settings: Settings;
 }
 
+/** День календаря занятий. active — день засчитан в стрик; answers и correct считаются с момента появления календаря. */
+export interface HistoryDay {
+  date: string;
+  active: boolean;
+  answers: number;
+  correct: number;
+}
+
+export interface HistoryResponse {
+  today: string;
+  days: HistoryDay[];
+}
+
 export type SessionRequest = { mode: 'track'; track: TrackId } | { mode: 'review' };
 
 export interface SessionResponse {

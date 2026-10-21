@@ -23,13 +23,14 @@ interface Props {
   onSection: (section: SectionFilter) => void;
   onStart: (s: SessionMode) => void;
   onSettings: () => void;
+  onCalendar: () => void;
 }
 
 /** Главная из двух вкладок: прогресс с трекером занятий и список тем. */
-export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onSettings }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onSettings, onCalendar }: Props) {
   return (
     <>
-      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />}
+      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />}
       <TabBar tab={tab} onTab={onTab} />
     </>
   );
@@ -37,7 +38,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
 
 type TabProps = Pick<Props, 'starting' | 'onStart'> & { profile: Profile };
 
-function ProgressTab({ profile, starting, onStart, onSettings, onTab }: TabProps & Pick<Props, 'onSettings' | 'onTab'>) {
+function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab }: TabProps & Pick<Props, 'onSettings' | 'onCalendar' | 'onTab'>) {
   const { streak } = profile;
   // Новичок ещё не прошёл ни одной сессии — сразу предлагаем начать, а не искать тесты на соседней вкладке
   const firstRun = streak.activeDays === 0;
@@ -54,7 +55,9 @@ function ProgressTab({ profile, starting, onStart, onSettings, onTab }: TabProps
 
       {firstRun && <FirstRun starting={starting} onStart={onStart} onTab={onTab} />}
 
+      {/* Вся карточка стрика ведёт в календарь занятий: поверх неё растянута прозрачная кнопка */}
       <section className="streak card">
+        <button className="streak__open" onClick={onCalendar} aria-label="Открыть календарь занятий" />
         <div className="streak__head">
           <div className={`streak__flame ${streak.todayDone ? 'is-lit' : ''}`} aria-hidden>
             🔥
@@ -71,6 +74,9 @@ function ProgressTab({ profile, starting, onStart, onSettings, onTab }: TabProps
                   : 'Пройди первую сессию и начни стрик'}
             </div>
           </div>
+          <span className="streak__more" aria-hidden>
+            Календарь ›
+          </span>
         </div>
         <ol className="week" aria-label="Активность на этой неделе">
           {streak.week.map((d, i) => (

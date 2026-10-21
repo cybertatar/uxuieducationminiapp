@@ -1,6 +1,7 @@
 import type {
   AnswerResponse,
   CompleteResponse,
+  HistoryResponse,
   Profile,
   SessionRequest,
   SessionResponse,
@@ -27,6 +28,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const api = {
   me: () => request<Profile>('GET', '/me'),
+  history: () => request<HistoryResponse>('GET', '/history'),
   session: (body: SessionRequest) => request<SessionResponse>('POST', '/session', body),
   answer: (questionId: string, option: number) => request<AnswerResponse>('POST', '/answer', { questionId, option }),
   complete: () => request<CompleteResponse>('POST', '/session/complete'),

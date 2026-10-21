@@ -105,6 +105,35 @@ export async function addActivity(db: D1Database, userId: number, date: string) 
   await db.prepare('INSERT OR IGNORE INTO activity (user_id, date) VALUES (?, ?)').bind(userId, date).run();
 }
 
+export async function addDailyAnswer(db: D1Database, userId: number, date: string, correct: boolean) {
+  await db
+    .prepare(
+      `INSERT INTO daily_stats (user_id, date, answers, correct) VALUES (?1, ?2, 1, ?3)
+       ON CONFLICT(user_id, date) DO UPDATE SET answers = answers + 1, correct = correct + ?3`,
+    )
+    .bind(userId, date, correct ? 1 : 0)
+    .run();
+}
+
+/** Все дни с занятиями или ответами начиная с fromDate: засчитан ли день в стрик и сколько было ответов */
+export async function history(db: D1Database, userId: number, fromDate: string) {
+  const [active, stats] = await Promise.all([
+    db.prepare('SELECT date FROM activity WHERE user_id = ? AND date >= ?').bind(userId, fromDate).all<{ date: string }>(),
+    db
+      .prepare('SELECT date, answers, correct FROM daily_stats WHERE user_id = ? AND date >= ?')
+      .bind(userId, fromDate)
+      .all<{ date: string; answers: number; correct: number }>(),
+  ]);
+  const days = new Map<string, { date: string; active: boolean; answers: number; correct: number }>();
+  for (const r of stats.results) days.set(r.date, { date: r.date, active: false, answers: r.answers, correct: r.correct });
+  for (const r of active.results) {
+    const d = days.get(r.date);
+    if (d) d.active = true;
+    else days.set(r.date, { date: r.date, active: true, answers: 0, correct: 0 });
+  }
+  return [...days.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function activityCount(db: D1Database, userId: number): Promise<number> {
   const row = await db.prepare('SELECT COUNT(*) AS n FROM activity WHERE user_id = ?').bind(userId).first<{ n: number }>();
   return row?.n ?? 0;
