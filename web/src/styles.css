@@ -476,6 +476,14 @@ button.card:active:not(:disabled) {
     inset 0 0 0 0.5px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+/* В Android WebView размытие под скруглённой капсулой даёт светлый ореол по краю — там капсула сплошная */
+.tg-android .tabbar__pill {
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
 .tabbar__item {
   min-width: 104px;
   display: flex;
@@ -584,7 +592,9 @@ button.card:active:not(:disabled) {
 
 /* Вкладка «Темы» не прокручивается целиком: пилюли закреплены, прокручиваются разделы */
 .screen--tracks {
-  height: var(--tg-viewport-stable-height, 100dvh);
+  /* Прибит к окну: после длинного экрана результатов прокрутка окна не сдвигает пилюли под кнопки Telegram */
+  position: fixed;
+  inset: 0;
   padding-bottom: 0;
   gap: 6px;
   overflow: hidden;

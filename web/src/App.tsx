@@ -71,6 +71,8 @@ export function App() {
 
   const goHome = () => {
     setScreen({ name: 'home' });
+    // Экран результатов длинный — без этого главная открылась бы с его прокруткой
+    window.scrollTo({ top: 0 });
     refresh();
   };
 
