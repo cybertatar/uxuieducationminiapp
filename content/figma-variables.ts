@@ -46,6 +46,7 @@ export const figmaVariablesQuestions: Question[] = [
     id: 'fv-003',
     track: 'figma-variables',
     topic: T.types,
+    image: 'fv-gradient',
     text: 'Для фона нужен градиент. Что для этого использовать?',
     options: ['Стиль заливки', 'Одну color-переменную', 'Number-переменную', 'Boolean-переменную'],
     correct: 0,
@@ -58,6 +59,7 @@ export const figmaVariablesQuestions: Question[] = [
     id: 'fv-004',
     track: 'figma-variables',
     topic: T.types,
+    image: 'fv-languages',
     text: 'Как показать один и тот же макет на трёх языках, не копируя экраны?',
     options: [
       'String-переменные для текстов с режимами по языкам',
@@ -111,12 +113,14 @@ export const figmaVariablesQuestions: Question[] = [
     summary: 'Режимы задаются на уровне коллекции, поэтому независимые оси — разные коллекции.',
     explanation:
       'Если в одной коллекции смешать тему и плотность, придётся завести режимы на все сочетания: Light Compact, Dark Compact и так далее. Две коллекции переключаются независимо. Внутри коллекции переменные дополнительно раскладывают по группам.',
+    fix: 'fv-collections',
     links: [L.overview],
   },
   {
     id: 'fv-008',
     track: 'figma-variables',
     topic: T.modes,
+    image: 'fv-inherit',
     text: 'Фрейму экрана поставили режим Dark. Карточка внутри стоит в режиме Auto. Какие значения переменных она получит?',
     options: ['Из режима Dark — Auto наследует режим родителя', 'Из режима по умолчанию', 'Из режима Light', 'Никакие, пока режим не выбран явно'],
     correct: 0,
@@ -164,6 +168,7 @@ export const figmaVariablesQuestions: Question[] = [
     summary: 'Scoping ограничивает, к каким свойствам переменную можно применить.',
     explanation:
       'У color-переменной можно оставить, например, только frame fill и shape fill. Тогда в выборе цвета для текста или обводки её не будет. Так же number-переменную радиуса показывают только для скругления.',
+    fix: 'fv-scoping',
     links: [L.manage],
   },
   {
@@ -176,6 +181,7 @@ export const figmaVariablesQuestions: Question[] = [
     summary: 'Code syntax задаёт имя переменной в коде отдельно для Web, iOS и Android.',
     explanation:
       'Имя в Figma остаётся удобным для дизайнеров (color/bg/surface), а code syntax подставляется в сниппеты Dev Mode. На каждую платформу — своё имя, всего до трёх.',
+    fix: 'fv-code-syntax',
     links: [L.manage],
   },
   {
@@ -216,6 +222,7 @@ export const figmaVariablesQuestions: Question[] = [
     id: 'fv-015',
     track: 'figma-variables',
     topic: T.prototyping,
+    image: 'fv-counter',
     text: 'В прототипе есть счётчик товаров count. Что поставить на кнопку «+»?',
     options: ['Действие Set variable: count + 1', 'Переход на экран с цифрой 2', 'Действие Set variable mode', 'Change to на следующий вариант'],
     correct: 0,
@@ -234,6 +241,7 @@ export const figmaVariablesQuestions: Question[] = [
     summary: 'Conditional выполняет действие, только если условие истинно.',
     explanation:
       'В условии пишут логическое выражение: count == 0. Ветка if ведёт на пустую корзину, else — к оформлению. Условия можно комбинировать через and и or.',
+    fix: 'fv-conditional',
     links: [L.prototyping],
   },
   {
@@ -252,6 +260,7 @@ export const figmaVariablesQuestions: Question[] = [
     id: 'fv-018',
     track: 'figma-variables',
     topic: T.prototyping,
+    image: 'fv-theme-toggle',
     text: 'В прототипе нужен переключатель светлой и тёмной темы. Какое действие повесить на него?',
     options: ['Set variable mode', 'Set variable для каждого цвета', 'Navigate to на копию экрана в тёмной теме', 'Swap overlay'],
     correct: 0,
@@ -259,5 +268,18 @@ export const figmaVariablesQuestions: Question[] = [
     explanation:
       'Если цвета экрана привязаны к переменным с режимами Light и Dark, достаточно переключить режим коллекции — перекрасится весь прототип. Копии экранов в тёмной теме не нужны.',
     links: [L.prototyping, L.modes],
+  },
+  {
+    id: 'fv-019',
+    track: 'figma-variables',
+    kind: 'hotspot',
+    topic: T.types,
+    image: 'fv-bind-panel',
+    zone: 'text',
+    text: 'Тапни на свойство кнопки, к которому можно привязать string-переменную.',
+    summary: 'String-переменная задаёт текст слоя, имя шрифта или начертание.',
+    explanation:
+      'Заливка принимает color-переменную, скругление и прозрачность — number. Текст слоя связывают со string-переменной: так делают переводы и подставляют имя пользователя в прототипах.',
+    links: [L.overview],
   },
 ];
