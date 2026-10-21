@@ -5,7 +5,7 @@ import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
-import { AUTHOR_URL, haptic, openTelegramLink } from '../tg';
+import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { Wireframe } from '../Wireframe';
 
 export type HomeTab = 'progress' | 'tracks';
@@ -449,7 +449,6 @@ function TabBar({ tab, onTab }: Pick<Props, 'tab' | 'onTab'>) {
             className={`tabbar__item ${tab === t ? 'is-active' : ''}`}
             onClick={() => {
               if (t === tab) return;
-              haptic.tap();
               onTab(t);
               window.scrollTo({ top: 0 });
             }}

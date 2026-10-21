@@ -84,12 +84,14 @@ export const figmaAutoLayoutQuestions: Question[] = [
     summary: 'Fill по ширине ограничивает строку, Hug по высоте даёт место новым строкам.',
     explanation:
       'При ширине Hug текст тянется в одну строку и раздвигает карточку. С Fill ширина берётся из карточки, текст переносится, а высота с Hug растёт вместе с числом строк.',
+    fix: 'fl-title-wrap',
     links: [L.guide],
   },
   {
     id: 'fl-006',
     track: 'figma-auto-layout',
     topic: T.resizing,
+    image: 'fl-max-width',
     text: 'Карточка с шириной Fill на широком экране растягивается так, что строки текста становятся слишком длинными. Что поможет?',
     options: ['Задать карточке max width', 'Поставить карточке Hug', 'Убрать автолейаут', 'Сделать шрифт крупнее'],
     correct: 0,
@@ -132,6 +134,7 @@ export const figmaAutoLayoutQuestions: Question[] = [
     id: 'fl-009',
     track: 'figma-auto-layout',
     topic: T.spacing,
+    image: 'fl-avatars',
     text: 'Аватары в ряду должны наезжать друг на друга, и левый должен быть сверху. Как собрать это автолейаутом?',
     options: [
       'Отрицательный gap и порядок наложения «первый сверху»',
@@ -166,6 +169,7 @@ export const figmaAutoLayoutQuestions: Question[] = [
     id: 'fl-011',
     track: 'figma-auto-layout',
     topic: T.spacing,
+    image: 'fl-stroke',
     text: 'В ряду кнопок с автолейаутом внешняя обводка 2px налезает на соседнюю кнопку. Почему?',
     options: [
       'Внешняя обводка не учитывается в размерах и рисуется поверх соседей',
@@ -196,6 +200,7 @@ export const figmaAutoLayoutQuestions: Question[] = [
     id: 'fl-013',
     track: 'figma-auto-layout',
     topic: T.flow,
+    image: 'fl-grid',
     text: 'В галерее нужны строгие колонки и строки, а карточка-баннер занимает сразу две колонки. Какой поток автолейаута подойдёт?',
     options: ['Grid', 'Horizontal с Wrap', 'Vertical', 'Без автолейаута, только constraints'],
     correct: 0,
@@ -283,12 +288,14 @@ export const figmaAutoLayoutQuestions: Question[] = [
     summary: 'Left & Right держит оба отступа, поэтому слой растягивается.',
     explanation:
       'Слой привязан к обоим краям фрейма и сохраняет расстояние до каждого из них. Поэтому при ресайзе меняется его ширина. Так делают полосы и кнопки на всю ширину в макетах без автолейаута.',
+    fix: 'fl-left-right',
     links: [L.constraints],
   },
   {
     id: 'fl-019',
     track: 'figma-auto-layout',
     topic: T.constraints,
+    image: 'fl-scale',
     text: 'Слой шириной 70px стоит во фрейме шириной 100px с constraint Scale. Фрейм растянули до 200px. Какой станет ширина слоя?',
     options: ['140px', '70px', '170px', '200px'],
     correct: 0,
@@ -313,5 +320,45 @@ export const figmaAutoLayoutQuestions: Question[] = [
     explanation:
       'Группа — просто объединение слоёв без собственной рамки, поэтому constraints задать ей нельзя. Если выделить группу и выставить constraints, Figma применит их к слоям внутри. Нужно поведение как у единого блока — оберни слои во фрейм.',
     links: [L.constraints],
+  },
+  {
+    id: 'fl-021',
+    track: 'figma-auto-layout',
+    topic: T.resizing,
+    image: 'fl-title-stretch',
+    text: 'Длинный заголовок вытолкнул карточку за край экрана. Какая ширина у текстового слоя?',
+    options: ['Hug contents', 'Fill container', 'Fixed, 120px', 'Max width 200px'],
+    correct: 0,
+    summary: 'Hug тянет текст в одну строку, и он раздвигает родителя.',
+    explanation:
+      'Текст с шириной Hug подгоняет рамку под строку и не переносится. Карточка-автолейаут вокруг него растёт, пока не выйдет за экран. Нужна ширина Fill container: тогда строка упрётся в края карточки и перенесётся.',
+    fix: 'fl-title-wrap',
+    links: [L.guide],
+  },
+  {
+    id: 'fl-022',
+    track: 'figma-auto-layout',
+    kind: 'hotspot',
+    topic: T.spacing,
+    image: 'fl-padding-gap',
+    zone: 'gap',
+    text: 'В кнопке подсвечены все пустые места. Тапни на gap.',
+    summary: 'Gap — промежуток между детьми, padding — поля по краям фрейма.',
+    explanation:
+      'Широкая рамка вдоль краёв кнопки — это padding. Узкая полоса между корзиной и подписью — gap. Добавь третий элемент, и между ним и соседом появится такой же промежуток.',
+    links: [L.guide],
+  },
+  {
+    id: 'fl-023',
+    track: 'figma-auto-layout',
+    kind: 'image-choice',
+    topic: T.spacing,
+    text: 'Где цена и подпись выровнены по базовой линии?',
+    options: ['fl-baseline-a', 'fl-baseline-b'],
+    correct: 0,
+    summary: 'При выравнивании по базовой линии буквы разного кегля стоят на одной линии.',
+    explanation:
+      'Пунктир отмечает линию, на которой стоят цифры цены. В неверном варианте подпись выровнена по нижнему краю рамки: у мелкого кегля другой межстрочный интервал, и подпись съезжает ниже этой линии.',
+    links: [L.guide],
   },
 ];

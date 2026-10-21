@@ -96,6 +96,7 @@ export const figmaPropsQuestions: Question[] = [
     id: 'fp-006',
     track: 'figma-props',
     topic: T.variants,
+    image: 'fp-states',
     text: 'У кнопки состояния default, hover, pressed и disabled. Каким свойством их оформить?',
     options: ['Variant', 'Boolean', 'Text', 'Instance swap'],
     correct: 0,
@@ -126,6 +127,7 @@ export const figmaPropsQuestions: Question[] = [
     summary: '3 × 4 × 2 = 24: boolean не размножает варианты.',
     explanation:
       'Каждое variant-свойство умножает число вариантов. Если бы иконка тоже была вариантом, набор вырос бы вдвое — до 48, и любую правку пришлось бы повторять в каждом. Boolean управляет слоем внутри уже существующих вариантов.',
+    fix: 'fp-grid',
     links: [L.variants, L.props],
   },
   {
@@ -155,6 +157,7 @@ export const figmaPropsQuestions: Question[] = [
     summary: 'Интерактивный компонент: прототипные связи между вариантами.',
     explanation:
       'Связь рисуют прямо внутри набора вариантов: default → hover с триггером On hover и действием Change to. После этого каждый экземпляр кнопки сам реагирует на наведение во всех прототипах.',
+    fix: 'fp-interactive',
     links: [L.interactive],
   },
   {
@@ -167,6 +170,7 @@ export const figmaPropsQuestions: Question[] = [
     summary: 'Preferred instances — короткий список рекомендуемых компонентов для swap.',
     explanation:
       'При создании instance swap-свойства задают компонент по умолчанию и, при желании, предпочтительные. Они показываются первыми в меню замены. Остальные компоненты при этом всё равно можно найти через поиск.',
+    fix: 'fp-swap-menu',
     links: [L.props],
   },
   {
@@ -184,6 +188,7 @@ export const figmaPropsQuestions: Question[] = [
     summary: 'Exposed nested instances показывают свойства вложенных экземпляров наверху.',
     explanation:
       'В главном компоненте карточки отмечают, какие вложенные экземпляры открыть. Тогда их свойства появляются в панели экземпляра карточки рядом с её собственными, и глубоко выделять кнопку больше не нужно.',
+    fix: 'fp-exposed',
     links: [L.props],
   },
   {
@@ -223,14 +228,10 @@ export const figmaPropsQuestions: Question[] = [
   {
     id: 'fp-015',
     track: 'figma-props',
+    kind: 'image-choice',
     topic: T.practice,
-    text: 'В кнопке с автолейаутом иконку скрыли boolean-свойством. Что будет с отступом между иконкой и текстом?',
-    options: [
-      'Он исчезнет: скрытые слои не участвуют в автолейауте',
-      'Останется пустое место размером с иконку',
-      'Отступ удвоится',
-      'Кнопка перестанет быть автолейаутом',
-    ],
+    text: 'В кнопке с автолейаутом иконку слева от текста скрыли boolean-свойством. Как будет выглядеть кнопка?',
+    options: ['fp-hide-a', 'fp-hide-b'],
     correct: 0,
     summary: 'Скрытый слой в автолейауте не занимает места и не даёт отступа.',
     explanation:
@@ -282,5 +283,18 @@ export const figmaPropsQuestions: Question[] = [
     explanation:
       'Instance swap создают на конкретном вложенном экземпляре внутри главного компонента. Этот экземпляр становится значением по умолчанию. Preferred instances — необязательное дополнение.',
     links: [L.props],
+  },
+  {
+    id: 'fp-019',
+    track: 'figma-props',
+    kind: 'hotspot',
+    topic: T.variants,
+    image: 'fp-variant-names',
+    zone: 'wrong',
+    text: 'Тапни на вариант, имя которого Figma не сможет разобрать на свойства.',
+    summary: 'Имя варианта — пары «Свойство=Значение», а не слэши.',
+    explanation:
+      'Из строки «Large / Hover» непонятно, какое это свойство и какое значение, — набор подсветит ошибку в имени. Правильно — Size=Large, State=Hover. Надёжнее переименовывать свойства и значения в правой панели, а не в имени слоя.',
+    links: [L.variants],
   },
 ];
