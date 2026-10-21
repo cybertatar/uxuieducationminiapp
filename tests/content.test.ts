@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { correctOption, optionCount, questions, trackById } from '../content';
+import { correctOption, optionCount, questions, sections, trackById, tracks } from '../content';
 import { illustrations } from '../web/src/illustrations';
 
 describe('контент', () => {
@@ -46,5 +46,11 @@ describe('суть и разбор', () => {
     const overlap = [...summary].filter((w) => words(first).has(w)).length / Math.max(1, summary.size);
     expect(q.explanation).not.toContain(q.summary.replace(/\.$/, ''));
     expect(overlap).toBeLessThan(0.75);
+  });
+});
+
+describe('разделы', () => {
+  it('каждый трек ровно в одном разделе, в порядке tracks', () => {
+    expect(sections.flatMap((s) => s.tracks)).toEqual(tracks.map((t) => t.id));
   });
 });

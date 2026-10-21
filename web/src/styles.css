@@ -544,6 +544,80 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
+/* Разделы на вкладке «Темы»: ряд пилюль, активная — тоном акцента, как пункт таббара */
+.section-tabs {
+  display: flex;
+  gap: 8px;
+  /* Поля по вертикали — чтобы прокручиваемый ряд не обрезал обводку фокуса */
+  margin: -6px calc(-1 * var(--side));
+  padding: 6px var(--side);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.section-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.section-tab {
+  flex: none;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s, transform 0.12s;
+}
+
+.section-tab.is-active {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  /* Как у .chip: чистый акцент на тонированной подложке не добирает 4,5:1 */
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+  font-weight: 600;
+}
+
+.section-tab:active {
+  transform: scale(0.96);
+}
+
+/* Лента разделов: страница на всю ширину, листается свайпом и встаёт ровно на раздел */
+.section-pager {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 calc(-1 * var(--side));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.section-pager::-webkit-scrollbar {
+  display: none;
+}
+
+.section-page,
+.section-page__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.section-page {
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: 0 var(--side) 2px;
+  scroll-snap-align: start;
+  /* Один свайп — один раздел, даже резкий */
+  scroll-snap-stop: always;
+}
+
+.section-page__group {
+  margin-top: 4px;
+}
+
 .tracks {
   display: flex;
   flex-direction: column;
@@ -1216,6 +1290,8 @@ button.card:active:not(:disabled) {
 .wf .wf-finger { fill: var(--wf-card); stroke: var(--wf-ink); stroke-width: 1.4; stroke-linejoin: round; }
 .wf .wf-cursor { fill: var(--wf-ink); stroke: var(--wf-card); stroke-width: 1.2; stroke-linejoin: round; }
 .wf .wf-divider { stroke: var(--wf-line); stroke-width: 1; }
+/* Образец цвета с фиксированной заливкой: обводка, чтобы белый был виден на светлом фоне */
+.wf .wf-swatch { stroke: var(--wf-line); stroke-width: 1; }
 
 .wf [class^='wf-stroke'] { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .wf .wf-stroke { stroke: var(--wf-ink); }

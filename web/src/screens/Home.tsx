@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { questions, trackById } from '../../../content';
+import { useEffect, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { questionsByTrack, sections, trackById, type SectionId, type TrackId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
@@ -10,20 +10,26 @@ import { Wireframe } from '../Wireframe';
 
 export type HomeTab = 'progress' | 'tracks';
 
+/** Фильтр на вкладке «Темы»: все разделы сразу или один */
+export type SectionFilter = 'all' | SectionId;
+
 interface Props {
   profile: Profile | null;
   starting: boolean;
   tab: HomeTab;
   onTab: (tab: HomeTab) => void;
+  /** Раздел на вкладке «Темы»: хранится в App, чтобы не сбрасываться после сессии */
+  section: SectionFilter;
+  onSection: (section: SectionFilter) => void;
   onStart: (s: SessionMode) => void;
   onSettings: () => void;
 }
 
 /** Главная из двух вкладок: прогресс с трекером занятий и список тем. */
-export function Home({ profile, starting, tab, onTab, onStart, onSettings }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onSettings }: Props) {
   return (
     <>
-      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} />}
+      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />}
       <TabBar tab={tab} onTab={onTab} />
     </>
   );
@@ -147,42 +153,204 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
   );
 }
 
-function TracksTab({ profile, starting, onStart }: TabProps) {
+const FILTERS: { id: SectionFilter; title: string }[] = [{ id: 'all', title: 'Все' }, ...sections.map((s) => ({ id: s.id, title: s.title }))];
+
+/**
+ * Темы по разделам. Разделы — страницы горизонтальной ленты со scroll-snap:
+ * на телефоне их листают свайпом, как папки в Telegram, а пилюли сверху следуют за лентой.
+ */
+function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabRow = useRef<HTMLDivElement>(null);
+  const pager = useRef<HTMLDivElement>(null);
+  const pages = useRef<(HTMLDivElement | null)[]>([]);
+  /** Куда лента едет после тапа по пилюле: промежуточные страницы по пути не выбираем */
+  const target = useRef<number | null>(null);
+  const activeIndex = Math.max(0, FILTERS.findIndex((f) => f.id === section));
+  const active = FILTERS[activeIndex].id;
+  const progress = new Map(profile.tracks.map((t) => [t.id, t]));
+
+  // Лента по высоте равна текущей странице, иначе под короткими разделами осталась бы пустота от «Все»
+  useLayoutEffect(() => {
+    const page = pages.current[activeIndex];
+    const el = pager.current;
+    if (!page || !el) return;
+    const fit = () => (el.style.height = `${page.offsetHeight}px`);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(page);
+    return () => ro.disconnect();
+  }, [activeIndex]);
+
+  // При открытии и смене ширины экрана встаём ровно на текущую страницу.
+  // На смену раздела не реагируем: во время свайпа это дёрнуло бы ленту под пальцем.
+  const indexRef = useRef(activeIndex);
+  indexRef.current = activeIndex;
+  useLayoutEffect(() => {
+    const el = pager.current;
+    if (!el) return;
+    const snap = () => {
+      if (target.current === null) el.scrollLeft = indexRef.current * el.clientWidth;
+    };
+    snap();
+    window.addEventListener('resize', snap);
+    return () => window.removeEventListener('resize', snap);
+  }, []);
+
+  // Палец перехватил ленту на полпути после тапа или анимация закончилась — снова слушаем свайпы
+  useEffect(() => {
+    const el = pager.current;
+    if (!el) return;
+    const release = () => (target.current = null);
+    el.addEventListener('scrollend', release);
+    el.addEventListener('touchstart', release, { passive: true });
+    return () => {
+      el.removeEventListener('scrollend', release);
+      el.removeEventListener('touchstart', release);
+    };
+  }, []);
+
+  // Активная пилюля всегда видна, даже если ряд не влез в узкий экран
+  useEffect(() => {
+    const row = tabRow.current;
+    const tab = tabs.current[activeIndex];
+    if (!row || !tab) return;
+    const left = tab.offsetLeft - row.offsetLeft;
+    if (left < row.scrollLeft || left + tab.offsetWidth > row.scrollLeft + row.clientWidth) {
+      row.scrollTo({ left: left - (row.clientWidth - tab.offsetWidth) / 2, behavior: 'smooth' });
+    }
+  }, [activeIndex]);
+
+  const change = (i: number) => {
+    if (i === activeIndex) return;
+    haptic.tap();
+    onSection(FILTERS[i].id);
+    // Раздел сменился, а страница прокручена ниже начала ленты — возвращаемся к пилюлям
+    const top = (tabRow.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 12;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: 'smooth' });
+  };
+
+  const go = (i: number) => {
+    const el = pager.current;
+    if (!el || i === activeIndex) return;
+    target.current = i;
+    change(i);
+    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
+  };
+
+  const onScroll = () => {
+    const el = pager.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (target.current !== null) {
+      if (i === target.current && Math.abs(el.scrollLeft - i * el.clientWidth) < 2) target.current = null;
+      return;
+    }
+    // Пилюля переключается, как только страница перевалила за середину — как в Telegram
+    if (i !== activeIndex && i >= 0 && i < FILTERS.length) change(i);
+  };
+
+  // Стрелки переключают вкладки, как положено у role="tablist"
+  const onKeyDown = (e: KeyboardEvent) => {
+    const next = { ArrowRight: activeIndex + 1, ArrowLeft: activeIndex - 1, Home: 0, End: FILTERS.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    const j = (next + FILTERS.length) % FILTERS.length;
+    go(j);
+    tabs.current[j]?.focus();
+  };
+
   return (
     <main className="screen" aria-busy={starting}>
       <h1 className="page-title">Темы</h1>
-      <p className="hint section-hint">
-        {profile.tracks.length} {plural(profile.tracks.length, 'тема', 'темы', 'тем')} · {questions.length} {questionsWord(questions.length)}
-      </p>
-      <div className="tracks">
-        {profile.tracks.map((t) => {
-          const track = trackById.get(t.id)!;
-          const pct = Math.round((t.mastered / t.total) * 100);
+      <div className="section-tabs" role="tablist" aria-label="Разделы тем" onKeyDown={onKeyDown} ref={tabRow}>
+        {FILTERS.map((f, i) => (
+          <button
+            key={f.id}
+            ref={(el) => {
+              tabs.current[i] = el;
+            }}
+            id={`section-${f.id}`}
+            role="tab"
+            aria-selected={f.id === active}
+            aria-controls={`section-panel-${f.id}`}
+            tabIndex={f.id === active ? 0 : -1}
+            className={`section-tab ${f.id === active ? 'is-active' : ''}`}
+            onClick={() => go(i)}
+          >
+            {f.title}
+          </button>
+        ))}
+      </div>
+      <div className="section-pager" ref={pager} onScroll={onScroll}>
+        {FILTERS.map((f, i) => {
+          const shown = f.id === 'all' ? sections : sections.filter((s) => s.id === f.id);
+          const trackCount = shown.reduce((n, s) => n + s.tracks.length, 0);
+          const count = shown.reduce((n, s) => n + s.tracks.reduce((m, id) => m + questionsByTrack(id).length, 0), 0);
           return (
-            <button
-              key={t.id}
-              className="card track"
-              disabled={starting}
-              onClick={() => onStart({ mode: 'track', track: t.id })}
+            <div
+              key={f.id}
+              ref={(el) => {
+                pages.current[i] = el;
+              }}
+              id={`section-panel-${f.id}`}
+              role="tabpanel"
+              aria-labelledby={`section-${f.id}`}
+              // Соседние страницы видны только во время свайпа — ни фокусу, ни скринридеру они не нужны
+              inert={f.id !== active}
+              className="section-page"
             >
-              <span className="track__art" aria-hidden>
-                <Wireframe name={track.art} />
-              </span>
-              <span className="track__body">
-                <span className="track__title">{track.title}</span>
-                <span className="hint">{track.description}</span>
-                <span className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                  <span className="progress__fill" style={{ width: `${pct}%` }} />
-                </span>
-                <span className="track__meta">
-                  Освоено {t.mastered} из {t.total}
-                </span>
-              </span>
-            </button>
+              <p className="hint section-hint">
+                {trackCount} {plural(trackCount, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
+              </p>
+              {shown.map((s) =>
+                f.id === 'all' ? (
+                  <section key={s.id} className="section-page__group" aria-labelledby={`group-${s.id}`}>
+                    <h2 id={`group-${s.id}`} className="section-title">
+                      {s.title}
+                    </h2>
+                    <TrackList ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
+                  </section>
+                ) : (
+                  <TrackList key={s.id} ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
+                ),
+              )}
+            </div>
           );
         })}
       </div>
     </main>
+  );
+}
+
+type TrackProgress = Profile['tracks'][number];
+
+function TrackList({ ids, progress, starting, onStart }: Pick<Props, 'starting' | 'onStart'> & { ids: TrackId[]; progress: Map<TrackId, TrackProgress> }) {
+  return (
+    <div className="tracks">
+      {ids.map((id) => {
+        const t = progress.get(id)!;
+        const track = trackById.get(id)!;
+        const pct = Math.round((t.mastered / t.total) * 100);
+        return (
+          <button key={id} className="card track" disabled={starting} onClick={() => onStart({ mode: 'track', track: id })}>
+            <span className="track__art" aria-hidden>
+              <Wireframe name={track.art} />
+            </span>
+            <span className="track__body">
+              <span className="track__title">{track.title}</span>
+              <span className="hint">{track.description}</span>
+              <span className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                <span className="progress__fill" style={{ width: `${pct}%` }} />
+              </span>
+              <span className="track__meta">
+                Освоено {t.mastered} из {t.total}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

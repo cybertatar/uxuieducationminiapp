@@ -1,4 +1,18 @@
-export type TrackId = 'heuristics' | 'ux-laws' | 'hig' | 'material' | 'wcag' | 'design-systems' | 'ux-writing' | 'usability-testing';
+export type TrackId =
+  | 'heuristics'
+  | 'ux-laws'
+  | 'hig'
+  | 'material'
+  | 'wcag'
+  | 'design-systems'
+  | 'ux-writing'
+  | 'usability-testing'
+  | 'figma-components'
+  | 'figma-props'
+  | 'figma-auto-layout'
+  | 'figma-variables';
+
+export type SectionId = 'ux' | 'guidelines' | 'figma';
 
 export interface Link {
   title: string;
@@ -57,4 +71,11 @@ export interface Track {
   art: string;
   /** Для сообщений бота, где картинок нет. */
   emoji: string;
+}
+
+/** Раздел на экране «Темы»: группа треков одной области. */
+export interface Section {
+  id: SectionId;
+  title: string;
+  tracks: TrackId[];
 }

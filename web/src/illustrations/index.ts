@@ -1,3 +1,4 @@
+import { figmaArt, figmaTrackArt } from './figma';
 import { heuristicsArt } from './heuristics';
 import type { Illustration } from './kit';
 import { lawsArt } from './laws';
@@ -18,10 +19,12 @@ export const illustrations: Record<string, Illustration> = {
   ...systemsArt,
   ...writingArt,
   ...researchArt,
+  ...figmaArt,
   ...trackArt,
   ...platformTrackArt,
   ...wcagTrackArt,
   ...systemsTrackArt,
   ...writingTrackArt,
   ...researchTrackArt,
+  ...figmaTrackArt,
 };
