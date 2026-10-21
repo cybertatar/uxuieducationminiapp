@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { questionsByTrack, sections, trackById, type SectionId } from '../../../content';
+import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { questionsByTrack, sections, trackById, type SectionId, type TrackId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
@@ -10,14 +10,17 @@ import { Wireframe } from '../Wireframe';
 
 export type HomeTab = 'progress' | 'tracks';
 
+/** Фильтр на вкладке «Темы»: все разделы сразу или один */
+export type SectionFilter = 'all' | SectionId;
+
 interface Props {
   profile: Profile | null;
   starting: boolean;
   tab: HomeTab;
   onTab: (tab: HomeTab) => void;
   /** Раздел на вкладке «Темы»: хранится в App, чтобы не сбрасываться после сессии */
-  section: SectionId;
-  onSection: (section: SectionId) => void;
+  section: SectionFilter;
+  onSection: (section: SectionFilter) => void;
   onStart: (s: SessionMode) => void;
   onSettings: () => void;
 }
@@ -150,71 +153,104 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
   );
 }
 
+const FILTERS: { id: SectionFilter; title: string }[] = [{ id: 'all', title: 'Все' }, ...sections.map((s) => ({ id: s.id, title: s.title }))];
+
 function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
-  const current = sections.find((s) => s.id === section) ?? sections[0];
-  const count = current.tracks.reduce((n, id) => n + questionsByTrack(id).length, 0);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const active = FILTERS.some((f) => f.id === section) ? section : 'all';
+  const shown = active === 'all' ? sections : sections.filter((s) => s.id === active);
+  const trackCount = shown.reduce((n, s) => n + s.tracks.length, 0);
+  const count = shown.reduce((n, s) => n + s.tracks.reduce((m, id) => m + questionsByTrack(id).length, 0), 0);
   const progress = new Map(profile.tracks.map((t) => [t.id, t]));
+
+  const select = (id: SectionFilter) => {
+    if (id === active) return;
+    haptic.tap();
+    onSection(id);
+  };
+
+  // Стрелки переключают вкладки, как положено у role="tablist"
+  const onKeyDown = (e: KeyboardEvent) => {
+    const i = FILTERS.findIndex((f) => f.id === active);
+    const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: FILTERS.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    const j = (next + FILTERS.length) % FILTERS.length;
+    select(FILTERS[j].id);
+    tabs.current[j]?.focus();
+  };
 
   return (
     <main className="screen" aria-busy={starting}>
       <h1 className="page-title">Темы</h1>
-      <div className="section-tabs" role="tablist" aria-label="Разделы тем">
-        {sections.map((s) => (
+      <div className="section-tabs" role="tablist" aria-label="Разделы тем" onKeyDown={onKeyDown}>
+        {FILTERS.map((f, i) => (
           <button
-            key={s.id}
-            id={`section-${s.id}`}
-            role="tab"
-            aria-selected={s.id === current.id}
-            aria-controls="section-panel"
-            className={`section-tab ${s.id === current.id ? 'is-active' : ''}`}
-            onClick={() => {
-              if (s.id === current.id) return;
-              haptic.tap();
-              onSection(s.id);
+            key={f.id}
+            ref={(el) => {
+              tabs.current[i] = el;
             }}
+            id={`section-${f.id}`}
+            role="tab"
+            aria-selected={f.id === active}
+            aria-controls="section-panel"
+            tabIndex={f.id === active ? 0 : -1}
+            className={`section-tab ${f.id === active ? 'is-active' : ''}`}
+            onClick={() => select(f.id)}
           >
-            {s.title}
-            <span className="section-tab__count" aria-hidden>
-              {s.tracks.length}
-            </span>
+            {f.title}
           </button>
         ))}
       </div>
-      <section id="section-panel" role="tabpanel" aria-labelledby={`section-${current.id}`} className="tracks-section">
+      <section id="section-panel" role="tabpanel" aria-labelledby={`section-${active}`} className="tracks-section">
         <p className="hint section-hint">
-          {count} {questionsWord(count)} в разделе «{current.title}»
+          {trackCount} {plural(trackCount, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
         </p>
-        <div className="tracks">
-          {current.tracks.map((id) => {
-            const t = progress.get(id)!;
-            const track = trackById.get(id)!;
-            const pct = Math.round((t.mastered / t.total) * 100);
-            return (
-              <button
-                key={id}
-                className="card track"
-                disabled={starting}
-                onClick={() => onStart({ mode: 'track', track: id })}
-              >
-                <span className="track__art" aria-hidden>
-                  <Wireframe name={track.art} />
-                </span>
-                <span className="track__body">
-                  <span className="track__title">{track.title}</span>
-                  <span className="hint">{track.description}</span>
-                  <span className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                    <span className="progress__fill" style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="track__meta">
-                    Освоено {t.mastered} из {t.total}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {shown.map((s) =>
+          active === 'all' ? (
+            <section key={s.id} className="tracks-section" aria-labelledby={`group-${s.id}`}>
+              <h2 id={`group-${s.id}`} className="section-title">
+                {s.title}
+              </h2>
+              <TrackList ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
+            </section>
+          ) : (
+            <TrackList key={s.id} ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
+          ),
+        )}
       </section>
     </main>
+  );
+}
+
+type TrackProgress = Profile['tracks'][number];
+
+function TrackList({ ids, progress, starting, onStart }: Pick<Props, 'starting' | 'onStart'> & { ids: TrackId[]; progress: Map<TrackId, TrackProgress> }) {
+  return (
+    <div className="tracks">
+      {ids.map((id) => {
+        const t = progress.get(id)!;
+        const track = trackById.get(id)!;
+        const pct = Math.round((t.mastered / t.total) * 100);
+        return (
+          <button key={id} className="card track" disabled={starting} onClick={() => onStart({ mode: 'track', track: id })}>
+            <span className="track__art" aria-hidden>
+              <Wireframe name={track.art} />
+            </span>
+            <span className="track__body">
+              <span className="track__title">{track.title}</span>
+              <span className="hint">{track.description}</span>
+              <span className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                <span className="progress__fill" style={{ width: `${pct}%` }} />
+              </span>
+              <span className="track__meta">
+                Освоено {t.mastered} из {t.total}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

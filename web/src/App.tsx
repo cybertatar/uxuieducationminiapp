@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { SectionId, TrackId } from '../../content';
+import type { TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
-import { Home, type HomeTab } from './screens/Home';
+import { Home, type HomeTab, type SectionFilter } from './screens/Home';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
 import { Settings } from './screens/Settings';
@@ -17,13 +17,32 @@ type Screen =
   | { name: 'result'; session: SessionMode; result: QuizResult }
   | { name: 'settings' };
 
+/** Последний открытый раздел тем помним на устройстве: кто учит Figma, не переключается каждый раз */
+const SECTION_KEY = 'tracks-section';
+
+function loadSection(): SectionFilter {
+  try {
+    return (localStorage.getItem(SECTION_KEY) as SectionFilter | null) ?? 'all';
+  } catch {
+    return 'all';
+  }
+}
+
+function saveSection(section: SectionFilter) {
+  try {
+    localStorage.setItem(SECTION_KEY, section);
+  } catch {
+    // Хранилище недоступно — просто не запоминаем
+  }
+}
+
 export function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState(false);
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [starting, setStarting] = useState(false);
   const [tab, setTab] = useState<HomeTab>('progress');
-  const [section, setSection] = useState<SectionId>('ux');
+  const [section, setSection] = useState<SectionFilter>(loadSection);
 
   const refresh = useCallback(() => {
     api
@@ -103,7 +122,10 @@ export function App() {
             tab={tab}
             onTab={setTab}
             section={section}
-            onSection={setSection}
+            onSection={(s) => {
+              setSection(s);
+              saveSection(s);
+            }}
             onStart={start}
             onSettings={() => setScreen({ name: 'settings' })}
           />
