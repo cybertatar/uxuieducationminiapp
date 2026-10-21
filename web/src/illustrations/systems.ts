@@ -59,12 +59,16 @@ const stateField = (x: number, y: number, state: 'default' | 'focus' | 'error' |
   });
 };
 
+/** Полная спецификация или такая же по объёму, но из вариаций обычного вида и ошибки — без фокуса и неактивного */
 const states = (full: boolean) =>
   screen(10, 10, 300, 170) +
   title(26, 36, 'Поле ввода · состояния', 12) +
-  stateField(26, 64, 'default') +
-  stateField(170, 64, full ? 'focus' : 'error') +
-  (full ? stateField(26, 128, 'error') + stateField(170, 128, 'disabled') : '');
+  (full
+    ? stateField(26, 64, 'default') + stateField(170, 64, 'focus') + stateField(26, 128, 'error') + stateField(170, 128, 'disabled')
+    : stateField(26, 64, 'default') +
+      field(170, 64, 120, 24, { label: 'Заполнено', value: 'Анна' }) +
+      field(26, 128, 120, 24, { label: 'Ошибка · пусто', placeholder: 'Имя', state: 'error', hint: 'Обязательное поле' }) +
+      stateField(170, 128, 'error'));
 
 /** Экран в тёмной теме с фиксированными цветами; в «зашитом» варианте карточка и заголовок не перекрасились */
 const darkScreen = (hardcoded: boolean) =>
@@ -169,7 +173,7 @@ export const systemsArt: Record<string, Illustration> = {
       text(70, 114, '4 990 ₽', { size: 10 }) +
       button(70, 122, 100, 22, 'В корзину'),
   ),
-  'ds-states-partial': ill(320, 190, 'Спецификация поля ввода: только состояния «по умолчанию» и «ошибка»', states(false)),
+  'ds-states-partial': ill(320, 190, 'Спецификация поля ввода: «по умолчанию», «заполнено» и две ошибки — пустое поле и неверный формат', states(false)),
 };
 
 export const systemsTrackArt: Record<string, Illustration> = {

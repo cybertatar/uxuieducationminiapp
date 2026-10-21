@@ -46,7 +46,9 @@ const tagsCard = (same: boolean) =>
 /** Анкета: последний вопрос и, при желании, индикатор прогресса */
 const survey = (progress: boolean) =>
   phone(10, 10, 220, 160, 'Опрос') +
-  (progress ? text(24, 54, 'Вопрос 9 из 10', { size: 9 }) + rect(24, 60, 192, 6, 'block', 3) + rect(24, 60, 173, 6, 'success', 3) : '') +
+  (progress
+    ? text(24, 54, 'Вопрос 9 из 10', { size: 9 }) + rect(24, 60, 192, 6, 'block', 3) + rect(24, 60, 173, 6, 'success', 3)
+    : text(24, 54, 'Вопрос 9', { size: 9 }) + text(24, 68, 'Спасибо, что помогаете нам стать лучше!', { size: 8, cls: 'muted' })) +
   text(24, 88, 'Как часто вы пользуетесь', { size: 11, cls: 'ink' }) +
   text(24, 103, 'приложением?', { size: 11, cls: 'ink' }) +
   button(24, 114, 92, 22, 'Каждый день', 'outline') +
@@ -379,7 +381,7 @@ export const lawsArt: Record<string, Illustration> = {
       button(36, 118, 248, 30, 'Продолжить'),
   ),
   'l-goal-progress': ill(240, 180, 'Опрос: над вопросом надпись «Вопрос 9 из 10» и почти заполненная полоса прогресса', survey(true)),
-  'l-goal-none': ill(240, 180, 'Тот же опрос без индикатора: непонятно, сколько вопросов осталось', survey(false)),
+  'l-goal-none': ill(240, 180, 'Тот же опрос: вместо индикатора надпись «Вопрос 9» и благодарность, сколько вопросов осталось — непонятно', survey(false)),
   'l-chunk-wall': ill(
     240,
     180,
@@ -396,11 +398,13 @@ export const lawsArt: Record<string, Illustration> = {
   'l-end-plain': ill(
     240,
     180,
-    'Экран после покупки билетов: серый текст «Операция выполнена. Код транзакции 8F3A-22C1» и кнопка OK',
+    'Экран после покупки билетов: галочка, «Операция выполнена», «Код транзакции 8F3A-22C1» и кнопка OK',
     screen(10, 10, 220, 160) +
-      text(120, 74, 'Операция выполнена', { size: 12, weight: 600, cls: 'ink', anchor: 'middle' }) +
-      text(120, 92, 'Код транзакции 8F3A-22C1', { size: 9, anchor: 'middle' }) +
-      button(24, 130, 192, 26, 'OK', 'secondary'),
+      circle(120, 50, 18, 'block') +
+      icon('check', 108, 38, 24, 'stroke') +
+      text(120, 92, 'Операция выполнена', { size: 14, weight: 700, cls: 'ink', anchor: 'middle' }) +
+      text(120, 110, 'Код транзакции 8F3A-22C1', { size: 9, anchor: 'middle' }) +
+      button(24, 130, 192, 26, 'OK'),
   ),
   'l-end-good': ill(
     240,

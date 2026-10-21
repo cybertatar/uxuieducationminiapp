@@ -46,7 +46,10 @@ const transferResult = (clear: boolean) =>
       text(160, 116, '5 000 ₽ · Анна К.', { size: 11, cls: 'ink', anchor: 'middle' }) +
       text(160, 132, 'Деньги придут в течение минуты', { size: 9, anchor: 'middle' }) +
       button(36, 152, 248, 32, 'На главную')
-    : text(160, 104, 'Готово', { size: 14, weight: 700, cls: 'ink', anchor: 'middle' }) + button(36, 152, 248, 32, 'ОК'));
+    : text(160, 96, 'Готово', { size: 14, weight: 700, cls: 'ink', anchor: 'middle' }) +
+      text(160, 116, 'Операция успешно выполнена', { size: 11, cls: 'ink', anchor: 'middle' }) +
+      text(160, 132, 'Спасибо, что выбираете наш банк', { size: 9, anchor: 'middle' }) +
+      button(36, 152, 248, 32, 'ОК'));
 
 const privacySettings = (clear: boolean) =>
   screen(20, 10, 280, 190) +
@@ -122,7 +125,17 @@ export const writingArt: Record<string, Illustration> = {
     'Настройки уведомлений: переключатель с подписью в три строки «Если вы хотите получать уведомления о скидках и акциях, включите этот переключатель»',
     toggles(true),
   ),
-  'uw-empty-bad': ill(320, 230, 'Поиск по запросу «кросовки»: на экране только серый текст «Ничего не найдено»', searchScreen(text(160, 118, 'Ничего не найдено', { size: 11, cls: 'muted', anchor: 'middle' }))),
+  'uw-empty-bad': ill(
+    320,
+    230,
+    'Поиск по запросу «кросовки»: иконка лупы, «Ничего не найдено», «Попробуйте изменить запрос» и кнопка «Сбросить поиск»',
+    searchScreen(
+      icon('search', 148, 72, 24, 'stroke-muted') +
+        text(160, 120, 'Ничего не найдено', { size: 12, weight: 700, cls: 'ink', anchor: 'middle' }) +
+        text(160, 136, 'Попробуйте изменить запрос', { size: 9, anchor: 'middle' }) +
+        button(100, 146, 120, 26, 'Сбросить поиск', 'outline'),
+    ),
+  ),
   'uw-empty-good': ill(
     320,
     230,
@@ -148,7 +161,7 @@ export const writingArt: Record<string, Illustration> = {
     subscriptionDialog(button(42, 124, 156, 28, 'Отменить подписку', 'danger') + button(42, 158, 156, 28, 'Оставить подписку', 'outline'), 144),
   ),
   'uw-success-clear': ill(320, 210, 'Экран «Перевод отправлен»: 5 000 ₽, получатель Анна К., деньги придут в течение минуты, кнопка «На главную»', transferResult(true)),
-  'uw-success-vague': ill(320, 210, 'Экран с галочкой, словом «Готово» и кнопкой «ОК»', transferResult(false)),
+  'uw-success-vague': ill(320, 210, 'Экран с галочкой: «Готово», «Операция успешно выполнена», «Спасибо, что выбираете наш банк» и кнопка «ОК»', transferResult(false)),
   'uw-pass-rules': ill(320, 220, 'Новый пароль: под полем список требований с отметками — от 8 символов (выполнено), цифра (нет), заглавная буква (выполнено)', passwordForm(false)),
   'uw-pass-tooltip': ill(320, 220, 'Новый пароль: требования спрятаны во всплывающей подсказке у иконки «i» и видны только при наведении', passwordForm(true)),
   'uw-help-structured': ill(320, 230, 'Справка «Возврат денег»: три подзаголовка — «Сроки», «Как оформить», «Деньги не пришли» — с короткими пунктами', helpScreen(true)),

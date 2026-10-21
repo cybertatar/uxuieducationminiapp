@@ -67,7 +67,8 @@ const checkoutSteps = (x: number, y: number, labeled: boolean) =>
           );
         })
         .join('')
-    : [0, 1, 2].map((i) => circle(x + 6 + i * 16, y + 7, 4, i === 2 ? 'accent' : 'block')).join('');
+    : // Счётчик шагов: видно, где ты, но вернуться к прошлому шагу с него нельзя
+      text(x, y + 6, 'Шаг 3 из 3', { size: 9 }) + [0, 1, 2].map((i) => rect(x + i * 65, y + 12, 61, 5, 'accent', 2.5)).join('');
 
 /** Переписка: входящее сообщение и два исходящих, со статусами доставки или без */
 const chatBubbles = (status: boolean) =>
@@ -83,7 +84,8 @@ const chatBubbles = (status: boolean) =>
       `<circle cx="205" cy="122" r="4" fill="none" class="wf-stroke-on-accent-thin"/>` +
       path('M205 119.5V122h2', 'stroke-on-accent-thin', 'fill="none"') +
       text(218, 148, 'отправляется…', { size: 8, cls: 'muted', anchor: 'end' })
-    : '');
+    : // Только время: когда написано — видно, дошло ли — нет
+      text(210, 94, '12:40', { size: 7, cls: 'on-accent', anchor: 'end' }) + text(210, 126, '12:41', { size: 7, cls: 'on-accent', anchor: 'end' }));
 
 export const heuristicsArt: Record<string, Illustration> = {
   'h-pay-double': ill(
@@ -437,8 +439,14 @@ export const heuristicsArt: Record<string, Illustration> = {
   'h-empty-blank': ill(
     240,
     170,
-    'Пустой экран «Проекты» без пояснений',
-    screen(10, 10, 220, 150) + title(24, 34, 'Проекты', 12) + tabbar(10, 128, 220, ['home', 'folder', 'user'], 1),
+    'Экран «Проекты» с иллюстрацией, текстом «Здесь пока пусто» и пояснением «Проекты появятся на этом экране», без кнопки',
+    screen(10, 10, 220, 150) +
+      title(24, 34, 'Проекты', 12) +
+      circle(120, 62, 16, 'block') +
+      icon('folder', 110, 52, 20) +
+      text(120, 94, 'Здесь пока пусто', { size: 11, weight: 700, cls: 'ink', anchor: 'middle' }) +
+      text(120, 112, 'Проекты появятся на этом экране', { size: 9, anchor: 'middle' }) +
+      tabbar(10, 128, 220, ['home', 'folder', 'user'], 1),
   ),
   'h-empty-guided': ill(
     240,
@@ -542,8 +550,8 @@ export const heuristicsArt: Record<string, Illustration> = {
   'h-steps-noback': ill(
     240,
     170,
-    'Третий шаг оформления «Оплата»: нет кнопки «назад», шаги — просто серые точки без подписей',
-    screen(10, 10, 220, 150) + title(24, 34, 'Оплата') + checkoutSteps(24, 48, false) + field(24, 92, 192, 24, { label: 'Номер карты', value: '4276 •••• 1234' }) + button(24, 126, 192, 26, 'Оплатить'),
+    'Третий шаг оформления «Оплата»: вместо кнопки «назад» крестик, над формой надпись «Шаг 3 из 3» и заполненная полоса из трёх отрезков',
+    screen(10, 10, 220, 150) + icon('close', 22, 22, 14) + title(44, 34, 'Оплата') + checkoutSteps(24, 48, false) + field(24, 92, 192, 24, { label: 'Номер карты', value: '4276 •••• 1234' }) + button(24, 126, 192, 26, 'Оплатить'),
   ),
   'h-chat-status': ill(
     240,
@@ -554,7 +562,7 @@ export const heuristicsArt: Record<string, Illustration> = {
   'h-chat-nostatus': ill(
     240,
     170,
-    'Тот же чат: у отправленных сообщений нет ни времени, ни отметок о доставке',
+    'Тот же чат: у отправленных сообщений только время, отметок о доставке нет',
     phone(10, 10, 220, 150, 'Анна') + chatBubbles(false),
   ),
 };
