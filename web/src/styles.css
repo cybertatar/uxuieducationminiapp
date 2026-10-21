@@ -582,10 +582,19 @@ button.card:active:not(:disabled) {
   transform: scale(0.96);
 }
 
+/* Вкладка «Темы» не прокручивается целиком: пилюли закреплены, прокручиваются разделы */
+.screen--tracks {
+  height: var(--tg-viewport-stable-height, 100dvh);
+  padding-bottom: 0;
+  gap: 6px;
+  overflow: hidden;
+}
+
 /* Лента разделов: страница на всю ширину, листается свайпом и встаёт ровно на раздел */
 .section-pager {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: flex-start;
   margin: 0 calc(-1 * var(--side));
   overflow-x: auto;
   overflow-y: hidden;
@@ -608,7 +617,13 @@ button.card:active:not(:disabled) {
 .section-page {
   flex: 0 0 100%;
   min-width: 0;
-  padding: 0 var(--side) 2px;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  /* Снизу — место под плавающий таббар */
+  padding: 12px var(--side) calc(var(--safe-bottom-device) + 108px);
+  /* Карточки уходят под пилюли с мягким затуханием, а не резкой линией */
+  mask-image: linear-gradient(transparent, #000 12px);
   scroll-snap-align: start;
   /* Один свайп — один раздел, даже резкий */
   scroll-snap-stop: always;

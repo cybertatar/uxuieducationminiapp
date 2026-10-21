@@ -158,6 +158,8 @@ const FILTERS: { id: SectionFilter; title: string }[] = [{ id: 'all', title: 'В
 /**
  * Темы по разделам. Разделы — страницы горизонтальной ленты со scroll-snap:
  * на телефоне их листают свайпом, как папки в Telegram, а пилюли сверху следуют за лентой.
+ * Экран не прокручивается целиком: у каждого раздела своя прокрутка, поэтому пилюли всегда на месте,
+ * а свайп из середины списка не дёргает страницу.
  */
 function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -169,18 +171,6 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
   const activeIndex = Math.max(0, FILTERS.findIndex((f) => f.id === section));
   const active = FILTERS[activeIndex].id;
   const progress = new Map(profile.tracks.map((t) => [t.id, t]));
-
-  // Лента по высоте равна текущей странице, иначе под короткими разделами осталась бы пустота от «Все»
-  useLayoutEffect(() => {
-    const page = pages.current[activeIndex];
-    const el = pager.current;
-    if (!page || !el) return;
-    const fit = () => (el.style.height = `${page.offsetHeight}px`);
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(page);
-    return () => ro.disconnect();
-  }, [activeIndex]);
 
   // При открытии и смене ширины экрана встаём ровно на текущую страницу.
   // На смену раздела не реагируем: во время свайпа это дёрнуло бы ленту под пальцем.
@@ -225,9 +215,6 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
     if (i === activeIndex) return;
     haptic.tap();
     onSection(FILTERS[i].id);
-    // Раздел сменился, а страница прокручена ниже начала ленты — возвращаемся к пилюлям
-    const top = (tabRow.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 12;
-    if (window.scrollY > top) window.scrollTo({ top, behavior: 'smooth' });
   };
 
   const go = (i: number) => {
@@ -261,8 +248,8 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
   };
 
   return (
-    <main className="screen" aria-busy={starting}>
-      <h1 className="page-title">Темы</h1>
+    <main className="screen screen--tracks" aria-busy={starting}>
+      <h1 className="visually-hidden">Темы</h1>
       <div className="section-tabs" role="tablist" aria-label="Разделы тем" onKeyDown={onKeyDown} ref={tabRow}>
         {FILTERS.map((f, i) => (
           <button
