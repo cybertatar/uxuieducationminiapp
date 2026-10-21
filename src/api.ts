@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { questions, questionsByTrack, trackById, type TrackId } from '../content';
-import type { CompleteResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
+import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
-import { activityCount, activityDates, getAnswers, upsertUser, type UserRow } from './db';
+import { activityCount, activityDates, getAnswers, history, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession } from './select';
@@ -99,6 +99,14 @@ api.post('/session', async (c) => {
   }
   if (!trackById.has(body.track)) return c.json({ error: 'unknown track' }, 400);
   return c.json({ questionIds: pickTrackSession(questionsByTrack(body.track as TrackId), answers, date) });
+});
+
+/** Календарь занятий: история за последние два года */
+api.get('/history', async (c) => {
+  const user = c.get('user');
+  const date = today(user, Date.now());
+  const res: HistoryResponse = { today: date, days: await history(c.env.DB, user.id, addDays(date, -730)) };
+  return c.json(res);
 });
 
 api.post('/answer', async (c) => {

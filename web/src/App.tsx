@@ -7,6 +7,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { Home, type HomeTab, type SectionFilter } from './screens/Home';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
+import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
 
 export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' };
@@ -15,7 +16,8 @@ type Screen =
   | { name: 'home' }
   | { name: 'quiz'; session: SessionMode; questionIds: string[] }
   | { name: 'result'; session: SessionMode; result: QuizResult }
-  | { name: 'settings' };
+  | { name: 'settings' }
+  | { name: 'calendar' };
 
 /** Последний открытый раздел тем помним на устройстве: кто учит Figma, не переключается каждый раз */
 const SECTION_KEY = 'tracks-section';
@@ -112,6 +114,8 @@ export function App() {
             starting={starting}
           />
         );
+      case 'calendar':
+        return profile && <Calendar profile={profile} onBack={goHome} />;
       case 'settings':
         return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
       default:
@@ -128,6 +132,10 @@ export function App() {
             }}
             onStart={start}
             onSettings={() => setScreen({ name: 'settings' })}
+            onCalendar={() => {
+              setScreen({ name: 'calendar' });
+              window.scrollTo({ top: 0 });
+            }}
           />
         );
     }

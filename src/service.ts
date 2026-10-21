@@ -1,5 +1,5 @@
 import { correctOption, optionCount, questionById } from '../content';
-import { addActivity, getAnswer, saveAnswer, updateUser, type UserRow } from './db';
+import { addActivity, addDailyAnswer, getAnswer, saveAnswer, updateUser, type UserRow } from './db';
 import { applyAnswer } from './review';
 import { applyActivity } from './streak';
 import { addDays, localDate, nextOccurrence } from './time';
@@ -15,7 +15,8 @@ export async function recordAnswer(db: D1Database, user: UserRow, questionId: st
   if (!question || !Number.isInteger(option) || option < 0 || option >= optionCount(question)) return null;
   const correct = option === correctOption(question);
   const prev = await getAnswer(db, user.id, questionId);
-  await saveAnswer(db, user.id, questionId, applyAnswer(prev, correct, today(user, now)), now);
+  const date = today(user, now);
+  await Promise.all([saveAnswer(db, user.id, questionId, applyAnswer(prev, correct, date), now), addDailyAnswer(db, user.id, date, correct)]);
   return { correct, question };
 }
 

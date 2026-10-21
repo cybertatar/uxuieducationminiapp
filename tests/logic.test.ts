@@ -158,3 +158,46 @@ describe('статистика', () => {
     expect(accuracy({ attempts: 4, correct: 3 })).toBe(0.75);
   });
 });
+
+describe('календарь занятий', async () => {
+  const { addMonths, dayLevel, monthGrid, summarize, yearWeeks } = await import('../src/calendar');
+  const day = (date: string, active: boolean, answers = 0, correct = 0) => ({ date, active, answers, correct });
+
+  it('листает месяцы через границу года', () => {
+    expect(addMonths('2026-01', -1)).toBe('2025-12');
+    expect(addMonths('2026-12', 1)).toBe('2027-01');
+    expect(addMonths('2026-10', -14)).toBe('2025-08');
+  });
+
+  it('сетка месяца начинается с понедельника', () => {
+    // 1 октября 2026 — четверг
+    const g = monthGrid('2026-10');
+    expect(g[0]).toEqual([null, null, null, '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']);
+    expect(g.flat().filter(Boolean)).toHaveLength(31);
+    expect(g.every((w) => w.length === 7)).toBe(true);
+  });
+
+  it('уровень дня растёт с числом ответов, незасчитанный день — самый бледный', () => {
+    expect(dayLevel(undefined)).toBe(0);
+    expect(dayLevel(day('2026-10-01', false, 3))).toBe(1);
+    expect(dayLevel(day('2026-10-01', true))).toBe(2);
+    expect(dayLevel(day('2026-10-01', true, 12))).toBe(3);
+    expect(dayLevel(day('2026-10-01', true, 25))).toBe(4);
+  });
+
+  it('итоги считают точность только по дням с ответами', () => {
+    expect(summarize([day('2026-10-01', true, 10, 8), day('2026-10-02', true), day('2026-10-03', false, 10, 6)])).toEqual({
+      activeDays: 2,
+      answers: 20,
+      accuracy: 0.7,
+    });
+    expect(summarize([day('2026-10-02', true)]).accuracy).toBeNull();
+  });
+
+  it('годовая карта заканчивается текущей неделей без будущих дней', () => {
+    const w = yearWeeks('2026-10-21'); // среда
+    expect(w).toHaveLength(53);
+    expect(w.at(-1)).toEqual(['2026-10-19', '2026-10-20', '2026-10-21', null, null, null, null]);
+    expect(w[0][0]).toBe('2025-10-20');
+  });
+});

@@ -343,6 +343,265 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
+/* Карточка стрика целиком ведёт в календарь */
+.streak {
+  position: relative;
+  transition: transform 0.12s ease;
+}
+
+.streak:has(.streak__open:active) {
+  transform: scale(0.98);
+}
+
+.streak__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.streak__head > div:nth-child(2) {
+  flex: 1;
+}
+
+.streak__more {
+  align-self: flex-start;
+  color: var(--link);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ---------- Календарь занятий ---------- */
+
+.calendar__tiles {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.calendar__tiles .stats__tile {
+  background: var(--surface);
+}
+
+.calendar__error {
+  margin: 8px 4px;
+}
+
+.month__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.month__title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.month__nav {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--link);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.month__nav:disabled {
+  color: var(--hint);
+  opacity: 0.4;
+}
+
+.month__weekdays,
+.month__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.month__weekdays {
+  margin-bottom: 4px;
+  color: var(--hint);
+  font-size: 11px;
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 3px 0;
+}
+
+/* Полоса между соседними днями стрика: цепочка, как в календарях привычек */
+.day.chain-prev::before,
+.day.chain-next::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 26px;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--flame) 30%, transparent);
+}
+
+.day.chain-prev::before {
+  left: 0;
+  right: 50%;
+}
+
+.day.chain-next::after {
+  left: 50%;
+  right: 0;
+}
+
+.day__dot {
+  position: relative;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.day__dot.level-1 {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--flame) 55%, transparent);
+}
+
+.day__dot.level-2,
+.day__dot.level-3,
+.day__dot.level-4 {
+  background: var(--flame);
+  color: #fff;
+  font-weight: 700;
+}
+
+.day__dot.level-2 {
+  background: color-mix(in srgb, var(--flame) 75%, var(--surface));
+}
+
+.day__dot.is-today {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.day__dot.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.day__dot.is-future {
+  color: var(--hint);
+  opacity: 0.5;
+}
+
+.month__summary {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--separator);
+  font-size: 14px;
+  color: var(--hint);
+  min-height: 1.4em;
+}
+
+.month__summary b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.year {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.year__scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.year__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.year__months,
+.year__grid {
+  display: flex;
+  gap: 3px;
+  width: max-content;
+}
+
+.year__months span {
+  width: 12px;
+  font-size: 10px;
+  color: var(--hint);
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.year__week {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+}
+
+.year__cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--bg);
+}
+
+.year__cell.is-empty {
+  background: none;
+}
+
+.year__cell.level-1 {
+  background: color-mix(in srgb, var(--flame) 25%, var(--bg));
+}
+
+.year__cell.level-2 {
+  background: color-mix(in srgb, var(--flame) 50%, var(--bg));
+}
+
+.year__cell.level-3 {
+  background: color-mix(in srgb, var(--flame) 75%, var(--bg));
+}
+
+.year__cell.level-4 {
+  background: var(--flame);
+}
+
+.year__cell.is-today {
+  outline: 1.5px solid var(--text);
+  outline-offset: 1px;
+}
+
+.year__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--hint);
+}
+
+.year__legend span:first-child {
+  margin-right: 4px;
+}
+
+.year__legend span:last-child {
+  margin-left: 4px;
+}
+
 /* ---------- Главная: первый запуск ---------- */
 
 .first-run {
@@ -396,6 +655,8 @@ button.card:active:not(:disabled) {
 .stats__tile {
   display: flex;
   flex-direction: column-reverse;
+  /* В column-reverse flex-end — это верх: цифры в соседних плитках стоят на одной линии, даже если подпись в две строки */
+  justify-content: flex-end;
   gap: 2px;
   padding: 10px 12px;
   border-radius: 12px;
