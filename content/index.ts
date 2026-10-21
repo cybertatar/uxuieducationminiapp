@@ -1,4 +1,8 @@
 import { designSystemsQuestions } from './design-systems';
+import { figmaAutoLayoutQuestions } from './figma-auto-layout';
+import { figmaComponentsQuestions } from './figma-components';
+import { figmaPropsQuestions } from './figma-props';
+import { figmaVariablesQuestions } from './figma-variables';
 import { heuristics } from './heuristics';
 import { higQuestions } from './hig';
 import { materialQuestions } from './material';
@@ -6,9 +10,9 @@ import { usabilityTestingQuestions } from './usability-testing';
 import { wcagQuestions } from './wcag';
 import { uxLaws } from './ux-laws';
 import { uxWritingQuestions } from './ux-writing';
-import type { ChoiceQuestion, Question, Track, TrackId } from './types';
+import type { ChoiceQuestion, Question, Section, Track, TrackId } from './types';
 
-export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Link, Question, Track, TrackId } from './types';
+export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Link, Question, Section, SectionId, Track, TrackId } from './types';
 
 export const tracks: Track[] = [
   {
@@ -24,6 +28,20 @@ export const tracks: Track[] = [
     description: 'Психология и гештальт: Фиттс, Хик, Миллер, Якоб и другие.',
     art: 'track-ux-laws',
     emoji: '🧠',
+  },
+  {
+    id: 'ux-writing',
+    title: 'UX-райтинг',
+    description: 'Тексты интерфейса: кнопки, ошибки, пустые экраны, тон и ясность.',
+    art: 'track-ux-writing',
+    emoji: '✍️',
+  },
+  {
+    id: 'usability-testing',
+    title: 'Юзабилити-тестирование',
+    description: 'Задания, модерация, выборка, метрики SUS и SEQ, приоритеты проблем.',
+    art: 'track-usability-testing',
+    emoji: '🔬',
   },
   {
     id: 'hig',
@@ -47,29 +65,63 @@ export const tracks: Track[] = [
     emoji: '♿',
   },
   {
+    id: 'figma-components',
+    title: 'Компоненты в Figma',
+    description: 'Главный компонент и экземпляры, переопределения, вложенность и библиотеки.',
+    art: 'track-figma-components',
+    emoji: '💠',
+  },
+  {
+    id: 'figma-props',
+    title: 'Свойства и варианты',
+    description: 'Boolean, text, instance swap и variant: как собрать удобный компонент.',
+    art: 'track-figma-props',
+    emoji: '🎛️',
+  },
+  {
+    id: 'figma-auto-layout',
+    title: 'Автолейаут',
+    description: 'Hug, fill и fixed, отступы, перенос, Ignore auto layout и constraints.',
+    art: 'track-figma-auto-layout',
+    emoji: '📐',
+  },
+  {
+    id: 'figma-variables',
+    title: 'Переменные',
+    description: 'Типы, коллекции и режимы, алиасы, scoping, стили и переменные в прототипах.',
+    art: 'track-figma-variables',
+    emoji: '🎨',
+  },
+  {
     id: 'design-systems',
     title: 'Дизайн-системы',
     description: 'Токены, компоненты, варианты и atomic design: как собрать систему и поддерживать её.',
     art: 'track-design-systems',
     emoji: '🧩',
   },
-  {
-    id: 'ux-writing',
-    title: 'UX-райтинг',
-    description: 'Тексты интерфейса: кнопки, ошибки, пустые экраны, тон и ясность.',
-    art: 'track-ux-writing',
-    emoji: '✍️',
-  },
-  {
-    id: 'usability-testing',
-    title: 'Юзабилити-тестирование',
-    description: 'Задания, модерация, выборка, метрики SUS и SEQ, приоритеты проблем.',
-    art: 'track-usability-testing',
-    emoji: '🔬',
-  },
 ];
 
-export const questions: Question[] = [...heuristics, ...uxLaws, ...higQuestions, ...materialQuestions, ...wcagQuestions, ...designSystemsQuestions, ...uxWritingQuestions, ...usabilityTestingQuestions];
+/** Разделы экрана «Темы». Каждый трек — ровно в одном разделе, порядок совпадает с tracks. */
+export const sections: Section[] = [
+  { id: 'ux', title: 'UX', tracks: ['heuristics', 'ux-laws', 'ux-writing', 'usability-testing'] },
+  { id: 'guidelines', title: 'Гайдлайны', tracks: ['hig', 'material', 'wcag'] },
+  { id: 'figma', title: 'Figma', tracks: ['figma-components', 'figma-props', 'figma-auto-layout', 'figma-variables', 'design-systems'] },
+];
+
+export const questions: Question[] = [
+  ...heuristics,
+  ...uxLaws,
+  ...higQuestions,
+  ...materialQuestions,
+  ...wcagQuestions,
+  ...designSystemsQuestions,
+  ...uxWritingQuestions,
+  ...usabilityTestingQuestions,
+  ...figmaComponentsQuestions,
+  ...figmaPropsQuestions,
+  ...figmaAutoLayoutQuestions,
+  ...figmaVariablesQuestions,
+];
 
 export const questionById = new Map(questions.map((q) => [q.id, q]));
 

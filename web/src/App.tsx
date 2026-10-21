@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { TrackId } from '../../content';
+import type { SectionId, TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
@@ -23,6 +23,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [starting, setStarting] = useState(false);
   const [tab, setTab] = useState<HomeTab>('progress');
+  const [section, setSection] = useState<SectionId>('ux');
 
   const refresh = useCallback(() => {
     api
@@ -101,6 +102,8 @@ export function App() {
             starting={starting}
             tab={tab}
             onTab={setTab}
+            section={section}
+            onSection={setSection}
             onStart={start}
             onSettings={() => setScreen({ name: 'settings' })}
           />

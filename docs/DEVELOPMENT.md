@@ -49,7 +49,7 @@ npm run typecheck
 
 ## Как добавить вопрос
 
-Вопросы лежат в `content/*.ts`, по файлу на трек; новый трек регистрируется в `content/index.ts` (и в `TrackId` в `content/types.ts`), его обложка — в `web/src/illustrations/`. Есть три формата.
+Вопросы лежат в `content/*.ts`, по файлу на трек; новый трек регистрируется в `content/index.ts` (и в `TrackId` в `content/types.ts`) и добавляется в один из разделов `sections` там же, его обложка — в `web/src/illustrations/`. Есть три формата.
 
 **Обычный вопрос** (варианты текстом, картинка необязательна):
 

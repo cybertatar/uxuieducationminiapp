@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { questions, trackById } from '../../../content';
+import { questionsByTrack, sections, trackById, type SectionId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
@@ -15,15 +15,18 @@ interface Props {
   starting: boolean;
   tab: HomeTab;
   onTab: (tab: HomeTab) => void;
+  /** Раздел на вкладке «Темы»: хранится в App, чтобы не сбрасываться после сессии */
+  section: SectionId;
+  onSection: (section: SectionId) => void;
   onStart: (s: SessionMode) => void;
   onSettings: () => void;
 }
 
 /** Главная из двух вкладок: прогресс с трекером занятий и список тем. */
-export function Home({ profile, starting, tab, onTab, onStart, onSettings }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onSettings }: Props) {
   return (
     <>
-      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} />}
+      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />}
       <TabBar tab={tab} onTab={onTab} />
     </>
   );
@@ -147,41 +150,67 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
   );
 }
 
-function TracksTab({ profile, starting, onStart }: TabProps) {
+function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
+  const current = sections.find((s) => s.id === section) ?? sections[0];
+  const count = current.tracks.reduce((n, id) => n + questionsByTrack(id).length, 0);
+  const progress = new Map(profile.tracks.map((t) => [t.id, t]));
+
   return (
     <main className="screen" aria-busy={starting}>
       <h1 className="page-title">Темы</h1>
-      <p className="hint section-hint">
-        {profile.tracks.length} {plural(profile.tracks.length, 'тема', 'темы', 'тем')} · {questions.length} {questionsWord(questions.length)}
-      </p>
-      <div className="tracks">
-        {profile.tracks.map((t) => {
-          const track = trackById.get(t.id)!;
-          const pct = Math.round((t.mastered / t.total) * 100);
-          return (
-            <button
-              key={t.id}
-              className="card track"
-              disabled={starting}
-              onClick={() => onStart({ mode: 'track', track: t.id })}
-            >
-              <span className="track__art" aria-hidden>
-                <Wireframe name={track.art} />
-              </span>
-              <span className="track__body">
-                <span className="track__title">{track.title}</span>
-                <span className="hint">{track.description}</span>
-                <span className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                  <span className="progress__fill" style={{ width: `${pct}%` }} />
-                </span>
-                <span className="track__meta">
-                  Освоено {t.mastered} из {t.total}
-                </span>
-              </span>
-            </button>
-          );
-        })}
+      <div className="segmented" role="tablist" aria-label="Разделы тем">
+        {sections.map((s) => (
+          <button
+            key={s.id}
+            id={`section-${s.id}`}
+            role="tab"
+            aria-selected={s.id === current.id}
+            aria-controls="section-panel"
+            className={`segmented__item ${s.id === current.id ? 'is-active' : ''}`}
+            onClick={() => {
+              if (s.id === current.id) return;
+              haptic.tap();
+              onSection(s.id);
+            }}
+          >
+            {s.title}
+          </button>
+        ))}
       </div>
+      <section id="section-panel" role="tabpanel" aria-labelledby={`section-${current.id}`} className="tracks-section">
+        <p className="hint section-hint">
+          {current.tracks.length} {plural(current.tracks.length, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
+        </p>
+        <div className="tracks">
+          {current.tracks.map((id) => {
+            const t = progress.get(id)!;
+            const track = trackById.get(id)!;
+            const pct = Math.round((t.mastered / t.total) * 100);
+            return (
+              <button
+                key={id}
+                className="card track"
+                disabled={starting}
+                onClick={() => onStart({ mode: 'track', track: id })}
+              >
+                <span className="track__art" aria-hidden>
+                  <Wireframe name={track.art} />
+                </span>
+                <span className="track__body">
+                  <span className="track__title">{track.title}</span>
+                  <span className="hint">{track.description}</span>
+                  <span className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                    <span className="progress__fill" style={{ width: `${pct}%` }} />
+                  </span>
+                  <span className="track__meta">
+                    Освоено {t.mastered} из {t.total}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }

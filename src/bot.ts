@@ -1,5 +1,5 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
-import { isTextOnly, questionById, questions, trackById, tracks, type ChoiceQuestion } from '../content';
+import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion } from '../content';
 import { getAnswers, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
@@ -189,7 +189,7 @@ export function getBot(env: Env): Bot {
     ctx.reply(
       '/question — получить вопрос прямо сейчас\n' +
         '/settings — вопрос дня, напоминания, часовой пояс, пауза\n\n' +
-        `Все темы (${tracks.map((t) => t.title).join(', ')}), прогресс и повторение ошибок — в приложении.`,
+        `Все темы (разделы ${sections.map((s) => s.title).join(', ')}), прогресс и повторение ошибок — в приложении.`,
       { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
     ),
   );
