@@ -91,8 +91,6 @@ body {
   border-radius: calc(55 * var(--u));
   overflow: hidden;
   background: var(--bg);
-  display: flex;
-  flex-direction: column;
 }
 
 .mock__screen img {
@@ -101,14 +99,65 @@ body {
 }
 
 .mock__status {
-  position: relative;
-  flex: none;
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
   height: calc(54 * var(--u));
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 calc(30 * var(--u)) 0 calc(44 * var(--u));
   color: var(--text);
+}
+
+/* Плавающие кнопки Telegram в зоне --tg-content-safe-area-inset-top (54–100 pt) */
+.mock__tg {
+  position: absolute;
+  top: calc(62 * var(--u));
+  left: calc(16 * var(--u));
+  right: calc(16 * var(--u));
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mock__pill {
+  height: calc(30 * var(--u));
+  padding: 0 calc(13 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: calc(6 * var(--u));
+  border-radius: 999px;
+  background: rgba(60, 60, 67, 0.36);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  font-family: -apple-system, 'Inter', 'Manrope', sans-serif;
+  font-size: calc(15 * var(--u));
+  font-weight: 600;
+}
+
+.mock__pill svg {
+  height: calc(13 * var(--u));
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mock__pill--icons {
+  gap: calc(16 * var(--u));
+  padding: 0 calc(14 * var(--u));
+}
+
+.mock__pill--icons svg:first-child {
+  height: calc(8 * var(--u));
+}
+
+.mock__pill--icons svg:last-child {
+  height: calc(4 * var(--u));
+  fill: currentColor;
+  stroke: none;
 }
 
 .mock__time {

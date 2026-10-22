@@ -9,10 +9,11 @@ import themes from './themes.png';
 const BOT_URL = 't.me/uxuitrainer_bot';
 
 /**
- * iPhone 390×844 pt: статус-бар 54 pt, скриншот 390×756 (снят с этой высотой), индикатор Home 34 pt.
- * Так интерфейс не заходит под скругления рамки и Dynamic Island.
+ * iPhone 390×844 pt в полноэкранном режиме Telegram. Скриншоты сняты с отступами
+ * --tg-safe-area-inset-top: 54px, --tg-content-safe-area-inset-top: 46px, --tg-safe-area-inset-bottom: 34px,
+ * поэтому интерфейс сам стоит ниже статус-бара и плавающих кнопок Telegram, которые рисуются поверх.
  */
-const Phone = ({ src, className }: { src: string; className: string }) => (
+const Phone = ({ src, className, back = false }: { src: string; className: string; back?: boolean }) => (
   <div className={`mock ${className}`}>
     <div className="mock__screen">
       <div className="mock__status">
@@ -28,6 +29,26 @@ const Phone = ({ src, className }: { src: string; className: string }) => (
           <rect x="46.5" y="2.5" width="17" height="7" rx="1.6" />
           <path d="M66.6 4.2v3.6a1.9 1.9 0 0 0 0-3.6z" opacity="0.4" />
         </svg>
+      </div>
+      <div className="mock__tg">
+        <span className="mock__pill">
+          {back && (
+            <svg viewBox="0 0 8 14" aria-hidden>
+              <path d="M7 1 1 7l6 6" />
+            </svg>
+          )}
+          {back ? 'Назад' : 'Закрыть'}
+        </span>
+        <span className="mock__pill mock__pill--icons">
+          <svg viewBox="0 0 14 8" aria-hidden>
+            <path d="m1 1 6 6 6-6" />
+          </svg>
+          <svg viewBox="0 0 18 4" aria-hidden>
+            <circle cx="2" cy="2" r="2" />
+            <circle cx="9" cy="2" r="2" />
+            <circle cx="16" cy="2" r="2" />
+          </svg>
+        </span>
       </div>
       <img src={src} alt="" />
       <div className="mock__home" />
@@ -59,7 +80,7 @@ export function Post() {
       </div>
       <div className="post__art">
         <Phone src={themes} className="post__phone post__phone--back" />
-        <Phone src={hotspot} className="post__phone post__phone--front" />
+        <Phone src={hotspot} className="post__phone post__phone--front" back />
         <div className="post__cat">
           <Cat mood="happy" size={200} />
         </div>
