@@ -19,10 +19,18 @@ export interface UserRow {
   last_active_date: string | null;
   /** Предложение вопроса дня уже отправлено */
   daily_offered: number;
+  /** Метка из ссылки, по которой пользователь пришёл впервые */
+  source: string | null;
 }
 
 /** Поля, которые можно менять через updateUser. */
-type Writable = Partial<Omit<UserRow, 'id' | 'created_at'>>;
+type Writable = Partial<Omit<UserRow, 'id' | 'created_at' | 'source'>>;
+
+/** Метка источника из ссылки: Telegram пропускает только A-Z, a-z, 0-9, _ и -, не длиннее 64 символов. */
+export function parseSource(raw: string | null | undefined): string | null {
+  const s = raw?.trim().toLowerCase() ?? '';
+  return /^[a-z0-9_-]{1,64}$/.test(s) ? s : null;
+}
 
 export async function getUser(db: D1Database, id: number): Promise<UserRow | null> {
   return db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first<UserRow>();
@@ -32,14 +40,16 @@ export async function upsertUser(
   db: D1Database,
   u: { id: number; first_name?: string; username?: string },
   now: number,
+  source: string | null = null,
 ): Promise<UserRow> {
+  // Источник пишется только при создании: считаем первое касание, а не последнюю ссылку
   const row = await db
     .prepare(
-      `INSERT INTO users (id, first_name, username, created_at) VALUES (?1, ?2, ?3, ?4)
+      `INSERT INTO users (id, first_name, username, created_at, source) VALUES (?1, ?2, ?3, ?4, ?5)
        ON CONFLICT(id) DO UPDATE SET first_name = ?2, username = ?3
        RETURNING *`,
     )
-    .bind(u.id, u.first_name ?? null, u.username ?? null, now)
+    .bind(u.id, u.first_name ?? null, u.username ?? null, now, source)
     .first<UserRow>();
   return row!;
 }
@@ -100,6 +110,21 @@ export async function saveAnswer(db: D1Database, userId: number, questionId: str
          attempts = ?3, correct_total = ?4, last_correct = ?5, box = ?6, due_date = ?7, updated_at = ?8`,
     )
     .bind(userId, questionId, a.attempts, a.correctTotal, a.lastCorrect ? 1 : 0, a.box, a.dueDate, now)
+    .run();
+}
+
+export async function logAnswer(
+  db: D1Database,
+  userId: number,
+  questionId: string,
+  option: number,
+  correct: boolean,
+  via: 'app' | 'chat',
+  now: number,
+) {
+  await db
+    .prepare('INSERT INTO answer_log (user_id, question_id, option, correct, via, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(userId, questionId, option, correct ? 1 : 0, via, now)
     .run();
 }
 

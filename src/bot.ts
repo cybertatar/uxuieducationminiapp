@@ -1,6 +1,6 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
 import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion } from '../content';
-import { getAnswers, upsertUser, updateUser, usersDue, type UserRow } from './db';
+import { getAnswers, parseSource, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
@@ -175,16 +175,17 @@ export function getBot(env: Env): Bot {
   const webApp = { url: env.WEBAPP_URL };
 
   /** Любое сообщение от пользователя значит, что бот может ему писать. */
-  async function loadUser(ctx: Context): Promise<UserRow> {
+  async function loadUser(ctx: Context, source: string | null = null): Promise<UserRow> {
     const from = ctx.from!;
     const now = Date.now();
-    const user = await upsertUser(db, { id: from.id, first_name: from.first_name, username: from.username }, now);
+    const user = await upsertUser(db, { id: from.id, first_name: from.first_name, username: from.username }, now, source);
     if (!user.can_message) await updateSettings(db, user, { can_message: 1 }, now);
     return user;
   }
 
   bot.command('start', async (ctx) => {
-    const user = await loadUser(ctx);
+    // t.me/<бот>?start=vc приходит как «/start vc»: метка запоминается как источник нового пользователя
+    const user = await loadUser(ctx, parseSource(ctx.match));
     const text = welcomeText(escape(user.first_name ?? 'дизайнер'));
     const options = { parse_mode: 'HTML' as const, reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) };
     // Анимация показывает, где открыть мини-апп: без неё многие так и пишут боту в чат
@@ -239,7 +240,7 @@ export function getBot(env: Env): Bot {
     const user = await loadUser(ctx);
     const [, questionId, chosenRaw, orderRaw] = ctx.match;
     const now = Date.now();
-    const result = await recordAnswer(db, user, questionId, Number(chosenRaw), now);
+    const result = await recordAnswer(db, user, questionId, Number(chosenRaw), now, 'chat');
     if (!result || !isTextOnly(result.question)) return ctx.answerCallbackQuery({ text: 'Этот вопрос больше не доступен' });
     const { correct } = result;
     const q = result.question;

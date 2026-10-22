@@ -113,3 +113,23 @@ tests/        vitest
 Слайды — dev-страница `http://localhost:5173/carousel.html` (`web/src/carousel/`): они собираются из настоящих компонентов приложения, поэтому числа тем, вопросов и иллюстраций всегда актуальны. Скриншоты экранов лежат в `web/src/carousel/shots/`.
 
 Снять PNG 1080×1350 в `brand/instagram/`: запустить `npm run dev:web` и выполнить `node scripts/render-carousel.mjs` (нужен Playwright с Chromium). Текст поста — `brand/instagram/caption.md`.
+
+## Статистика
+
+**Метки источника.** Чтобы понять, откуда приходят люди, давайте ссылку с меткой: `t.me/uxuitrainer_bot?start=vc` (откроет чат с ботом) или `t.me/uxuitrainer_bot?startapp=vc` (сразу откроет мини-апп). В метке только латиница, цифры, `_` и `-`, до 64 символов. Она пишется в `users.source` один раз, когда человек приходит впервые.
+
+**Журнал ответов.** Каждый ответ — строка в `answer_log`: вопрос, выбранный вариант (индекс в исходном `options`), верно ли и где ответили (`app` или `chat`).
+
+Запросы к боевой базе: `npx wrangler d1 execute ux-quiz --remote --command "…"` из папки проекта.
+
+```sql
+-- откуда пришли и сколько из них ответили хотя бы раз
+SELECT COALESCE(u.source, '—') AS source, COUNT(*) AS came, COUNT(a.user_id) AS answered
+FROM users u LEFT JOIN (SELECT DISTINCT user_id FROM answer_log) a ON a.user_id = u.id
+WHERE u.source IS NOT NULL OR u.created_at > (SELECT MIN(created_at) FROM answer_log)
+GROUP BY source ORDER BY came DESC;
+
+-- с чем путают правильный ответ: распределение выбранных вариантов по вопросу
+SELECT question_id, option, correct, COUNT(*) AS n
+FROM answer_log WHERE question_id = 'h-007' GROUP BY option ORDER BY n DESC;
+```
