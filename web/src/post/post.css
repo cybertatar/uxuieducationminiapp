@@ -71,7 +71,77 @@ body {
 
 .post__phone {
   position: absolute;
-  width: 250px;
+}
+
+/* Мокап iPhone. Размеры в долях ширины экрана 390 pt: --u = 1 pt. */
+.mock {
+  --u: calc(240px / 390);
+  padding: calc(13 * var(--u));
+  border-radius: calc(68 * var(--u));
+  background: #17171c;
+  box-shadow:
+    inset 0 0 0 calc(2 * var(--u)) #3a3a42,
+    0 30px 60px rgba(23, 23, 28, 0.22);
+}
+
+.mock__screen {
+  position: relative;
+  width: calc(390 * var(--u));
+  height: calc(844 * var(--u));
+  border-radius: calc(55 * var(--u));
+  overflow: hidden;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.mock__screen img {
+  display: block;
+  width: 100%;
+}
+
+.mock__status {
+  position: relative;
+  flex: none;
+  height: calc(54 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 calc(30 * var(--u)) 0 calc(44 * var(--u));
+  color: var(--text);
+}
+
+.mock__time {
+  font-family: -apple-system, 'Inter', 'Manrope', sans-serif;
+  font-size: calc(17 * var(--u));
+  font-weight: 700;
+}
+
+.mock__island {
+  position: absolute;
+  left: 50%;
+  top: calc(11 * var(--u));
+  width: calc(124 * var(--u));
+  height: calc(36 * var(--u));
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #000;
+}
+
+.mock__icons {
+  width: calc(68 * var(--u));
+  fill: currentColor;
+}
+
+.mock__home {
+  position: absolute;
+  left: 50%;
+  bottom: calc(8 * var(--u));
+  width: calc(134 * var(--u));
+  height: calc(5 * var(--u));
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--text);
 }
 
 .post__phone--back {
