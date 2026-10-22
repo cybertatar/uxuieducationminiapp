@@ -1,5 +1,5 @@
 // Снимает анимацию-гайд с dev-страницы /onboarding.html в два файла (30 fps):
-// - web/public/onboarding.mp4 (800×960) — уходит в приветствие бота на /start, раздаётся по адресу /onboarding.mp4;
+// - web/public/onboarding.mp4 (800×800) — уходит в приветствие бота на /start, раздаётся по адресу /onboarding.mp4;
 // - brand/onboarding-description.mp4 и .gif (640×360) — картинка описания бота, ставится вручную в @BotFather.
 // Нужны запущенный `npm run dev:web`, Playwright с Chromium и ffmpeg.
 import { execFileSync } from 'node:child_process';
@@ -37,7 +37,7 @@ const ffmpeg = (...args) => execFileSync('ffmpeg', ['-loglevel', 'error', '-y', 
 const mp4 = (dir, out) =>
   ffmpeg('-framerate', String(FPS), '-i', join(dir, '%04d.png'), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', '-an', out);
 
-// Приветствие: 400×480 × 2
+// Приветствие: 400×400 × 2
 const chat = await frames('chat', 2);
 mp4(chat, 'web/public/onboarding.mp4');
 rmSync(chat, { recursive: true });

@@ -89,8 +89,9 @@ const DONE: [string, string] = ['Готово!', 'Можно учиться 🎉
 
 /**
  * Два варианта:
- * - chat — 400×480 для приветствия. Человек уже нажал «Старт», остаётся кнопка «Тренажёр».
- *   Telegram обрезает в чате медиа выше примерно 4:5, поэтому телефон целиком справа, текст и кот слева.
+ * - chat — 400×400 для приветствия. Человек уже нажал «Старт», остаётся кнопка «Тренажёр».
+ *   Telegram обрезает медиа в чате (Android — почти до квадрата), поэтому кадр квадратный:
+ *   телефон целиком справа, текст и кот слева.
  * - wide — 480×270 (16:9) для картинки в описании бота (BotFather просит 640×360). Её видно в пустом чате,
  *   где вместо поля ввода только «Старт», поэтому шагов два: «Старт», затем «Тренажёр».
  *   Телефон крупнее и обрезан сверху — обе кнопки внизу.
@@ -98,10 +99,10 @@ const DONE: [string, string] = ['Готово!', 'Можно учиться 🎉
 const SCENARIOS: Record<'chat' | 'wide', Scenario> = {
   chat: {
     duration: 7000,
-    scale: 446 / SCREEN.height,
-    phone: { x: 169, y: 10, bezel: 7 },
-    fingerFrom: { x: 330, y: 230 },
-    burst: { x: 278, y: 200 },
+    scale: 0.43,
+    phone: { x: 201, y: 5, bezel: 7 },
+    fingerFrom: { x: 330, y: 200 },
+    burst: { x: 294, y: 170 },
     cat: 96,
     titles: [
       { text: ['Нажми «Тренажёр»', 'внизу чата'], shown: [[-1000, 1850], [6000, 99999]] },
@@ -245,7 +246,7 @@ export function Onboarding() {
         </div>
       </header>
 
-      <div className="ob__phone" style={{ left: PHONE.x, top: PHONE.y, padding: PHONE.bezel }}>
+      <div className="ob__phone" style={{ left: PHONE.x, top: PHONE.y, padding: PHONE.bezel, ['--s' as string]: SCREEN_SCALE }}>
         <span className="ob__side ob__side--action" />
         <span className="ob__side ob__side--volume-up" />
         <span className="ob__side ob__side--volume-down" />
