@@ -1,4 +1,4 @@
-// Анимация-гайд для приветствия бота: где в чате кнопка, которая открывает мини-апп.
+// Анимация-гайд: как открыть мини-апп из чата с ботом.
 // Dev-страница /onboarding.html. Кадр зависит только от времени t, поэтому скрипт
 // scripts/render-onboarding.mjs снимает ровные кадры через window.setFrame(t) и склеивает их в MP4.
 //
@@ -12,12 +12,11 @@ import { Cat, type CatMood } from '../Cat';
 import { Home } from '../screens/Home';
 import avatar from '../../../brand/avatar-blue.png';
 
-/** Длина цикла, мс. Telegram крутит анимацию по кругу */
-export const DURATION = 7000;
-
 declare global {
   interface Window {
     setFrame: (t: number) => void;
+    /** Длина цикла текущего варианта, мс — её читает скрипт рендера */
+    obDuration: number;
   }
 }
 
@@ -58,22 +57,102 @@ const pop = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * (x - 1) ** 3 + 1
  * Чат и приложение рисуются в настоящем размере экрана и уменьшаются целиком.
  */
 const SCREEN = { width: 402, height: 874 };
+type Point = { x: number; y: number };
+type Target = 'start' | 'menu';
+/** Отрезок времени [from, to], мс */
+type Window_ = [number, number];
+
+interface Scenario {
+  /** Длина цикла, мс. Telegram крутит анимацию по кругу */
+  duration: number;
+  scale: number;
+  phone: { x: number; y: number; bezel: number };
+  fingerFrom: Point;
+  burst: Point;
+  cat: number;
+  /** Заголовки шагов: когда каждый виден */
+  titles: { text: [string, string]; shown: Window_[] }[];
+  /** Реплики кота */
+  bubbles: { text: string; shown: Window_ }[];
+  /** Нажатия: на какую кнопку и когда палец касается её */
+  taps: { target: Target; at: number }[];
+  /** Когда палец появляется и исчезает */
+  finger: Window_;
+  /** Чат переходит от пустого («Старт») к диалогу; null — диалог с самого начала */
+  started: Window_ | null;
+  /** Мини-апп выезжает и закрывается */
+  open: Window_;
+  close: Window_;
+}
+
+const DONE: [string, string] = ['Готово!', 'Можно учиться 🎉'];
+
 /**
- * Два варианта кадра:
- * - chat — 400×480 для приветствия: Telegram обрезает в чате медиа выше примерно 4:5,
- *   поэтому телефон целиком справа, текст и кот слева;
- * - wide — 480×270 (16:9) для картинки в описании бота, которую BotFather просит 640×360:
- *   телефон крупнее и обрезан сверху — главное (поле ввода и кнопка) внизу.
+ * Два варианта:
+ * - chat — 400×480 для приветствия. Человек уже нажал «Старт», остаётся кнопка «Тренажёр».
+ *   Telegram обрезает в чате медиа выше примерно 4:5, поэтому телефон целиком справа, текст и кот слева.
+ * - wide — 480×270 (16:9) для картинки в описании бота (BotFather просит 640×360). Её видно в пустом чате,
+ *   где вместо поля ввода только «Старт», поэтому шагов два: «Старт», затем «Тренажёр».
+ *   Телефон крупнее и обрезан сверху — обе кнопки внизу.
  */
-const LAYOUTS = {
-  chat: { scale: 446 / SCREEN.height, phone: { x: 169, y: 10, bezel: 7 }, fingerFrom: { x: 330, y: 230 }, burst: { x: 278, y: 200 }, cat: 96 },
-  wide: { scale: 0.5, phone: { x: 237, y: -189, bezel: 7 }, fingerFrom: { x: 420, y: 110 }, burst: { x: 344, y: 150 }, cat: 80 },
+const SCENARIOS: Record<'chat' | 'wide', Scenario> = {
+  chat: {
+    duration: 7000,
+    scale: 446 / SCREEN.height,
+    phone: { x: 169, y: 10, bezel: 7 },
+    fingerFrom: { x: 330, y: 230 },
+    burst: { x: 278, y: 200 },
+    cat: 96,
+    titles: [
+      { text: ['Нажми «Тренажёр»', 'внизу чата'], shown: [[-1000, 1850], [6000, 99999]] },
+      { text: DONE, shown: [[2050, 5800]] },
+    ],
+    bubbles: [
+      { text: 'Мяу! Жми сюда 👉', shown: [350, 1700] },
+      { text: 'Мур! Поехали 🐾', shown: [2300, 5400] },
+    ],
+    taps: [{ target: 'menu', at: 1550 }],
+    finger: [600, 1850],
+    started: null,
+    open: [1850, 2400],
+    close: [5700, 6200],
+  },
+  wide: {
+    duration: 9800,
+    scale: 0.5,
+    phone: { x: 237, y: -189, bezel: 7 },
+    fingerFrom: { x: 420, y: 110 },
+    burst: { x: 344, y: 150 },
+    cat: 80,
+    titles: [
+      { text: ['Нажми «Старт»', 'внизу чата'], shown: [[-1000, 1650], [9400, 99999]] },
+      { text: ['Теперь — кнопка', '«Тренажёр»'], shown: [[1850, 3550]] },
+      { text: DONE, shown: [[3750, 8500]] },
+    ],
+    bubbles: [
+      { text: 'Мяу! Начнём? 👉', shown: [300, 1500] },
+      { text: 'А теперь сюда 👉', shown: [2100, 3400] },
+      { text: 'Мур! Поехали 🐾', shown: [4100, 8100] },
+    ],
+    taps: [
+      { target: 'start', at: 1400 },
+      { target: 'menu', at: 3250 },
+    ],
+    finger: [500, 3550],
+    started: [1550, 2050],
+    open: [3550, 4100],
+    close: [8400, 8900],
+  },
 };
-export type Layout = keyof typeof LAYOUTS;
 
 const params = new URLSearchParams(location.search);
-const layout: Layout = params.get('layout') === 'wide' ? 'wide' : 'chat';
-const { scale: SCREEN_SCALE, phone: PHONE, fingerFrom: FINGER_FROM, burst: BURST, cat: CAT_SIZE } = LAYOUTS[layout];
+const scenario = SCENARIOS[params.get('layout') === 'wide' ? 'wide' : 'chat'];
+const layout = params.get('layout') === 'wide' ? 'wide' : 'chat';
+const SCREEN_SCALE = scenario.scale;
+const PHONE = scenario.phone;
+
+/** Видимость на отрезке с плавным входом и выходом за fade мс */
+const visible = (t: number, [from, to]: Window_, fade = 200) => span(t, from, from + fade) * (1 - span(t, to, to + fade));
 
 /** Конфетти: детерминированный «случайный» набор, чтобы каждый рендер давал те же кадры */
 const CONFETTI = Array.from({ length: 22 }, (_, i) => {
@@ -90,52 +169,60 @@ const CONFETTI = Array.from({ length: 22 }, (_, i) => {
 });
 
 export function Onboarding() {
-  const [t, setT] = useState(() => Number(new URLSearchParams(location.search).get('t') ?? 0));
-  // Палец целится в центр настоящей кнопки меню: её положение меряем в кадре один раз
+  const [t, setT] = useState(() => Number(params.get('t') ?? 0));
+  // Палец целится в центры настоящих кнопок: их положение в кадре меряем один раз
   const root = useRef<HTMLDivElement>(null);
-  const [button, setButton] = useState({ x: 0, y: 0 });
+  const [buttons, setButtons] = useState<Record<Target, Point>>({ start: { x: 0, y: 0 }, menu: { x: 0, y: 0 } });
   useLayoutEffect(() => {
-    const menu = root.current?.querySelector('.ob__menu')?.getBoundingClientRect();
-    const frame = root.current?.getBoundingClientRect();
-    if (menu && frame) setButton({ x: menu.left - frame.left + menu.width / 2, y: menu.top - frame.top + menu.height / 2 });
+    const frame = root.current!.getBoundingClientRect();
+    const center = (selector: string) => {
+      const r = root.current!.querySelector(selector)!.getBoundingClientRect();
+      return { x: r.left - frame.left + r.width / 2, y: r.top - frame.top + r.height / 2 };
+    };
+    setButtons({ start: center('.ob__start'), menu: center('.ob__menu') });
   }, []);
 
   useEffect(() => {
+    window.obDuration = scenario.duration;
     window.setFrame = (ms) => flushSync(() => setT(ms));
     // Без ?t= анимация просто играет по кругу — удобно смотреть в браузере
-    if (new URLSearchParams(location.search).has('t')) return;
+    if (params.has('t')) return;
     let raf = 0;
     const start = performance.now();
     const tick = (now: number) => {
-      setT((now - start) % DURATION);
+      setT((now - start) % scenario.duration);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Шаг 1: кот зовёт нажать, палец едет к кнопке и нажимает
-  const callout = pop(span(t, 350, 750)) * (1 - span(t, 1700, 1850));
-  const move = easeInOut(span(t, 700, 1550));
-  const press = span(t, 1550, 1650) * (1 - span(t, 1750, 1850));
-  const finger = span(t, 600, 850) * (1 - span(t, 1850, 2100));
-  const ripple = span(t, 1600, 2150);
-  // Шаг 2: мини-апп выезжает, конфетти, кот радуется. В конце мини-апп закрывается, и цикл начинается с того же чата
-  const open = easeOut(span(t, 1850, 2400)) * (1 - easeInOut(span(t, 5700, 6200)));
-  const cheer = pop(span(t, 2300, 2700)) * (1 - span(t, 5400, 5600));
-  const burst = t - 1950;
-  // Заголовок шага: старый уходит целиком, и только потом появляется новый
-  const swap = span(t, 1850, 2250) * (1 - span(t, 5800, 6200));
-  const first = 1 - clamp(swap * 2);
-  const second = clamp(swap * 2 - 1);
+  const { taps, duration } = scenario;
 
-  const mood: CatMood = t > 1900 && t < 5600 ? (t < 3400 ? 'celebrate' : 'happy') : 'idle';
+  // Палец: появляется, едет к первой кнопке, нажимает, едет к следующей
+  let pos = scenario.fingerFrom;
+  let press = 0;
+  const pressed: Record<Target, number> = { start: 0, menu: 0 };
+  taps.forEach((tap, i) => {
+    const from = i === 0 ? scenario.fingerFrom : buttons[taps[i - 1].target];
+    const leave = i === 0 ? scenario.finger[0] + 100 : taps[i - 1].at + 400;
+    const move = easeInOut(span(t, leave, tap.at - 50));
+    if (t >= leave) pos = { x: from.x + (buttons[tap.target].x - from.x) * move, y: from.y + (buttons[tap.target].y - from.y) * move };
+    const p = span(t, tap.at - 50, tap.at + 50) * (1 - span(t, tap.at + 150, tap.at + 250));
+    pressed[tap.target] = Math.max(pressed[tap.target], p);
+    press = Math.max(press, p);
+  });
+  const finger = visible(t, scenario.finger, 250);
+
+  const started = scenario.started ? easeOut(span(t, ...scenario.started)) * (1 - span(t, scenario.close[1] + 100, scenario.close[1] + 500)) : 1;
+  const open = easeOut(span(t, ...scenario.open)) * (1 - easeInOut(span(t, ...scenario.close)));
+  const opened = scenario.open[0];
+  const burst = t - opened - 100;
+
+  const mood: CatMood = t > opened + 50 && t < scenario.close[0] - 300 ? (t < opened + 1550 ? 'celebrate' : 'happy') : 'idle';
   // Кот подпрыгивает, когда открылся тренажёр, а в остальное время спокойно дышит
-  const jump = Math.sin(Math.PI * span(t, 1900, 2250)) * 22 + Math.sin(Math.PI * span(t, 2250, 2500)) * 8;
-  const breathe = Math.sin((t / DURATION) * Math.PI * 6) * 1.5;
-
-  const fx = FINGER_FROM.x + (button.x - FINGER_FROM.x) * move;
-  const fy = FINGER_FROM.y + (button.y - FINGER_FROM.y) * move;
+  const jump = Math.sin(Math.PI * span(t, opened + 50, opened + 400)) * 22 + Math.sin(Math.PI * span(t, opened + 400, opened + 650)) * 8;
+  const breathe = Math.sin((t / duration) * Math.PI * 6) * 1.5;
 
   return (
     <div className={`ob ob--${layout}`} ref={root}>
@@ -144,16 +231,17 @@ export function Onboarding() {
       <header className="ob__heading">
         <span className="ob__tag">UX/UI Trainer</span>
         <div className="ob__steps">
-          <h1 style={{ opacity: first, transform: `translateY(${(first - 1) * 10}px)` }}>
-            Нажми «Тренажёр»
-            <br />
-            внизу чата
-          </h1>
-          <h1 style={{ opacity: second, transform: `translateY(${(1 - second) * 10}px)` }}>
-            Готово!
-            <br />
-            Можно учиться 🎉
-          </h1>
+          {scenario.titles.map(({ text, shown }) => {
+            // Заголовки сменяют друг друга: старый уходит целиком, и только потом появляется новый
+            const o = Math.max(...shown.map((w) => visible(t, w)));
+            return (
+              <h1 key={text.join()} style={{ opacity: o, transform: `translateY(${(1 - o) * 8}px)` }}>
+                {text[0]}
+                <br />
+                {text[1]}
+              </h1>
+            );
+          })}
         </div>
       </header>
 
@@ -164,7 +252,7 @@ export function Onboarding() {
         <span className="ob__side ob__side--power" />
         <div className="ob__screen" style={{ width: SCREEN.width * SCREEN_SCALE, height: SCREEN.height * SCREEN_SCALE }}>
           <div className="ob__scaled" style={{ transform: `scale(${SCREEN_SCALE})` }}>
-            <Chat open={open} press={press} />
+            <Chat open={open} started={started} pressed={pressed} />
             <div className="ob__app" style={{ transform: `translateY(${(1 - open) * 100}%)` }}>
               <div className="ob__tg-buttons">
                 <span>✕ Закрыть</span>
@@ -196,8 +284,8 @@ export function Onboarding() {
               <i
                 key={i}
                 style={{
-                  left: BURST.x + c.vx * s,
-                  top: BURST.y + c.vy * s + 520 * s * s,
+                  left: scenario.burst.x + c.vx * s,
+                  top: scenario.burst.y + c.vy * s + 520 * s * s,
                   width: c.size,
                   height: c.size,
                   background: c.color,
@@ -210,14 +298,26 @@ export function Onboarding() {
         </div>
       )}
 
-      <div className="ob__ripple" style={{ left: button.x, top: button.y, opacity: ripple > 0 ? 1 - ripple : 0, transform: `translate(-50%, -50%) scale(${0.4 + ripple * 1.4})` }} />
-      <div className="ob__finger" style={{ left: fx, top: fy, opacity: finger, transform: `translate(-50%, -50%) scale(${1 - press * 0.2})` }} />
+      {taps.map(({ target, at }) => {
+        const ripple = span(t, at, at + 550);
+        return (
+          <div
+            key={target}
+            className="ob__ripple"
+            style={{ left: buttons[target].x, top: buttons[target].y, opacity: ripple > 0 ? 1 - ripple : 0, transform: `translate(-50%, -50%) scale(${0.4 + ripple * 1.4})` }}
+          />
+        );
+      })}
+      <div className="ob__finger" style={{ left: pos.x, top: pos.y, opacity: finger, transform: `translate(-50%, -50%) scale(${1 - press * 0.2})` }} />
 
       <div className="ob__cat" style={{ transform: `translateY(${-jump - breathe}px)` }}>
-        <Cat mood={mood} size={CAT_SIZE} />
+        <Cat mood={mood} size={scenario.cat} />
       </div>
-      <Bubble scale={callout}>Мяу! Жми сюда 👉</Bubble>
-      <Bubble scale={cheer}>Мур! Поехали 🐾</Bubble>
+      {scenario.bubbles.map(({ text, shown: [from, to] }) => (
+        <Bubble key={text} scale={pop(span(t, from, from + 400)) * (1 - span(t, to, to + 150))}>
+          {text}
+        </Bubble>
+      ))}
     </div>
   );
 }
@@ -233,7 +333,7 @@ function Bubble({ scale, children }: { scale: number; children: string }) {
 }
 
 /** Чат с ботом в современном Telegram для iOS: прозрачный статус-бар, стеклянные капсулы шапки и поля ввода */
-function Chat({ open, press }: { open: number; press: number }) {
+function Chat({ open, started, pressed }: { open: number; started: number; pressed: Record<Target, number> }) {
   return (
     <div className="ob__chat" style={{ filter: `brightness(${1 - open * 0.35})` }}>
       <div className="ob__wallpaper" aria-hidden />
@@ -260,44 +360,64 @@ function Chat({ open, press }: { open: number; press: number }) {
           <img src={avatar} alt="" />
         </span>
       </header>
-      <div className="ob__messages">
-        <div className="ob__bubble ob__bubble--out">
-          /start<span className="ob__time">10:24 ✓✓</span>
+      <div className="ob__body">
+        {/* Пустой чат до «Старт»: карточка с описанием бота и одна большая кнопка */}
+        <div className="ob__layer ob__empty" style={{ opacity: clamp(1 - started * 2) }}>
+          <div className="ob__about">
+            <div className="ob__about-pic">
+              <Cat mood="idle" size={64} />
+            </div>
+            <b>Что умеет этот бот?</b>
+            <p>Тренажёр для UX/UI-дизайнеров с котом Кеглем 🐈 Тесты по эвристикам, законам UX, HIG, WCAG и Figma.</p>
+          </div>
+          <div className="ob__start-row">
+            <span className="ob__glass ob__start" style={{ transform: `scale(${1 - pressed.start * 0.05})` }}>
+              Старт
+            </span>
+          </div>
         </div>
-        <div className="ob__bubble">
-          Привет, Аня! 👋 Я Кегль, кот-тренажёр для&nbsp;дизайнеров&nbsp;🐈
-          <br />
-          <br />
-          Тесты, разборы и стрик — в приложении.
-          <span className="ob__time">10:24</span>
+        {/* Диалог после «Старт»: приветствие и поле ввода с кнопкой меню. Слои сменяются по очереди, без наложения */}
+        <div className="ob__layer" style={{ opacity: clamp(started * 2 - 1), transform: `translateY(${(1 - started) * 30}px)` }}>
+          <div className="ob__messages">
+            <div className="ob__bubble ob__bubble--out">
+              /start<span className="ob__time">10:24 ✓✓</span>
+            </div>
+            <div className="ob__bubble">
+              Привет, Аня! 👋 Я Кегль, кот-тренажёр для&nbsp;дизайнеров&nbsp;🐈
+              <br />
+              <br />
+              Тесты, разборы и стрик — в приложении.
+              <span className="ob__time">10:24</span>
+            </div>
+          </div>
+          <footer className="ob__input">
+            <span className="ob__menu" style={{ transform: `scale(${1 - pressed.menu * 0.08})`, boxShadow: `0 0 0 ${pressed.menu * 6}px rgba(255, 255, 255, 0.45), 0 4px 12px rgba(0, 80, 160, 0.3)` }}>
+              <svg viewBox="0 0 24 24" aria-hidden>
+                <rect x="4" y="5" width="16" height="14" rx="3.5" />
+                <path d="M4 9.5h16" />
+              </svg>
+              Тренажёр
+            </span>
+            <span className="ob__glass ob__glass--round ob__icon" aria-hidden>
+              <svg viewBox="0 0 24 24">
+                <path d="m20 11.5-7.8 7.8a5 5 0 0 1-7.1-7.1l8.2-8.2a3.4 3.4 0 0 1 4.8 4.8l-8.1 8.1a1.7 1.7 0 0 1-2.4-2.4l7.4-7.4" />
+              </svg>
+            </span>
+            <span className="ob__glass ob__field">
+              Сообщение
+              <svg viewBox="0 0 24 24" aria-hidden>
+                <path d="M20.5 12A8.5 8.5 0 1 1 12 3.5M20.5 12h-5a3.5 3.5 0 0 1-3.5-3.5v-5M20.5 12 12 3.5" />
+              </svg>
+            </span>
+            <span className="ob__glass ob__glass--round ob__icon" aria-hidden>
+              <svg viewBox="0 0 24 24">
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M6 11a6 6 0 0 0 12 0M12 17v4" />
+              </svg>
+            </span>
+          </footer>
         </div>
       </div>
-      <footer className="ob__input">
-        <span className="ob__menu" style={{ transform: `scale(${1 - press * 0.08})`, boxShadow: `0 0 0 ${press * 6}px rgba(255, 255, 255, 0.45), 0 4px 12px rgba(0, 80, 160, 0.3)` }}>
-          <svg viewBox="0 0 24 24" aria-hidden>
-            <rect x="4" y="5" width="16" height="14" rx="3.5" />
-            <path d="M4 9.5h16" />
-          </svg>
-          Тренажёр
-        </span>
-        <span className="ob__glass ob__glass--round ob__icon" aria-hidden>
-          <svg viewBox="0 0 24 24">
-            <path d="m20 11.5-7.8 7.8a5 5 0 0 1-7.1-7.1l8.2-8.2a3.4 3.4 0 0 1 4.8 4.8l-8.1 8.1a1.7 1.7 0 0 1-2.4-2.4l7.4-7.4" />
-          </svg>
-        </span>
-        <span className="ob__glass ob__field">
-          Сообщение
-          <svg viewBox="0 0 24 24" aria-hidden>
-            <path d="M20.5 12A8.5 8.5 0 1 1 12 3.5M20.5 12h-5a3.5 3.5 0 0 1-3.5-3.5v-5M20.5 12 12 3.5" />
-          </svg>
-        </span>
-        <span className="ob__glass ob__glass--round ob__icon" aria-hidden>
-          <svg viewBox="0 0 24 24">
-            <rect x="9" y="3" width="6" height="11" rx="3" />
-            <path d="M6 11a6 6 0 0 0 12 0M12 17v4" />
-          </svg>
-        </span>
-      </footer>
     </div>
   );
 }

@@ -11,7 +11,6 @@ import { chromium } from 'playwright';
 
 const base = process.env.ONBOARDING_URL ?? 'http://localhost:5173/onboarding.html';
 const FPS = 30;
-const DURATION = 7000; // как в web/src/onboarding/Onboarding.tsx
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
@@ -23,7 +22,9 @@ async function frames(layout, scale) {
   await page.waitForSelector('.ob__app .streak');
   await page.evaluate(() => document.fonts.ready);
   const frame = page.locator('.ob');
-  for (let i = 0; i < (DURATION / 1000) * FPS; i++) {
+  // У каждого варианта своя длина цикла: страница сообщает её сама
+  const duration = await page.evaluate(() => window.obDuration);
+  for (let i = 0; i < Math.round((duration / 1000) * FPS); i++) {
     await page.evaluate((t) => window.setFrame(t), (i * 1000) / FPS);
     await frame.screenshot({ path: join(dir, `${String(i).padStart(4, '0')}.png`) });
   }
