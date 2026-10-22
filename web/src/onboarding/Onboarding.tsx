@@ -4,7 +4,7 @@
 //
 // Тему пользователя бот на /start не знает (Telegram сообщает её только открытому мини-аппу),
 // поэтому у гайда свой фирменный фон — он одинаково смотрится и в светлом, и в тёмном чате.
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { trackById } from '../../../content';
 import type { Profile } from '../../../src/api-types';
@@ -53,14 +53,16 @@ const easeInOut = (x: number) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 /
 /** Появление с лёгким перелётом — для реплик кота */
 const pop = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * (x - 1) ** 3 + 1.7 * (x - 1) ** 2);
 
-/** Чат внутри телефона рисуется в 360×600 и уменьшается до экрана телефона */
-const SCREEN_SCALE = 0.72;
-const PHONE = { x: 95, y: 118, bezel: 9 };
-/** Центр кнопки меню в координатах кадра 400×600 */
-const BUTTON = { x: PHONE.x + PHONE.bezel + 58 * SCREEN_SCALE, y: PHONE.y + PHONE.bezel + 572 * SCREEN_SCALE };
-const FINGER_FROM = { x: 310, y: 400 };
+/**
+ * Телефон в пропорциях iPhone 17: экран 402×874 pt, рамка ~2,3 мм, скругление экрана 55 pt.
+ * Чат и приложение рисуются в настоящем размере экрана и уменьшаются целиком.
+ */
+const SCREEN = { width: 402, height: 874 };
+const SCREEN_SCALE = 262 / SCREEN.width;
+const PHONE = { x: 96, y: 112, bezel: 9 };
+const FINGER_FROM = { x: 320, y: 470 };
 /** Откуда летит конфетти — середина экрана телефона */
-const BURST = { x: PHONE.x + 138, y: PHONE.y + 200 };
+const BURST = { x: PHONE.x + PHONE.bezel + 131, y: PHONE.y + 250 };
 
 /** Конфетти: детерминированный «случайный» набор, чтобы каждый рендер давал те же кадры */
 const CONFETTI = Array.from({ length: 22 }, (_, i) => {
@@ -78,6 +80,14 @@ const CONFETTI = Array.from({ length: 22 }, (_, i) => {
 
 export function Onboarding() {
   const [t, setT] = useState(() => Number(new URLSearchParams(location.search).get('t') ?? 0));
+  // Палец целится в центр настоящей кнопки меню: её положение меряем в кадре один раз
+  const root = useRef<HTMLDivElement>(null);
+  const [button, setButton] = useState({ x: 140, y: 650 });
+  useLayoutEffect(() => {
+    const menu = root.current?.querySelector('.ob__menu')?.getBoundingClientRect();
+    const frame = root.current?.getBoundingClientRect();
+    if (menu && frame) setButton({ x: menu.left - frame.left + menu.width / 2, y: menu.top - frame.top + menu.height / 2 });
+  }, []);
 
   useEffect(() => {
     window.setFrame = (ms) => flushSync(() => setT(ms));
@@ -113,11 +123,11 @@ export function Onboarding() {
   const jump = Math.sin(Math.PI * span(t, 1900, 2250)) * 22 + Math.sin(Math.PI * span(t, 2250, 2500)) * 8;
   const breathe = Math.sin((t / DURATION) * Math.PI * 6) * 1.5;
 
-  const fx = FINGER_FROM.x + (BUTTON.x - FINGER_FROM.x) * move;
-  const fy = FINGER_FROM.y + (BUTTON.y - FINGER_FROM.y) * move;
+  const fx = FINGER_FROM.x + (button.x - FINGER_FROM.x) * move;
+  const fy = FINGER_FROM.y + (button.y - FINGER_FROM.y) * move;
 
   return (
-    <div className="ob">
+    <div className="ob" ref={root}>
       <div className="ob__dots" aria-hidden />
 
       <header className="ob__heading">
@@ -137,7 +147,11 @@ export function Onboarding() {
       </header>
 
       <div className="ob__phone" style={{ left: PHONE.x, top: PHONE.y, padding: PHONE.bezel }}>
-        <div className="ob__screen">
+        <span className="ob__side ob__side--action" />
+        <span className="ob__side ob__side--volume-up" />
+        <span className="ob__side ob__side--volume-down" />
+        <span className="ob__side ob__side--power" />
+        <div className="ob__screen" style={{ width: SCREEN.width * SCREEN_SCALE, height: SCREEN.height * SCREEN_SCALE }}>
           <div className="ob__scaled" style={{ transform: `scale(${SCREEN_SCALE})` }}>
             <Chat open={open} press={press} />
             <div className="ob__app" style={{ transform: `translateY(${(1 - open) * 100}%)` }}>
@@ -159,6 +173,7 @@ export function Onboarding() {
             </div>
           </div>
           <span className="ob__island" />
+          <span className="ob__home-indicator" />
         </div>
       </div>
 
@@ -184,7 +199,7 @@ export function Onboarding() {
         </div>
       )}
 
-      <div className="ob__ripple" style={{ left: BUTTON.x, top: BUTTON.y, opacity: ripple > 0 ? 1 - ripple : 0, transform: `translate(-50%, -50%) scale(${0.4 + ripple * 1.4})` }} />
+      <div className="ob__ripple" style={{ left: button.x, top: button.y, opacity: ripple > 0 ? 1 - ripple : 0, transform: `translate(-50%, -50%) scale(${0.4 + ripple * 1.4})` }} />
       <div className="ob__finger" style={{ left: fx, top: fy, opacity: finger, transform: `translate(-50%, -50%) scale(${1 - press * 0.2})` }} />
 
       <div className="ob__cat" style={{ transform: `translateY(${-jump - breathe}px)` }}>

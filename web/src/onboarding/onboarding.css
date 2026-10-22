@@ -1,4 +1,4 @@
-/* Кадр анимации-гайда: 400×600, снимается с deviceScaleFactor 2 */
+/* Кадр анимации-гайда: 400×720, снимается с deviceScaleFactor 2 */
 body {
   background: #fff;
 }
@@ -6,7 +6,7 @@ body {
 .ob {
   position: relative;
   width: 400px;
-  height: 600px;
+  height: 720px;
   overflow: hidden;
   /* Фирменный голубой с аватарки Кегля: своя подложка, которая не зависит от темы чата */
   background: radial-gradient(circle at 20% 105%, #c8f0d0 0, transparent 38%), radial-gradient(circle at 105% 10%, #7fd0f7 0, transparent 45%),
@@ -79,39 +79,84 @@ body {
 
 .ob__phone {
   position: absolute;
-  border-radius: 38px;
+  /* Скругление экрана 55 pt в масштабе плюс рамка */
+  border-radius: 45px;
   background: #17171c;
   box-shadow: 0 24px 48px rgba(0, 40, 90, 0.35), inset 0 0 0 2px #3a3a42;
 }
 
 .ob__screen {
   position: relative;
-  width: 259px;
-  height: 432px;
-  border-radius: 30px;
+  border-radius: 36px;
   overflow: hidden;
   background: var(--bg);
 }
 
+/* Dynamic Island 126×37 pt, 11 pt от верха экрана */
 .ob__island {
   position: absolute;
   top: 7px;
   left: 50%;
-  width: 72px;
-  height: 20px;
-  margin-left: -36px;
+  width: 82px;
+  height: 24px;
+  margin-left: -41px;
   border-radius: 12px;
   background: #000;
   z-index: 10;
 }
 
-/* Содержимое рисуется в 360×600, как настоящий экран, и уменьшается до размера телефона */
+/* Полоска «домой» 134×5 pt */
+.ob__home-indicator {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  width: 88px;
+  height: 3px;
+  margin-left: -44px;
+  border-radius: 2px;
+  background: #000;
+  z-index: 10;
+}
+
+/* Кнопки на корпусе: Action и громкость слева, питание справа */
+.ob__side {
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: #2c2c33;
+}
+
+.ob__side--action {
+  left: -3px;
+  top: 92px;
+  height: 20px;
+}
+
+.ob__side--volume-up {
+  left: -3px;
+  top: 128px;
+  height: 38px;
+}
+
+.ob__side--volume-down {
+  left: -3px;
+  top: 176px;
+  height: 38px;
+}
+
+.ob__side--power {
+  right: -3px;
+  top: 150px;
+  height: 60px;
+}
+
+/* Содержимое рисуется в размере экрана iPhone 17 (402×874 pt) и уменьшается до телефона */
 .ob__scaled {
   position: absolute;
   top: 0;
   left: 0;
-  width: 360px;
-  height: 600px;
+  width: 402px;
+  height: 874px;
   transform-origin: 0 0;
 }
 
@@ -129,8 +174,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 40px;
-  padding: 4px 28px 0;
+  height: 58px;
+  padding: 2px 34px 0 40px;
   background: rgba(255, 255, 255, 0.94);
   font-size: 15px;
   font-weight: 600;
@@ -228,8 +273,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 64px;
-  padding: 0 12px 8px 10px;
+  height: 86px;
+  padding: 0 12px 34px 10px;
   background: #fff;
   box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.08);
 }
@@ -270,14 +315,15 @@ body {
   overflow: hidden;
   background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif;
-  --safe-top: 44px;
-  --safe-bottom-device: 8px;
+  /* Вырез 62 pt и ряд кнопок Telegram под ним в полноэкранном режиме */
+  --safe-top: 104px;
+  --safe-bottom-device: 34px;
 }
 
 /* Плавающие кнопки Telegram в полноэкранном режиме — по бокам от выреза */
 .ob__tg-buttons {
   position: absolute;
-  top: 10px;
+  top: 60px;
   left: 12px;
   right: 12px;
   z-index: 6;
