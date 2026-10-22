@@ -58,11 +58,12 @@ const pop = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * (x - 1) ** 3 + 1
  * Чат и приложение рисуются в настоящем размере экрана и уменьшаются целиком.
  */
 const SCREEN = { width: 402, height: 874 };
-const SCREEN_SCALE = 262 / SCREEN.width;
-const PHONE = { x: 96, y: 112, bezel: 9 };
-const FINGER_FROM = { x: 320, y: 470 };
+// Telegram обрезает в чате медиа выше примерно 4:5, поэтому кадр 400×480: телефон целиком справа, текст и кот слева
+const SCREEN_SCALE = 446 / SCREEN.height;
+const PHONE = { x: 169, y: 10, bezel: 7 };
+const FINGER_FROM = { x: 330, y: 230 };
 /** Откуда летит конфетти — середина экрана телефона */
-const BURST = { x: PHONE.x + PHONE.bezel + 131, y: PHONE.y + 250 };
+const BURST = { x: PHONE.x + PHONE.bezel + 102, y: PHONE.y + 190 };
 
 /** Конфетти: детерминированный «случайный» набор, чтобы каждый рендер давал те же кадры */
 const CONFETTI = Array.from({ length: 22 }, (_, i) => {
@@ -82,7 +83,7 @@ export function Onboarding() {
   const [t, setT] = useState(() => Number(new URLSearchParams(location.search).get('t') ?? 0));
   // Палец целится в центр настоящей кнопки меню: её положение меряем в кадре один раз
   const root = useRef<HTMLDivElement>(null);
-  const [button, setButton] = useState({ x: 140, y: 650 });
+  const [button, setButton] = useState({ x: 205, y: 438 });
   useLayoutEffect(() => {
     const menu = root.current?.querySelector('.ob__menu')?.getBoundingClientRect();
     const frame = root.current?.getBoundingClientRect();
@@ -134,12 +135,16 @@ export function Onboarding() {
         <span className="ob__tag">UX/UI Trainer</span>
         <div className="ob__steps">
           <h1 style={{ opacity: first, transform: `translateY(${(first - 1) * 10}px)` }}>
-            Нажми «Тренажёр»
+            Нажми
             <br />
-            слева от поля ввода
+            «Тренажёр»
+            <br />
+            внизу чата
           </h1>
           <h1 style={{ opacity: second, transform: `translateY(${(1 - second) * 10}px)` }}>
-            Готово! Можно
+            Готово!
+            <br />
+            Можно
             <br />
             учиться 🎉
           </h1>
@@ -203,7 +208,7 @@ export function Onboarding() {
       <div className="ob__finger" style={{ left: fx, top: fy, opacity: finger, transform: `translate(-50%, -50%) scale(${1 - press * 0.2})` }} />
 
       <div className="ob__cat" style={{ transform: `translateY(${-jump - breathe}px)` }}>
-        <Cat mood={mood} size={108} />
+        <Cat mood={mood} size={96} />
       </div>
       <Bubble scale={callout}>Мяу! Жми сюда 👉</Bubble>
       <Bubble scale={cheer}>Мур! Поехали 🐾</Bubble>
