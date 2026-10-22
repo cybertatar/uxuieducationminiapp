@@ -307,6 +307,63 @@ body {
   color: #4fae4e;
 }
 
+/* Под шапкой два слоя: пустой чат до «Старт» и диалог после — они сменяют друг друга */
+.ob__body {
+  position: relative;
+  flex: 1;
+}
+
+.ob__layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Карточка «Что умеет этот бот?» — описание и картинка из BotFather */
+.ob__about {
+  margin: auto 40px;
+  padding: 10px 10px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.ob__about-pic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: linear-gradient(165deg, #2aabee, #1e8fd8);
+}
+
+.ob__about b,
+.ob__about p {
+  display: block;
+  margin: 0 4px;
+}
+
+.ob__about p {
+  margin-top: 4px;
+}
+
+.ob__start-row {
+  padding: 0 12px 30px;
+}
+
+/* До «Старт» вместо поля ввода одна большая кнопка */
+.ob__start {
+  height: 50px;
+  border-radius: 25px;
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 600;
+}
+
 /* Поле ввода — ряд отдельных капсул без общей плашки */
 .ob__input {
   position: relative;
@@ -454,4 +511,38 @@ body {
 .ob__confetti i {
   position: absolute;
   border-radius: 1px;
+}
+
+/* ---------- Широкий кадр для описания бота: 480×270 → 640×360 ---------- */
+
+.ob--wide {
+  width: 480px;
+  height: 270px;
+  background: radial-gradient(circle at 8% 110%, #c8f0d0 0, transparent 34%), radial-gradient(circle at 100% 0, #7fd0f7 0, transparent 40%),
+    linear-gradient(160deg, #2aabee, #1e8fd8);
+}
+
+.ob--wide .ob__heading {
+  top: 18px;
+  left: 20px;
+  width: 210px;
+}
+
+.ob--wide .ob__steps {
+  height: 56px;
+  margin-top: 10px;
+}
+
+.ob--wide .ob__steps h1 {
+  font-size: 22px;
+}
+
+.ob--wide .ob__cat {
+  left: 18px;
+}
+
+.ob--wide .ob__bubble-cat {
+  left: 24px;
+  bottom: 88px;
+  font-size: 14px;
 }
