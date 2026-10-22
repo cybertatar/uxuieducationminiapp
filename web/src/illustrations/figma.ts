@@ -545,6 +545,164 @@ const themeToggle = () =>
   card(72, 88, 176, 34, 8) +
   text(84, 109, 'Уведомления', { size: 11, cls: 'ink' });
 
+
+/* ---------- Новые сюжеты: панель автолейаута, подписи размеров, отвязка, вложенные свойства, группы переменных ---------- */
+
+/** Сегмент переключателя направления автолейаута */
+const segment = (x: number, y: number, active: boolean, glyph: string) => rect(x, y, 40, 26, active ? 'tonal' : 'field', 6) + glyph;
+const arrowDown = (x: number, y: number) => path(`M${x + 20} ${y + 7}v12M${x + 15} ${y + 14}l5 5 5-5`, 'stroke', 'fill="none"');
+const arrowRight = (x: number, y: number) => path(`M${x + 13} ${y + 13}h14M${x + 22} ${y + 8}l5 5-5 5`, 'stroke-accent', 'fill="none"');
+const wrapArrow = (x: number, y: number) => path(`M${x + 12} ${y + 8}h14v8h-12M${x + 18} ${y + 12}l-4 4 4 4`, 'stroke', 'fill="none"');
+
+/** Сетка выравнивания 3×3, активна верхняя левая точка */
+const alignGrid = (x: number, y: number) =>
+  rect(x, y, 56, 56, 'field', 6) +
+  [0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (r === 0 && c === 0 ? rect(x + 8, y + 8, 12, 4, 'accent', 2) : circle(x + 14 + c * 14, y + 14 + r * 14, 1.8, 'block')))).join('');
+
+const autoLayoutPanel = () =>
+  screen(20, 10, 280, 204) +
+  title(36, 36, 'Auto layout', 12) +
+  path('M20 48H300', 'divider') +
+  propLabel(56, 'Направление') +
+  segment(140, 56, false, arrowDown(140, 56)) +
+  segment(184, 56, true, arrowRight(184, 56)) +
+  segment(228, 56, false, wrapArrow(228, 56)) +
+  text(36, 109, 'W', { size: 11, weight: 600 }) +
+  rect(52, 94, 100, 24, 'field', 6) +
+  text(60, 110, 'Fill', { size: 11, cls: 'ink' }) +
+  icon('chevron', 134, 100, 12, 'stroke') +
+  text(168, 109, 'H', { size: 11, weight: 600 }) +
+  rect(184, 94, 100, 24, 'field', 6) +
+  text(192, 110, 'Fixed 180', { size: 11, cls: 'ink' }) +
+  icon('chevron', 266, 100, 12, 'stroke') +
+  alignGrid(36, 132) +
+  text(108, 146, 'Gap', { size: 10 }) +
+  field(108, 152, 76, 24, { value: '12' }) +
+  text(196, 146, 'Padding', { size: 10 }) +
+  field(196, 152, 88, 24, { value: '16' });
+
+/** Подпись размеров, как Figma показывает её под выделенным слоем */
+const sizeLabel = (cx: number, y: number, s: string) => {
+  const w = s.length * 5.6 + 12;
+  return rect(cx - w / 2, y, w, 16, 'accent', 4) + text(cx, y + 11.5, s, { size: 9, weight: 600, cls: 'on-accent', anchor: 'middle' });
+};
+const selection = (x: number, y: number, w: number, h: number) => path(`M${x} ${y}h${w}v${h}h-${w}z`, 'stroke-accent', 'fill="none"');
+
+const sizeLabels = () =>
+  card(20, 14, 280, 152, 12) +
+  selection(34, 26, 252, 56) +
+  rect(38, 30, 244, 48, 'block', 8) +
+  sizeLabel(160, 86, 'Fill × Fixed') +
+  selection(34, 112, 136, 14) +
+  lines(34, 116, [136], 10, 6) +
+  sizeLabel(102, 130, 'Fill × Hug') +
+  selection(210, 108, 76, 26) +
+  button(212, 110, 72, 22, 'Купить') +
+  sizeLabel(248, 140, 'Hug × Hug');
+
+/** Карточка товара с описанием: до — текст на пять строк, после — две строки и многоточие */
+const truncCard = (x: number, full: boolean) =>
+  card(x, 26, 136, full ? 148 : 112, 10) +
+  rect(x + 10, 36, 116, 40, 'block', 6) +
+  text(x + 10, 92, 'Кеды Classic', { size: 11, weight: 700, cls: 'ink' }) +
+  (full
+    ? lines(x + 10, 102, [112, 108, 114, 104, 70], 10)
+    : lines(x + 10, 102, [112, 100], 10) + text(x + 114, 117, '…', { size: 11, weight: 700, cls: 'ink' }));
+const truncate = () => caption(80, 'Сейчас') + truncCard(12, true) + arrow(152, 100) + caption(240, 'Нужно') + truncCard(172, false);
+
+/** Плитка со строкой слоя «Button» — вариант ответа */
+const rectGlyph = (x: number, y: number) => path(`M${x + 3} ${y + 3}h10v10h-10z`, 'stroke', 'fill="none"');
+const layerTile = (glyph: (x: number, y: number) => string) => rect(0, 0, 160, 64, 'tile', 12) + layerAt(30, 24, glyph, 'Button', 'ink', 13);
+
+/** Дерево слоёв карточки: кнопка — экземпляр или нарисованная вручную */
+const cardTree = (instance: boolean) =>
+  rect(0, 0, 240, 130, 'tile', 12) +
+  layerAt(16, 14, frameGlyph, 'Карточка', 'ink', 11) +
+  layerAt(34, 40, groupGlyph, 'Фото', 'ink', 10) +
+  layerAt(34, 64, textGlyph, 'Кеды Classic', 'ink', 10) +
+  (instance
+    ? layerAt(34, 88, instanceGlyph, 'Button', 'accent', 10)
+    : layerAt(34, 88, rectGlyph, 'Rectangle 12', 'ink', 10) + layerAt(52, 108, textGlyph, 'Купить', 'ink', 10));
+
+/** Свойства экземпляра карточки; ниже — свойства вложенной кнопки */
+const nestedPanel = () =>
+  screen(20, 10, 280, 214) +
+  instanceGlyph(34, 22) +
+  title(56, 35, 'Card', 12) +
+  path('M20 48H300', 'divider') +
+  propLabel(54, 'Title') +
+  field(140, 54, 144, 26, { value: 'Новинка' }) +
+  propLabel(86, 'Show badge') +
+  toggle(86) +
+  path('M36 124H284', 'divider') +
+  instanceGlyph(36, 132) +
+  text(58, 144, 'Button', { size: 11, weight: 600, cls: 'ink' }) +
+  propLabel(154, 'Size') +
+  dropdown(154, 'Small') +
+  propLabel(186, 'Label') +
+  field(140, 186, 144, 26, { value: 'Купить' });
+
+/** Панель свойств с понятными или безымянными названиями */
+const namesPanel = (good: boolean) =>
+  rect(0, 0, 240, 120, 'tile', 12) +
+  instanceGlyph(14, 12) +
+  text(36, 24, 'Button', { size: 11, weight: 600, cls: 'ink' }) +
+  (good ? ['Size', 'State', 'Show icon'] : ['Property 1', 'Property 2', 'Property 3'])
+    .map((l, i) => text(14, 54 + i * 26, l, { size: 10 }) + rect(110, 41 + i * 26, 116, 20, 'field', 5) + text(118, 55 + i * 26, (good ? ['Large', 'Hover', 'true'] : ['Variant2', 'Default', 'true'])[i], { size: 10, cls: 'ink' }))
+    .join('');
+
+/** 20 иконок: набор из вариантов или одна кнопка со свойством instance swap */
+const ICON_NAMES = ['plus', 'search', 'cart', 'heart', 'star', 'trash', 'bell', 'user'];
+const iconVariants = () =>
+  rect(0, 0, 240, 130, 'tile', 12) +
+  path('M10 10h220v86h-220z', 'dash-accent', 'fill="none"') +
+  ICON_NAMES.map((n, i) => {
+    const x = 18 + (i % 4) * 52;
+    const y = 18 + Math.floor(i / 4) * 38;
+    return rect(x, y, 44, 28, 'accent', 7) + icon(n, x + 15, y + 7, 14, 'stroke-on-accent');
+  }).join('') +
+  text(120, 116, 'Icon=Plus, Icon=Search… · 20 вариантов', { size: 9, anchor: 'middle' });
+const iconSwap = () =>
+  rect(0, 0, 240, 130, 'tile', 12) +
+  rect(20, 22, 76, 30, 'accent', 8) +
+  icon('plus', 30, 30, 14, 'stroke-on-accent') +
+  text(70, 41, 'Add', { size: 10, weight: 600, cls: 'on-accent', anchor: 'middle' }) +
+  text(20, 82, 'Icon', { size: 10 }) +
+  rect(70, 68, 152, 22, 'field', 6) +
+  instanceGlyph(76, 71) +
+  text(98, 83, 'Plus', { size: 10, cls: 'ink' }) +
+  icon('chevron', 204, 73, 12, 'stroke') +
+  text(120, 116, '1 компонент · свойство instance swap', { size: 9, anchor: 'middle' });
+
+/** Список переменных: плоский или разложенный по группам через слэш */
+const varRow = (x: number, y: number, fill: string, name: string) => `<rect x="${x}" y="${y}" width="12" height="12" rx="3" fill="${fill}" class="wf-swatch"/>` + text(x + 18, y + 10, name, { size: 9.5, cls: 'ink' });
+const VARS: [string, string][] = [
+  ['#ffffff', 'surface'], ['#1c1c1e', 'textPrimary'], ['#2b6fd6', 'primaryBtn'], ['#f2f2f7', 'bg2'],
+  ['#8e8e93', 'secondaryText'], ['#e5484d', 'errorRed'], ['#4c8dff', 'linkBlue'], ['#2f9e44', 'ok'],
+];
+const varsFlat = () => rect(0, 0, 240, 150, 'tile', 12) + VARS.map(([c, n], i) => varRow(16 + (i % 2) * 112, 16 + Math.floor(i / 2) * 32, c, n)).join('');
+const varsGrouped = () =>
+  rect(0, 0, 240, 150, 'tile', 12) +
+  (
+    [
+      [0, 'color/bg', [['#ffffff', 'surface'], ['#f2f2f7', 'secondary']]],
+      [1, 'color/text', [['#1c1c1e', 'primary'], ['#8e8e93', 'secondary']]],
+      [2, 'color/action', [['#2b6fd6', 'primary'], ['#e5484d', 'danger']]],
+    ] as [number, string, [string, string][]][]
+  )
+    .map(([i, group, rows]) => {
+      const y = 14 + i * 44;
+      return icon('folder', 14, y, 13) + text(32, y + 10, group, { size: 9.5, weight: 700, cls: 'ink' }) + rows.map(([c, n], j) => varRow(32 + j * 100, y + 20, c, n)).join('');
+    })
+    .join('');
+
+/** Цепочка алиасов: заливка кнопки → семантическая переменная → примитив */
+const aliasNode = (x: number, name: string, value: string, primitive = false) =>
+  card(x, 40, 92, 52, 10) + text(x + 46, 60, name, { size: 9, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  (primitive ? `<rect x="${x + 22}" y="68" width="14" height="14" rx="3" fill="#2b6fd6" class="wf-swatch"/>` + text(x + 42, 79, value, { size: 9, cls: 'ink' }) : rect(x + 14, 67, 64, 16, 'tonal', 5) + icon('link', x + 18, 69, 12, 'stroke-accent') + text(x + 34, 79, value, { size: 8.5, cls: 'ink' }));
+const aliasChain = () =>
+  aliasNode(4, 'button/bg', 'action') + arrow(97, 66) + aliasNode(114, 'color/action', 'blue/500') + arrow(207, 66) + aliasNode(224, 'blue/500', '2B6FD6', true) + text(160, 118, 'заливка кнопки → семантика → палитра', { size: 9, anchor: 'middle' });
+
 export const figmaArt: Record<string, Illustration> = {
   'fc-ov-setup': ill(320, 116, 'Главный компонент — синяя кнопка «Купить»; его экземпляр — синяя кнопка, текст в которой переопределён на «Оплатить»', overrideSetup()),
   'fc-ov-a': ill(140, 100, 'Экземпляр: зелёная кнопка «Оплатить»', overrideTile('Оплатить', true)),
@@ -649,6 +807,51 @@ export const figmaArt: Record<string, Illustration> = {
     'Таблица переменных с режимами Light и Dark: color/bg/surface — FFFFFF и ссылка на gray/900, color/text/primary — 1C1C1E и F2F2F7, color/action/primary — 2B6FD6 и 4C8DFF',
     modesTable(),
     { alias: [226, 78, 80, 30] },
+  ),
+  'fl-panel': ill(
+    320,
+    224,
+    'Панель Auto layout: направление — вниз, вправо (выбрано) и с переносом; W — Fill, H — Fixed 180; сетка выравнивания, Gap 12, Padding 16',
+    autoLayoutPanel(),
+    { wrap: [224, 52, 48, 34], height: [164, 90, 124, 32] },
+  ),
+  'fl-labels': ill(
+    320,
+    176,
+    'Карточка в режиме выделения: картинка с подписью Fill × Fixed, строка текста с подписью Fill × Hug и кнопка «Купить» с подписью Hug × Hug',
+    sizeLabels(),
+    { hug: [204, 104, 88, 56] },
+  ),
+  'fl-truncate': ill(
+    320,
+    184,
+    'Карточка «Кеды Classic» с описанием на пять строк, а рядом та же карточка, где описание сокращено до двух строк с многоточием',
+    truncate(),
+  ),
+  'fc-glyph-instance': ill(160, 64, 'Слой Button со значком ромба-контура', layerTile(instanceGlyph)),
+  'fc-glyph-frame': ill(160, 64, 'Слой Button со значком фрейма — решёткой', layerTile(frameGlyph)),
+  'fc-glyph-main': ill(160, 64, 'Слой Button со значком из четырёх ромбов', layerTile(mainGlyph)),
+  'fc-glyph-group': ill(160, 64, 'Слой Button со значком группы — пунктирным квадратом', layerTile(groupGlyph)),
+  'fc-tree-instance': ill(240, 130, 'Слои карточки: Фото, текст «Кеды Classic» и экземпляр Button', cardTree(true)),
+  'fc-tree-drawn': ill(240, 130, 'Слои карточки: Фото, текст «Кеды Classic», прямоугольник Rectangle 12 и отдельный текст «Купить»', cardTree(false)),
+  'fp-nested-panel': ill(
+    320,
+    234,
+    'Панель экземпляра Card: Title — «Новинка», Show badge — включено; ниже раздел Button со свойствами Size — Small и Label — «Купить»',
+    nestedPanel(),
+    { nested: [28, 126, 264, 92] },
+  ),
+  'fp-names-good': ill(240, 120, 'Свойства кнопки: Size — Large, State — Hover, Show icon — true', namesPanel(true)),
+  'fp-names-bad': ill(240, 120, 'Свойства кнопки: Property 1 — Variant2, Property 2 — Default, Property 3 — true', namesPanel(false)),
+  'fp-icons-variants': ill(240, 130, 'Набор из 20 вариантов кнопки, по одному на каждую иконку: Icon=Plus, Icon=Search и так далее', iconVariants()),
+  'fp-icons-swap': ill(240, 130, 'Одна кнопка Add и свойство Icon с выпадающим списком, где выбрана иконка Plus', iconSwap()),
+  'fv-vars-flat': ill(240, 150, 'Плоский список переменных: surface, textPrimary, primaryBtn, bg2, secondaryText, errorRed, linkBlue, ok', varsFlat()),
+  'fv-vars-grouped': ill(240, 150, 'Переменные по группам: color/bg — surface и secondary, color/text — primary и secondary, color/action — primary и danger', varsGrouped()),
+  'fv-alias-chain': ill(
+    320,
+    128,
+    'Цепочка: переменная button/bg ссылается на color/action, та — на blue/500 со значением 2B6FD6',
+    aliasChain(),
   ),
 };
 
