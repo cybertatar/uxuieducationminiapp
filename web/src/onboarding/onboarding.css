@@ -165,96 +165,134 @@ body {
   inset: 0;
   display: flex;
   flex-direction: column;
-  /* Фон чата Telegram по умолчанию */
-  background: linear-gradient(160deg, #d8e6c2, #b9d3a5 55%, #a9c99c);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif;
 }
 
+/* Обои Telegram по умолчанию: зелёный градиент с бледным рисунком */
+.ob__wallpaper {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.07) 0 9px, transparent 10px) 0 0 / 96px 110px,
+    radial-gradient(circle at 70% 70%, transparent 0 12px, rgba(255, 255, 255, 0.07) 13px 15px, transparent 16px) 0 0 / 120px 130px,
+    linear-gradient(165deg, #e2e9b8, #a9cf9a 45%, #7fbf8f 75%, #a4cf9d);
+}
+
+/* Стеклянные капсулы Liquid Glass */
+.ob__glass {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 10px rgba(30, 70, 20, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px) saturate(1.4);
+}
+
+.ob__glass--round {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.ob__glass svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #1c1c1e;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Статус-бар прозрачный, поверх обоев, по бокам от Dynamic Island */
 .ob__status {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 58px;
-  padding: 2px 34px 0 40px;
-  background: rgba(255, 255, 255, 0.94);
-  font-size: 15px;
+  padding: 2px 30px 0 44px;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .ob__status-icons {
   display: flex;
-  gap: 5px;
+  align-items: center;
+  gap: 6px;
 }
 
-.ob__status-icons i {
-  width: 16px;
-  height: 10px;
-  border-radius: 3px;
+.ob__wifi {
+  width: 19px;
+  height: 14px;
+  fill: #000;
+}
+
+.ob__battery {
+  padding: 1px 4px;
+  border-radius: 5px;
   background: #000;
-}
-
-.ob__status-icons i:last-child {
-  width: 24px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .ob__header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 12px 10px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
-}
-
-.ob__back {
-  color: var(--accent);
-  font-size: 30px;
-  line-height: 1;
-  margin-top: -4px;
+  gap: 12px;
+  padding: 4px 16px 0;
 }
 
 .ob__title {
   flex: 1;
-  display: flex;
+  height: 44px;
   flex-direction: column;
-  align-items: center;
+  border-radius: 22px;
   font-size: 16px;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .ob__title span {
   font-size: 13px;
-  color: #8e8e93;
+  color: #6d6d72;
 }
 
 .ob__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ob__avatar img {
+  width: 100%;
+  height: 100%;
 }
 
 .ob__messages {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 8px;
-  padding: 12px 10px;
+  padding: 12px 12px 10px;
 }
 
 .ob__bubble {
-  max-width: 86%;
-  padding: 7px 11px 8px;
-  border-radius: 16px 16px 16px 4px;
+  max-width: 84%;
+  padding: 8px 12px 9px;
+  border-radius: 18px 18px 18px 6px;
   background: #fff;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.35;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
 }
 
 .ob__bubble--out {
   align-self: flex-end;
-  border-radius: 16px 16px 4px 16px;
+  border-radius: 18px 18px 6px 18px;
   background: #e1fec6;
 }
 
@@ -269,43 +307,55 @@ body {
   color: #4fae4e;
 }
 
+/* Поле ввода — ряд отдельных капсул без общей плашки */
 .ob__input {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 86px;
-  padding: 0 12px 34px 10px;
-  background: #fff;
-  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.08);
+  gap: 7px;
+  padding: 0 12px 30px;
 }
 
 /* Кнопка меню мини-аппа: setChatMenuButton с текстом «Тренажёр» */
 .ob__menu {
   flex: none;
-  padding: 7px 12px;
-  border-radius: 16px;
-  background: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px 0 11px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #3a9bff, #0a7aff);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
+}
+
+.ob__menu svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
 }
 
 .ob__field {
   flex: 1;
-  padding: 8px 14px;
-  border: 1px solid #e3e3e8;
-  border-radius: 18px;
-  color: #a2a2a8;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 9px 0 14px;
+  border-radius: 22px;
+  color: #6d6d72;
+  font-size: 16px;
 }
 
-.ob__mic svg {
-  display: block;
-  width: 26px;
-  height: 26px;
-  fill: none;
-  stroke: #8e8e93;
-  stroke-width: 1.8;
-  stroke-linecap: round;
+.ob__field svg {
+  flex: none;
+  stroke: #6d6d72;
 }
 
 /* Мини-апп выезжает снизу. transform делает его containing block для position: fixed — таббар остаётся внутри экрана */

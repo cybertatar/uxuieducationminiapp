@@ -221,25 +221,33 @@ function Bubble({ scale, children }: { scale: number; children: string }) {
   );
 }
 
-/** Чат с ботом: статус-бар, шапка, приветствие и поле ввода с кнопкой меню */
+/** Чат с ботом в современном Telegram для iOS: прозрачный статус-бар, стеклянные капсулы шапки и поля ввода */
 function Chat({ open, press }: { open: number; press: number }) {
   return (
     <div className="ob__chat" style={{ filter: `brightness(${1 - open * 0.35})` }}>
+      <div className="ob__wallpaper" aria-hidden />
       <div className="ob__status">
         <span>10:24</span>
-        <span className="ob__status-icons">
-          <i />
-          <i />
-          <i />
+        <span className="ob__status-icons" aria-hidden>
+          <svg viewBox="0 0 20 14" className="ob__wifi">
+            <path d="M10 13.5 7.4 10.6a3.6 3.6 0 0 1 5.2 0zM4.6 7.9a7.6 7.6 0 0 1 10.8 0l-1.6 1.7a5.3 5.3 0 0 0-7.6 0zM1.8 5.1a11.6 11.6 0 0 1 16.4 0l-1.6 1.7a9.3 9.3 0 0 0-13.2 0z" />
+          </svg>
+          <span className="ob__battery">80</span>
         </span>
       </div>
       <header className="ob__header">
-        <span className="ob__back">‹</span>
-        <span className="ob__title">
+        <span className="ob__glass ob__glass--round ob__back">
+          <svg viewBox="0 0 24 24">
+            <path d="M15 4 7 12l8 8" />
+          </svg>
+        </span>
+        <span className="ob__glass ob__title">
           <b>UX/UI Trainer</b>
           <span>бот</span>
         </span>
-        <img className="ob__avatar" src={avatar} alt="" />
+        <span className="ob__glass ob__glass--round ob__avatar">
+          <img src={avatar} alt="" />
+        </span>
       </header>
       <div className="ob__messages">
         <div className="ob__bubble ob__bubble--out">
@@ -254,11 +262,25 @@ function Chat({ open, press }: { open: number; press: number }) {
         </div>
       </div>
       <footer className="ob__input">
-        <span className="ob__menu" style={{ transform: `scale(${1 - press * 0.08})`, boxShadow: `0 0 0 ${press * 6}px rgba(36, 129, 204, 0.25)` }}>
+        <span className="ob__menu" style={{ transform: `scale(${1 - press * 0.08})`, boxShadow: `0 0 0 ${press * 6}px rgba(255, 255, 255, 0.45), 0 4px 12px rgba(0, 80, 160, 0.3)` }}>
+          <svg viewBox="0 0 24 24" aria-hidden>
+            <rect x="4" y="5" width="16" height="14" rx="3.5" />
+            <path d="M4 9.5h16" />
+          </svg>
           Тренажёр
         </span>
-        <span className="ob__field">Сообщение</span>
-        <span className="ob__mic" aria-hidden>
+        <span className="ob__glass ob__glass--round ob__icon" aria-hidden>
+          <svg viewBox="0 0 24 24">
+            <path d="m20 11.5-7.8 7.8a5 5 0 0 1-7.1-7.1l8.2-8.2a3.4 3.4 0 0 1 4.8 4.8l-8.1 8.1a1.7 1.7 0 0 1-2.4-2.4l7.4-7.4" />
+          </svg>
+        </span>
+        <span className="ob__glass ob__field">
+          Сообщение
+          <svg viewBox="0 0 24 24" aria-hidden>
+            <path d="M20.5 12A8.5 8.5 0 1 1 12 3.5M20.5 12h-5a3.5 3.5 0 0 1-3.5-3.5v-5M20.5 12 12 3.5" />
+          </svg>
+        </span>
+        <span className="ob__glass ob__glass--round ob__icon" aria-hidden>
           <svg viewBox="0 0 24 24">
             <rect x="9" y="3" width="6" height="11" rx="3" />
             <path d="M6 11a6 6 0 0 0 12 0M12 17v4" />
