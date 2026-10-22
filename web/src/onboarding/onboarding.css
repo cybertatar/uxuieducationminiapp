@@ -1,4 +1,4 @@
-/* Кадр анимации-гайда: 400×720, снимается с deviceScaleFactor 2 */
+/* Кадр анимации-гайда: 400×480 (Telegram обрезает в чате медиа выше ~4:5), снимается с deviceScaleFactor 2 */
 body {
   background: #fff;
 }
@@ -6,7 +6,7 @@ body {
 .ob {
   position: relative;
   width: 400px;
-  height: 720px;
+  height: 480px;
   overflow: hidden;
   /* Фирменный голубой с аватарки Кегля: своя подложка, которая не зависит от темы чата */
   background: radial-gradient(circle at 20% 105%, #c8f0d0 0, transparent 38%), radial-gradient(circle at 105% 10%, #7fd0f7 0, transparent 45%),
@@ -43,9 +43,9 @@ body {
 
 .ob__heading {
   position: absolute;
-  top: 22px;
-  left: 24px;
-  right: 24px;
+  top: 20px;
+  left: 16px;
+  width: 150px;
   color: #fff;
 }
 
@@ -61,14 +61,14 @@ body {
 
 .ob__steps {
   position: relative;
-  height: 62px;
-  margin-top: 10px;
+  height: 84px;
+  margin-top: 12px;
 }
 
 .ob__steps h1 {
   position: absolute;
   inset: 0;
-  font-size: 25px;
+  font-size: 23px;
   font-weight: 800;
   line-height: 1.12;
   letter-spacing: -0.01em;
@@ -80,14 +80,14 @@ body {
 .ob__phone {
   position: absolute;
   /* Скругление экрана 55 pt в масштабе плюс рамка */
-  border-radius: 45px;
+  border-radius: 35px;
   background: #17171c;
   box-shadow: 0 24px 48px rgba(0, 40, 90, 0.35), inset 0 0 0 2px #3a3a42;
 }
 
 .ob__screen {
   position: relative;
-  border-radius: 36px;
+  border-radius: 28px;
   overflow: hidden;
   background: var(--bg);
 }
@@ -95,12 +95,12 @@ body {
 /* Dynamic Island 126×37 pt, 11 pt от верха экрана */
 .ob__island {
   position: absolute;
-  top: 7px;
+  top: 6px;
   left: 50%;
-  width: 82px;
-  height: 24px;
-  margin-left: -41px;
-  border-radius: 12px;
+  width: 64px;
+  height: 19px;
+  margin-left: -32px;
+  border-radius: 10px;
   background: #000;
   z-index: 10;
 }
@@ -108,11 +108,11 @@ body {
 /* Полоска «домой» 134×5 pt */
 .ob__home-indicator {
   position: absolute;
-  bottom: 5px;
+  bottom: 4px;
   left: 50%;
-  width: 88px;
-  height: 3px;
-  margin-left: -44px;
+  width: 68px;
+  height: 2.5px;
+  margin-left: -34px;
   border-radius: 2px;
   background: #000;
   z-index: 10;
@@ -128,26 +128,26 @@ body {
 
 .ob__side--action {
   left: -3px;
-  top: 92px;
-  height: 20px;
+  top: 72px;
+  height: 15px;
 }
 
 .ob__side--volume-up {
   left: -3px;
-  top: 128px;
-  height: 38px;
+  top: 99px;
+  height: 29px;
 }
 
 .ob__side--volume-down {
   left: -3px;
-  top: 176px;
-  height: 38px;
+  top: 136px;
+  height: 29px;
 }
 
 .ob__side--power {
   right: -3px;
-  top: 150px;
-  height: 60px;
+  top: 116px;
+  height: 46px;
 }
 
 /* Содержимое рисуется в размере экрана iPhone 17 (402×874 pt) и уменьшается до телефона */
@@ -406,8 +406,8 @@ body {
 
 .ob__bubble-cat {
   position: absolute;
-  left: 14px;
-  bottom: 118px;
+  left: 10px;
+  bottom: 102px;
   padding: 9px 13px;
   border-radius: 16px;
   background: #fff;

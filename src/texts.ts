@@ -1,4 +1,4 @@
-import { questions, sections, trackById, tracks } from '../content';
+import { questions, sections, tracks } from '../content';
 
 /** «больше 130» — круглое число вопросов вниз до десятка, чтобы текст не устаревал с каждым новым вопросом */
 const questionsRounded = () => Math.floor((questions.length - 1) / 10) * 10;
@@ -7,10 +7,6 @@ const questionsRounded = () => Math.floor((questions.length - 1) / 10) * 10;
 const lower = (t: string) => (/^[А-ЯЁ]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t);
 
 const joinAnd = (items: string[]) => `${items.slice(0, -1).join(', ')} и ${items.at(-1)}`;
-
-/** «UX — эвристики Нильсена, законы UX…; гайдлайны — …; Figma — …» */
-const sectionList = () =>
-  sections.map((s) => `${lower(s.title)} — ${joinAnd(s.tracks.map((id) => lower(trackById.get(id)!.title)))}`).join('; ');
 
 const themes = (n: number) => {
   const m10 = n % 10;
@@ -35,13 +31,14 @@ export const botDescription = () =>
 /** Короткое описание в профиле бота (до 120 символов) */
 export const botShortDescription = () => 'Тесты для UX/UI: эвристики, законы UX, HIG, Material, WCAG, Figma, дизайн-системы, UX-райтинг 🐈';
 
-/** Приветствие на /start */
+/**
+ * Приветствие на /start — подпись к анимации-гайду. Короткое, чтобы гайд не уезжал за экран:
+ * полный список тем есть в описании бота.
+ */
 export const welcomeText = (name: string) =>
   `Привет, ${name}! 👋 Я Кегль, кот-тренажёр для UX/UI-дизайнеров 🐈\n\n` +
-  `Внутри ${themes(tracks.length)} в трёх разделах: ${sectionList()}. Это больше ${questionsRounded()} вопросов, ` +
-  'многие — на макетах: найти проблему, выбрать лучший вариант, узнать паттерн.\n\n' +
-  'После каждого ответа покажу разбор и ссылку на первоисточник — и при ошибке, и при верном ответе. А ошибки вернутся на повторение, чтобы точно запомнились.\n\n' +
-  '👇 Тренажёр открывается кнопкой «Тренажёр» слева от поля ввода или кнопкой под этим сообщением.';
+  `${themes(tracks.length)} и больше ${questionsRounded()} вопросов, многие — на макетах. После каждого ответа — разбор и ссылка на первоисточник.\n\n` +
+  '👇 Открой тренажёр кнопкой «Тренажёр» внизу чата или кнопкой под этим сообщением.';
 
 /** Ответ на любое сообщение: многие не знают про мини-аппы и пишут боту, как человеку */
 export const appHintText =
