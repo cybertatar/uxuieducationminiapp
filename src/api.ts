@@ -6,6 +6,7 @@ import { activityCount, activityDates, getAnswers, history, upsertUser, type Use
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession } from './select';
+import { weakTopics } from './stats';
 import { pauseUntil, recordActivity, recordAnswer, today, updateSettings } from './service';
 import { visibleStreak } from './streak';
 import { addDays, isValidTime, isValidTimeZone } from './time';
@@ -76,6 +77,7 @@ api.get('/me', async (c) => {
       };
     }),
     reviewDue: questions.filter((q) => isDue(answers.get(q.id), date)).length,
+    weakTopics: weakTopics(questions, answers),
     settings: {
       dailyEnabled: user.daily_enabled === 1,
       dailyTime: user.daily_time,

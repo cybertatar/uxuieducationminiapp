@@ -6,8 +6,8 @@ import { pickDailyQuestion, pickTrackSession } from '../src/select';
 import { applyActivity, streakAtRisk, visibleStreak } from '../src/streak';
 import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
-import { questionsByTrack, type TrackId } from '../content';
-import { accuracy, trackHighlights } from '../src/stats';
+import { questionsByTrack, type Question, type TrackId } from '../content';
+import { accuracy, trackHighlights, weakTopics } from '../src/stats';
 
 describe('time', () => {
   it('считает локальную дату в поясе пользователя', () => {
@@ -156,6 +156,33 @@ describe('статистика', () => {
   it('точность без ответов не считается', () => {
     expect(accuracy({ attempts: 0, correct: 0 })).toBeNull();
     expect(accuracy({ attempts: 4, correct: 3 })).toBe(0.75);
+  });
+
+  describe('что почитать', () => {
+    const link = (url: string) => ({ title: url, url });
+    const q = (id: string, topic: string, url: string) =>
+      ({ id, track: 'heuristics', topic, text: '', summary: '', explanation: '', options: ['a', 'b'], correct: 0, links: [link(url), link('extra')] }) as Question;
+    const a = (attempts: number, correctTotal: number) => ({ attempts, correctTotal });
+    const pool = [q('1', 'A', 'a1'), q('2', 'A', 'a2'), q('3', 'A', 'a2'), q('4', 'B', 'b1'), q('5', 'C', 'c1'), q('6', 'D', 'a2')];
+
+    it('темы по числу ошибок, статья — та, на чьих вопросах ошибались чаще', () => {
+      const answers = new Map([['1', a(3, 1)], ['2', a(2, 0)], ['3', a(2, 1)], ['4', a(1, 0)], ['5', a(4, 4)]]);
+      expect(weakTopics(pool, answers)).toEqual([
+        { track: 'heuristics', topic: 'A', mistakes: 5, link: link('a2') },
+        { track: 'heuristics', topic: 'B', mistakes: 1, link: link('b1') },
+      ]);
+    });
+
+    it('при равенстве ошибок выше тема с худшей точностью', () => {
+      const answers = new Map([['4', a(10, 8)], ['5', a(2, 0)]]);
+      expect(weakTopics(pool, answers).map((t) => t.topic)).toEqual(['C', 'B']);
+    });
+
+    it('одна статья не повторяется, список ограничен', () => {
+      const answers = new Map([['2', a(5, 0)], ['6', a(3, 0)], ['4', a(1, 0)], ['5', a(1, 0)]]);
+      expect(weakTopics(pool, answers).map((t) => t.topic)).toEqual(['A', 'B', 'C']);
+      expect(weakTopics(pool, answers, 1)).toHaveLength(1);
+    });
   });
 });
 

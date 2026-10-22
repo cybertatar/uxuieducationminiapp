@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Profile, Settings as SettingsT, SettingsPatch } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton } from '../buttons';
-import { shortDate } from '../format';
+import { shortDate, timeZoneLabel } from '../format';
 import { haptic, requestWriteAccess } from '../tg';
 
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -104,7 +104,7 @@ export function Settings({ profile, onBack, onChange }: Props) {
         </p>
       )}
 
-      <p className="hint section-hint">Часовой пояс: {s.tz} — определяется по телефону автоматически.</p>
+      <p className="hint section-hint">Часовой пояс: {timeZoneLabel(s.tz)}. Берём его из настроек телефона.</p>
     </main>
   );
 }

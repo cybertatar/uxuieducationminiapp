@@ -1009,6 +1009,27 @@ button.card:active:not(:disabled) {
   white-space: nowrap;
 }
 
+.reading__item {
+  text-align: left;
+}
+
+.reading__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.reading__title {
+  color: var(--link);
+  font-size: 15px;
+}
+
+.reading__arrow {
+  color: var(--hint);
+}
+
 .cell--action {
   color: var(--link);
 }

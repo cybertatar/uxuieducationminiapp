@@ -5,7 +5,7 @@ import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
-import { AUTHOR_URL, openTelegramLink } from '../tg';
+import { AUTHOR_URL, openLink, openTelegramLink } from '../tg';
 import { Wireframe } from '../Wireframe';
 
 export type HomeTab = 'progress' | 'tracks';
@@ -111,6 +111,8 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
           <Stats profile={profile} starting={starting} onStart={onStart} />
         </>
       )}
+
+      {profile.weakTopics.length > 0 && <Reading topics={profile.weakTopics} />}
 
       <button className="cell" onClick={onSettings}>
         <span>🔔 Уведомления</span>
@@ -418,6 +420,31 @@ function Stats({ profile, starting, onStart }: TabProps) {
         </p>
       )}
     </section>
+  );
+}
+
+/** Статьи по темам, где больше всего ошибок: тап открывает статью во встроенном браузере Telegram */
+function Reading({ topics }: { topics: Profile['weakTopics'] }) {
+  return (
+    <>
+      <h2 className="section-title">Что почитать</h2>
+      <p className="hint section-hint">Статьи по темам, в которых у тебя больше всего ошибок.</p>
+      <div className="group reading">
+        {topics.map((t) => (
+          <button key={t.link.url} className="cell reading__item" onClick={() => openLink(t.link.url)}>
+            <span className="reading__body">
+              <span className="reading__title">{t.link.title}</span>
+              <span className="hint">
+                {t.topic} · <span className="nowrap">{t.mistakes} {plural(t.mistakes, 'ошибка', 'ошибки', 'ошибок')}</span>
+              </span>
+            </span>
+            <span className="reading__arrow" aria-hidden>
+              ↗
+            </span>
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
