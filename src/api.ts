@@ -1,13 +1,13 @@
 import { Api } from 'grammy';
 import { Hono } from 'hono';
-import { questions, questionsByTrack, trackById, type TrackId } from '../content';
+import { questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
 import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
 import { offerDailyQuestion } from './bot';
 import { activityCount, activityDates, getAnswers, history, parseSource, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
-import { pickReviewSession, pickTrackSession } from './select';
+import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
 import { weakTopics } from './stats';
 import { pauseUntil, recordActivity, recordAnswer, today, updateSettings } from './service';
 import { visibleStreak } from './streak';
@@ -102,6 +102,9 @@ api.post('/session', async (c) => {
   const date = today(user, Date.now());
   if (body.mode === 'review') {
     return c.json({ questionIds: pickReviewSession(questions, answers, date) });
+  }
+  if (body.mode === 'warmup') {
+    return c.json({ questionIds: pickWarmupSession(questionById, answers) });
   }
   if (!trackById.has(body.track)) return c.json({ error: 'unknown track' }, 400);
   return c.json({ questionIds: pickTrackSession(questionsByTrack(body.track as TrackId), answers, date) });

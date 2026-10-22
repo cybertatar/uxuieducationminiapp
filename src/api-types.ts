@@ -44,7 +44,7 @@ export interface HistoryResponse {
   days: HistoryDay[];
 }
 
-export type SessionRequest = { mode: 'track'; track: TrackId } | { mode: 'review' };
+export type SessionRequest = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' };
 
 export interface SessionResponse {
   questionIds: string[];

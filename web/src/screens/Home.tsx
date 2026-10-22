@@ -131,21 +131,22 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
   );
 }
 
-/** С чего начать: первая тема и короткий путь к выбору другой */
-const FIRST_TRACK = 'heuristics';
+/** С чего начать: разминка по всем разделам и короткий путь к выбору темы */
+const WARMUP_ART = ['track-heuristics', 'track-hig', 'track-figma-components'];
 
 function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStart' | 'onTab'>) {
-  const track = trackById.get(FIRST_TRACK)!;
   return (
     <section className="card first-run">
-      <span className="track__art" aria-hidden>
-        <Wireframe name={track.art} />
+      <span className="first-run__art" aria-hidden>
+        {WARMUP_ART.map((name) => (
+          <span key={name} className="track__art">
+            <Wireframe name={name} />
+          </span>
+        ))}
       </span>
-      <h2 className="first-run__title">Начни с первой сессии</h2>
-      <p className="hint">
-        10 вопросов по теме «{track.title}» — база любого дизайн-ревью. Это займёт около 5 минут.
-      </p>
-      <button className="button button--primary" disabled={starting} onClick={() => onStart({ mode: 'track', track: FIRST_TRACK })}>
+      <h2 className="first-run__title">Начни с разминки</h2>
+      <p className="hint">10 вопросов из UX, гайдлайнов и Figma. По ответам покажу, какие темы стоит подтянуть. Это займёт около 5 минут.</p>
+      <button className="button button--primary" disabled={starting} onClick={() => onStart({ mode: 'warmup' })}>
         Начать
       </button>
       <button
@@ -155,7 +156,7 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
           window.scrollTo({ top: 0 });
         }}
       >
-        Выбрать другую тему
+        Выбрать тему самому
       </button>
     </section>
   );

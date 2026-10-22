@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { TrackId } from '../../content';
+import { tracks, type TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
@@ -10,7 +10,16 @@ import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
 
-export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' };
+export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' };
+
+/** Куда звать после разминки: тема, где больше всего ошибок (при равенстве — раньше в списке тем). Без ошибок — null. */
+function warmupNext(result: QuizResult): TrackId | null {
+  const mistakes = new Map<TrackId, number>();
+  for (const q of result.mistakes) mistakes.set(q.track, (mistakes.get(q.track) ?? 0) + 1);
+  let best: TrackId | null = null;
+  for (const t of tracks) if ((mistakes.get(t.id) ?? 0) > (best ? mistakes.get(best)! : 0)) best = t.id;
+  return best;
+}
 
 type Screen =
   | { name: 'home' }
@@ -106,7 +115,8 @@ export function App() {
             onFinish={(result) => setScreen({ name: 'result', session: screen.session, result })}
           />
         );
-      case 'result':
+      case 'result': {
+        const next = screen.session.mode === 'warmup' ? warmupNext(screen.result) : undefined;
         return (
           <Result
             result={screen.result}
@@ -114,8 +124,21 @@ export function App() {
             onAgain={() => start(screen.session)}
             canRepeat={screen.session.mode === 'track'}
             starting={starting}
+            warmup={
+              next === undefined
+                ? undefined
+                : {
+                    track: next,
+                    onTrack: (track) => start({ mode: 'track', track }),
+                    onTracks: () => {
+                      setTab('tracks');
+                      goHome();
+                    },
+                  }
+            }
           />
         );
+      }
       case 'calendar':
         return profile && <Calendar profile={profile} onBack={goHome} />;
       case 'settings':

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { trackById, tracks, type TrackId } from '../../../content';
 import type { CompleteResponse } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
@@ -15,6 +16,8 @@ interface Props {
   starting: boolean;
   onHome: () => void;
   onAgain: () => void;
+  /** Итог разминки: вместо «Ещё 10 вопросов» зовём в тему, где больше всего ошибок, или к выбору темы */
+  warmup?: { track: TrackId | null; onTrack: (track: TrackId) => void; onTracks: () => void };
 }
 
 function headline(ratio: number): { mood: CatMood; text: string } {
@@ -38,7 +41,7 @@ function useCountUp(to: number, from: number, enabled: boolean) {
   return value;
 }
 
-export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) {
+export function Result({ result, canRepeat, starting, onHome, onAgain, warmup }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
   const ratio = result.correct / result.total;
   const { mood, text } = headline(ratio);
@@ -87,6 +90,17 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
         </div>
       )}
 
+      {warmup && (
+        <div className="card result__next">
+          <b>Разминка пройдена</b>
+          <span className="hint">
+            {warmup.track
+              ? `Больше всего ошибок — в теме «${trackById.get(warmup.track)!.title}». Её и стоит подтянуть первой.`
+              : `Ни одной ошибки — слабых мест разминка не нашла. Выбери любую из ${tracks.length} тем, чтобы копнуть глубже.`}
+          </span>
+        </div>
+      )}
+
       {result.mistakes.length > 0 && (
         <>
           <h2 className="section-title">Что подтянуть</h2>
@@ -103,7 +117,18 @@ export function Result({ result, canRepeat, starting, onHome, onAgain }: Props) 
         </>
       )}
 
-      {canRepeat ? (
+      {warmup ? (
+        warmup.track ? (
+          <MainButton
+            text="Начать тему"
+            onClick={() => warmup.onTrack(warmup.track!)}
+            loading={starting}
+            secondary={{ text: 'Все темы', onClick: warmup.onTracks }}
+          />
+        ) : (
+          <MainButton text="Выбрать тему" onClick={warmup.onTracks} secondary={{ text: 'На главную', onClick: onHome }} />
+        )
+      ) : canRepeat ? (
         <MainButton
           text="Ещё 10 вопросов"
           onClick={onAgain}
