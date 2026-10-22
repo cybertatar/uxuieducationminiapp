@@ -5,6 +5,7 @@ import type { Env } from './env';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
+import { ONBOARDING_VERSION } from './onboarding-version';
 import { appHintText, welcomeText } from './texts';
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
@@ -161,7 +162,7 @@ export function getBot(env: Env): Bot {
     const options = { parse_mode: 'HTML' as const, reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) };
     // Анимация показывает, где открыть мини-апп: без неё многие так и пишут боту в чат
     try {
-      const msg = await ctx.replyWithAnimation(onboardingFileId ?? `${env.WEBAPP_URL}/onboarding.mp4`, { caption: text, ...options });
+      const msg = await ctx.replyWithAnimation(onboardingFileId ?? `${env.WEBAPP_URL}/onboarding.mp4?v=${ONBOARDING_VERSION}`, { caption: text, ...options });
       onboardingFileId = msg.animation?.file_id;
     } catch (err) {
       console.error('onboarding animation failed', err);

@@ -54,3 +54,13 @@ describe('разделы', () => {
     expect(sections.flatMap((s) => s.tracks)).toEqual(tracks.map((t) => t.id));
   });
 });
+
+describe('гайд в приветствии', () => {
+  it('версия в ссылке совпадает с файлом, иначе Telegram покажет закешированное старое видео', async () => {
+    const { createHash } = await import('node:crypto');
+    const { readFileSync } = await import('node:fs');
+    const { ONBOARDING_VERSION } = await import('../src/onboarding-version');
+    const hash = createHash('sha256').update(readFileSync('web/public/onboarding.mp4')).digest('hex');
+    expect(hash.startsWith(ONBOARDING_VERSION)).toBe(true);
+  });
+});
