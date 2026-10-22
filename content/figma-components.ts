@@ -6,7 +6,7 @@ const L = {
   swap: { title: 'Figma: Swap components and instances', url: 'https://help.figma.com/hc/en-us/articles/360039150413-Swap-components-and-instances' },
   publish: { title: 'Figma: Publish a library', url: 'https://help.figma.com/hc/en-us/articles/360025508373-Publish-a-library' },
   props: { title: 'Figma: Component properties', url: 'https://help.figma.com/hc/en-us/articles/5579474826519-Explore-component-properties' },
-  remove: { title: 'Figma: Remove styles and components from a library', url: 'https://help.figma.com/hc/en-us/articles/360039238193-Remove-Styles-and-Components-from-a-library' },
+  remove: { title: 'Figma: Hide styles, components, and variables when publishing', url: 'https://help.figma.com/hc/en-us/articles/360039238193-Hide-styles-components-and-variables-when-publishing' },
   ds101: { title: 'NN/g: Design Systems 101', url: 'https://www.nngroup.com/articles/design-systems-101/' },
 };
 

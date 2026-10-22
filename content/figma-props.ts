@@ -4,7 +4,7 @@ const L = {
   props: { title: 'Figma: Component properties', url: 'https://help.figma.com/hc/en-us/articles/5579474826519-Explore-component-properties' },
   variants: { title: 'Figma: Create and use variants', url: 'https://help.figma.com/hc/en-us/articles/360056440594-Create-and-use-variants' },
   interactive: { title: 'Figma: Create interactive components', url: 'https://help.figma.com/hc/en-us/articles/360061175334-Create-interactive-components-with-variants' },
-  autoLayout: { title: 'Figma: Guide to auto layout', url: 'https://help.figma.com/hc/en-us/articles/360040451373-Guide-to-auto-layout' },
+  autoLayout: { title: 'Figma: Guide to auto layout', url: 'https://help.figma.com/hc/en-us/articles/360040451373-Guide-to-auto-layout-in-Figma' },
 };
 
 const T = {

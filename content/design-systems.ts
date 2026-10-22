@@ -5,10 +5,10 @@ const L = {
   vsStyle: { title: 'NN/g: Design Systems vs. Style Guides', url: 'https://www.nngroup.com/articles/design-systems-vs-style-guides/' },
   consistency: { title: 'NN/g: Consistency and Standards', url: 'https://www.nngroup.com/articles/consistency-and-standards/' },
   atomic: { title: 'Brad Frost: Atomic Design, глава 2', url: 'https://atomicdesign.bradfrost.com/chapter-2/' },
-  dtcg: { title: 'DTCG: Design Tokens Format Module', url: 'https://tr.designtokens.org/format/' },
+  dtcg: { title: 'DTCG: Design Tokens Format Module', url: 'https://www.designtokens.org/tr/drafts/format/' },
   dtcgHome: { title: 'Design Tokens Community Group', url: 'https://www.designtokens.org/' },
   m3tokens: { title: 'Material 3: Design tokens', url: 'https://m3.material.io/foundations/design-tokens/overview' },
-  m3spacing: { title: 'Material 3: Spacing', url: 'https://m3.material.io/foundations/layout/understanding-layout/spacing' },
+  m3spacing: { title: 'Material 3: Spacing', url: 'https://m3.material.io/foundations/layout/grids-spacing/spacing' },
   m3states: { title: 'Material 3: States', url: 'https://m3.material.io/foundations/interaction/states/overview' },
   m3fields: { title: 'Material 3: Text fields', url: 'https://m3.material.io/components/text-fields/guidelines' },
   figmaComponents: { title: 'Figma: Guide to components', url: 'https://help.figma.com/hc/en-us/articles/360038662654-Guide-to-components-in-Figma' },
@@ -18,6 +18,10 @@ const L = {
   atomic5: { title: 'Brad Frost: Atomic Design, глава 5', url: 'https://atomicdesign.bradfrost.com/chapter-5/' },
   figmaOverrides: { title: 'Figma: Apply changes to instances', url: 'https://help.figma.com/hc/en-us/articles/360039150733-Apply-changes-to-instances' },
   figmaDetach: { title: 'Figma: Detach an instance', url: 'https://help.figma.com/hc/en-us/articles/360038665754-Detach-an-instance-from-the-component' },
+  figmaDescriptions: {
+    title: 'Figma: Add descriptions to styles, components, and variables',
+    url: 'https://help.figma.com/hc/en-us/articles/7938814091287-Add-descriptions-to-styles-components-and-variables',
+  },
   figmaProps: { title: 'Figma: Component properties', url: 'https://help.figma.com/hc/en-us/articles/5579474826519-Explore-component-properties' },
   figmaVarTypes: { title: 'Figma: Variables, collections and modes', url: 'https://help.figma.com/hc/en-us/articles/14506821864087-Overview-of-variables-collections-and-modes' },
   figmaStyles: { title: 'Figma: Variables vs. styles', url: 'https://help.figma.com/hc/en-us/articles/15871097384471-The-difference-between-variables-and-styles' },
@@ -453,7 +457,7 @@ export const designSystemsQuestions: Question[] = [
     summary: 'Описание и ссылка видны прямо там, где компонент используют.',
     explanation:
       'Figma советует добавлять к компонентам описания и ссылки на документацию: так проще применять варианты и состояния правильно и помнить о контрасте и доступности. Подсказка в контексте работает лучше вики, до которой не доходят.',
-    links: [L.figmaProps],
+    links: [L.figmaDescriptions],
   },
   {
     id: 'ds-028',

@@ -1,7 +1,7 @@
 import type { Question } from './types';
 
 const L = {
-  guide: { title: 'Figma: Guide to auto layout', url: 'https://help.figma.com/hc/en-us/articles/360040451373-Guide-to-auto-layout' },
+  guide: { title: 'Figma: Guide to auto layout', url: 'https://help.figma.com/hc/en-us/articles/360040451373-Guide-to-auto-layout-in-Figma' },
   constraints: { title: 'Figma: Apply constraints', url: 'https://help.figma.com/hc/en-us/articles/360039957734-Apply-constraints-to-define-how-layers-resize' },
 };
 

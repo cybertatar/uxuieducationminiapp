@@ -60,6 +60,8 @@ const T = {
   focus: 'Фокус',
   motion: 'Движение и анимация',
   forms: 'Формы и ошибки',
+  timing: 'Ограничения по времени',
+  names: 'Имена и роли элементов',
   content: 'Контент и ссылки',
   keyboard: 'Клавиатура',
   media: 'Медиа',
@@ -543,7 +545,7 @@ export const wcagQuestions: Question[] = [
   {
     id: 'w-035',
     track: 'wcag',
-    topic: T.forms,
+    topic: T.timing,
     text: 'Сессия в интернет-банке завершается через 5 минут бездействия. Что требует WCAG?',
     options: [
       'Предупредить заранее и дать продлить простым действием — не меньше чем за 20 секунд',
@@ -618,7 +620,7 @@ export const wcagQuestions: Question[] = [
   {
     id: 'w-040',
     track: 'wcag',
-    topic: T.forms,
+    topic: T.names,
     text: 'Чекбокс сделан из <div> с картинкой галочки. Что прежде всего нарушено?',
     options: ['4.1.2 Имя, роль, значение', '1.4.3 Контраст', '2.4.2 Заголовок страницы', '1.3.4 Ориентация'],
     correct: 0,
@@ -630,7 +632,7 @@ export const wcagQuestions: Question[] = [
   {
     id: 'w-041',
     track: 'wcag',
-    topic: T.forms,
+    topic: T.names,
     text: 'На кнопке написано «Отправить», а в коде её имя для скринридера — «Submit form». Кому это мешает?',
     options: [
       'Тем, кто управляет голосом: «Нажми „Отправить“» не сработает',
@@ -704,7 +706,7 @@ export const wcagQuestions: Question[] = [
     id: 'w-046',
     track: 'wcag',
     kind: 'image-choice',
-    topic: T.forms,
+    topic: T.timing,
     text: 'Пользователь долго заполнял перевод. Какой экран соответствует WCAG?',
     options: ['w-timeout-warn', 'w-timeout-expired'],
     correct: 0,

@@ -2,10 +2,10 @@ import type { Question } from './types';
 
 const L = {
   overview: { title: 'Figma: Variables, collections and modes', url: 'https://help.figma.com/hc/en-us/articles/14506821864087-Overview-of-variables-collections-and-modes' },
-  manage: { title: 'Figma: Create and manage variables', url: 'https://help.figma.com/hc/en-us/articles/15145852043927-Create-and-manage-variables' },
+  manage: { title: 'Figma: Create and manage variables and collections', url: 'https://help.figma.com/hc/en-us/articles/15145852043927-Create-and-manage-variables-and-collections' },
   apply: { title: 'Figma: Apply variables to designs', url: 'https://help.figma.com/hc/en-us/articles/15343107263511-Apply-variables-to-designs' },
   modes: { title: 'Figma: Modes for variables', url: 'https://help.figma.com/hc/en-us/articles/15343816063383-Modes-for-variables' },
-  prototyping: { title: 'Figma: Use variables in prototyping', url: 'https://help.figma.com/hc/en-us/articles/15253194385943-Use-variables-in-prototyping' },
+  prototyping: { title: 'Figma: Use expressions in prototypes', url: 'https://help.figma.com/hc/en-us/articles/15253194385943-Use-expressions-in-prototypes' },
   styles: { title: 'Figma: Variables vs. styles', url: 'https://help.figma.com/hc/en-us/articles/15871097384471-The-difference-between-variables-and-styles' },
 };
 

@@ -37,6 +37,9 @@ const T = {
   alerts: 'Алерты и action sheet',
   controls: 'Контролы',
   launch: 'Запуск и онбординг',
+  prompts: 'Системные запросы',
+  navigation: 'Навигация и модальность',
+  color: 'Цвет и тёмная тема',
   platform: 'iOS или Android',
 };
 
@@ -415,7 +418,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-027',
     track: 'hig',
-    topic: T.layout,
+    topic: T.navigation,
     text: 'Как HIG советует закрывать модальный экран в iOS?',
     options: [
       'Очевидной кнопкой в верхней панели или свайпом вниз',
@@ -432,7 +435,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-028',
     track: 'hig',
-    topic: T.layout,
+    topic: T.navigation,
     text: 'Какой длины HIG советует делать заголовок в верхней панели?',
     options: ['До 15 символов', 'До 30 символов', 'Не длиннее двух строк', 'Ограничений нет'],
     correct: 0,
@@ -473,7 +476,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-031',
     track: 'hig',
-    topic: T.a11y,
+    topic: T.color,
     text: 'Нужен ли в приложении собственный переключатель светлой и тёмной темы по HIG?',
     options: [
       'Лучше не добавлять: приложение должно следовать системной настройке',
@@ -490,7 +493,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-032',
     track: 'hig',
-    topic: T.a11y,
+    topic: T.color,
     text: 'Зачем использовать системные цвета вроде label и systemBackground вместо фиксированных HEX?',
     options: [
       'Они сами подстраиваются под тёмную тему, повышенный контраст и другие настройки',
@@ -560,7 +563,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-037',
     track: 'hig',
-    topic: T.layout,
+    topic: T.navigation,
     text: 'Что происходит с крупным заголовком (large title) в навигационной панели при прокрутке?',
     options: [
       'Он сворачивается в обычный заголовок по центру панели',
@@ -623,7 +626,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-041',
     track: 'hig',
-    topic: T.launch,
+    topic: T.prompts,
     text: 'Когда приложению лучше всего запросить доступ к камере?',
     options: [
       'Когда пользователь впервые открывает функцию, которой нужна камера',
@@ -640,7 +643,7 @@ export const higQuestions: Question[] = [
   {
     id: 'a-042',
     track: 'hig',
-    topic: T.launch,
+    topic: T.prompts,
     text: 'Сколько раз за год iOS позволяет показать человеку системный запрос оценки приложения?',
     options: ['До трёх раз за 365 дней', 'Без ограничений', 'Один раз за всё время', 'Раз в неделю'],
     correct: 0,
@@ -695,7 +698,7 @@ export const higQuestions: Question[] = [
     id: 'a-046',
     track: 'hig',
     kind: 'image-choice',
-    topic: T.launch,
+    topic: T.prompts,
     text: 'Какой запрос доступа к камере сделан по HIG?',
     options: ['a-perm-context', 'a-perm-launch'],
     correct: 0,
