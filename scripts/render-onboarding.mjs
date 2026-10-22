@@ -1,4 +1,4 @@
-// Снимает анимацию-гайд с dev-страницы /onboarding.html в web/public/onboarding.mp4 (720×1200, 30 fps).
+// Снимает анимацию-гайд с dev-страницы /onboarding.html в web/public/onboarding.mp4 (800×1200, 30 fps).
 // Нужны запущенный `npm run dev:web`, Playwright с Chromium и ffmpeg.
 // Файл раздаётся как статика по адресу /onboarding.mp4 и уходит в приветствие бота на /start.
 import { execFileSync } from 'node:child_process';
@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 
 const url = process.env.ONBOARDING_URL ?? 'http://localhost:5173/onboarding.html?t=0';
 const FPS = 30;
-const DURATION = 6000; // как в web/src/onboarding/Onboarding.tsx
+const DURATION = 7000; // как в web/src/onboarding/Onboarding.tsx
 
 const dir = mkdtempSync(join(tmpdir(), 'onboarding-'));
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
