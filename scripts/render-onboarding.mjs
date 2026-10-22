@@ -2,7 +2,8 @@
 // Нужны запущенный `npm run dev:web`, Playwright с Chromium и ffmpeg.
 // Файл раздаётся как статика по адресу /onboarding.mp4 и уходит в приветствие бота на /start.
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
@@ -32,4 +33,11 @@ execFileSync('ffmpeg', [
   'web/public/onboarding.mp4',
 ]);
 rmSync(dir, { recursive: true });
-console.log(`Готово: ${total} кадров → web/public/onboarding.mp4`);
+
+// Telegram кеширует файлы, скачанные по ссылке, поэтому бот добавляет к ней версию — хеш видео
+const version = createHash('sha256').update(readFileSync('web/public/onboarding.mp4')).digest('hex').slice(0, 10);
+writeFileSync(
+  'src/onboarding-version.ts',
+  `// Генерирует scripts/render-onboarding.mjs: хеш web/public/onboarding.mp4, чтобы Telegram не показывал закешированную старую версию\nexport const ONBOARDING_VERSION = '${version}';\n`,
+);
+console.log(`Готово: ${total} кадров → web/public/onboarding.mp4, версия ${version}`);
