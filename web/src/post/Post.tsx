@@ -32,18 +32,22 @@ const Phone = ({ src, className, back = false }: { src: string; className: strin
       </div>
       <div className="mock__tg">
         <span className="mock__pill">
-          {back && (
-            <svg viewBox="0 0 8 14" aria-hidden>
+          {back ? (
+            <svg className="mock__back" viewBox="0 0 8 14" aria-hidden>
               <path d="M7 1 1 7l6 6" />
+            </svg>
+          ) : (
+            <svg className="mock__close" viewBox="0 0 12 12" aria-hidden>
+              <path d="m1 1 10 10M11 1 1 11" />
             </svg>
           )}
           {back ? 'Назад' : 'Закрыть'}
         </span>
         <span className="mock__pill mock__pill--icons">
-          <svg viewBox="0 0 14 8" aria-hidden>
+          <svg className="mock__chevron" viewBox="0 0 14 8" aria-hidden>
             <path d="m1 1 6 6 6-6" />
           </svg>
-          <svg viewBox="0 0 18 4" aria-hidden>
+          <svg className="mock__more" viewBox="0 0 18 4" aria-hidden>
             <circle cx="2" cy="2" r="2" />
             <circle cx="9" cy="2" r="2" />
             <circle cx="16" cy="2" r="2" />
