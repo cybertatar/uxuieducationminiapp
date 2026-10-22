@@ -138,7 +138,9 @@ describe('тексты бота', () => {
     const { botDescription, botShortDescription, welcomeText } = await import('../src/texts');
     expect(botDescription().length).toBeLessThanOrEqual(512);
     expect(botShortDescription().length).toBeLessThanOrEqual(120);
-    expect(welcomeText('Аня').length).toBeLessThanOrEqual(4096);
+    // Приветствие уходит подписью к анимации, а у подписи лимит 1024 символа
+    expect(welcomeText('Аня').length).toBeLessThanOrEqual(1024);
+    expect(welcomeText('А'.repeat(64)).length).toBeLessThanOrEqual(1024);
   });
 });
 

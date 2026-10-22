@@ -1,0 +1,221 @@
+/* Кадр анимации-гайда: 360×600, снимается с deviceScaleFactor 2 */
+body {
+  background: #fff;
+}
+
+.ob {
+  position: relative;
+  width: 360px;
+  height: 600px;
+  overflow: hidden;
+  /* Светлая тема Telegram: так гайд одинаково читается в любой теме чата */
+  color-scheme: light;
+  --bg: #efeff4;
+  --surface: #ffffff;
+  --text: #000000;
+  --hint-raw: #8e8e93;
+  --link: #2481cc;
+  --accent: #2481cc;
+  --separator: rgba(0, 0, 0, 0.08);
+  color: var(--text);
+}
+
+.ob__chat {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  /* Фон чата Telegram по умолчанию */
+  background: linear-gradient(160deg, #d8e6c2, #b9d3a5 55%, #a9c99c);
+  transform-origin: 50% 40%;
+}
+
+.ob__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.ob__back {
+  color: var(--accent);
+  font-size: 30px;
+  line-height: 1;
+  margin-top: -4px;
+}
+
+.ob__title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.ob__title span {
+  font-size: 13px;
+  color: #8e8e93;
+}
+
+.ob__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.ob__messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 10px;
+}
+
+.ob__bubble {
+  max-width: 86%;
+  padding: 7px 11px 8px;
+  border-radius: 16px 16px 16px 4px;
+  background: #fff;
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.ob__bubble--out {
+  align-self: flex-end;
+  border-radius: 16px 16px 4px 16px;
+  background: #e1fec6;
+}
+
+.ob__time {
+  float: right;
+  margin: 8px 0 -4px 10px;
+  font-size: 11px;
+  color: #8e8e93;
+}
+
+.ob__bubble--out .ob__time {
+  color: #4fae4e;
+}
+
+.ob__input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 10px 0 8px;
+  background: #fff;
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* Кнопка меню мини-аппа: setChatMenuButton с текстом «Тренажёр» */
+.ob__menu {
+  flex: none;
+  padding: 7px 12px;
+  border-radius: 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ob__field {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1px solid #e3e3e8;
+  border-radius: 18px;
+  color: #a2a2a8;
+}
+
+.ob__mic svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: #8e8e93;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.ob__tip {
+  position: absolute;
+  left: 10px;
+  bottom: 64px;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: rgba(20, 20, 24, 0.9);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Хвостик подсказки указывает на кнопку */
+.ob__tip::after {
+  content: '';
+  position: absolute;
+  left: 38px;
+  bottom: -6px;
+  border: 7px solid transparent;
+  border-bottom: 0;
+  border-top-color: rgba(20, 20, 24, 0.9);
+}
+
+.ob__finger,
+.ob__ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ob__finger {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.ob__ripple {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+}
+
+/* Мини-апп выезжает снизу. transform делает его containing block для position: fixed — таббар остаётся внутри кадра */
+.ob__app {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  border-radius: 14px 14px 0 0;
+  --safe-top: 44px;
+  --safe-bottom-device: 8px;
+}
+
+.ob__app .screen {
+  pointer-events: none;
+}
+
+/* Плавающие кнопки Telegram в полноэкранном режиме */
+.ob__tg-buttons {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  z-index: 6;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ob__tg-buttons span {
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
