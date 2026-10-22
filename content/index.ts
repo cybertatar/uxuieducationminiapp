@@ -12,6 +12,7 @@ import { uxLaws } from './ux-laws';
 import { uxWritingQuestions } from './ux-writing';
 import type { ChoiceQuestion, Question, Section, Track, TrackId } from './types';
 
+export { WARMUP_SHARE, warmupPool } from './warmup';
 export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Link, Question, Section, SectionId, Track, TrackId } from './types';
 
 export const tracks: Track[] = [

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { correctOption, optionCount, questions, sections, trackById, tracks } from '../content';
+import { correctOption, optionCount, questionById, questions, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
 import { illustrations } from '../web/src/illustrations';
 
 describe('контент', () => {
@@ -52,6 +52,24 @@ describe('суть и разбор', () => {
 describe('разделы', () => {
   it('каждый трек ровно в одном разделе, в порядке tracks', () => {
     expect(sections.flatMap((s) => s.tracks)).toEqual(tracks.map((t) => t.id));
+  });
+});
+
+describe('разминка', () => {
+  it('вопросы существуют, лежат в своём разделе и только визуальные', () => {
+    for (const s of sections) {
+      for (const id of warmupPool[s.id]) {
+        const q = questionById.get(id);
+        expect(q, id).toBeDefined();
+        expect(s.tracks, id).toContain(q!.track);
+        expect(q!.kind === 'hotspot' || q!.kind === 'image-choice' || !!(q as { image?: string }).image, id).toBe(true);
+      }
+    }
+  });
+
+  it('в каждом разделе вопросов больше, чем берём в одну разминку, и в сумме ровно 10', () => {
+    for (const s of sections) expect(warmupPool[s.id].length).toBeGreaterThan(WARMUP_SHARE[s.id]);
+    expect(Object.values(WARMUP_SHARE).reduce((a, b) => a + b, 0)).toBe(10);
   });
 });
 

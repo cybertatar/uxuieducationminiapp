@@ -610,8 +610,15 @@ button.card:active:not(:disabled) {
   gap: 8px;
 }
 
-.first-run .track__art {
+.first-run__art {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   margin-bottom: 4px;
+}
+
+.first-run__art .track__art {
+  padding: 8px 6px;
 }
 
 .first-run__title {
@@ -1480,6 +1487,12 @@ button.card:active:not(:disabled) {
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.result__next {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .result__streak-flame {

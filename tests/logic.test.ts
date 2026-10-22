@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createHmac } from 'node:crypto';
 import { validateInitData } from '../src/auth';
 import { applyAnswer } from '../src/review';
-import { pickDailyQuestion, pickTrackSession } from '../src/select';
+import { pickDailyQuestion, pickTrackSession, pickWarmupSession } from '../src/select';
 import { applyActivity, streakAtRisk, visibleStreak } from '../src/streak';
 import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
-import { questionsByTrack, type Question, type TrackId } from '../content';
+import { questionById, questionsByTrack, sections, warmupPool, type Question, type TrackId } from '../content';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
 import { parseSource, type UserRow } from '../src/db';
 
@@ -100,6 +100,35 @@ describe('select', () => {
       const id = pickDailyQuestion(pool, new Map(), '2026-05-10');
       expect(pool.find((q) => q.id === id)!.image).toBeUndefined();
     }
+  });
+});
+
+describe('разминка', () => {
+  const sectionOf = (id: string) => sections.find((s) => s.tracks.includes(questionById.get(id)!.track))!.id;
+  const correct = { attempts: 1, correctTotal: 1, lastCorrect: true, box: 0, dueDate: null };
+
+  it('10 уникальных вопросов: 4 из UX, 3 из гайдлайнов, 3 из Figma', () => {
+    const ids = pickWarmupSession(questionById, new Map());
+    expect(ids).toHaveLength(10);
+    expect(new Set(ids).size).toBe(10);
+    const count = (s: string) => ids.filter((id) => sectionOf(id) === s).length;
+    expect([count('ux'), count('guidelines'), count('figma')]).toEqual([4, 3, 3]);
+  });
+
+  it('разделы чередуются, начинаем с UX', () => {
+    const ids = pickWarmupSession(questionById, new Map());
+    expect(ids.map(sectionOf)).toEqual(['ux', 'guidelines', 'figma', 'ux', 'guidelines', 'figma', 'ux', 'guidelines', 'figma', 'ux']);
+  });
+
+  it('при повторной разминке сначала новые вопросы', () => {
+    const first = pickWarmupSession(questionById, new Map());
+    const answers = new Map(first.map((id) => [id, correct]));
+    const second = pickWarmupSession(questionById, answers);
+    // В каждом разделе новые занимают столько мест, сколько их осталось (но не больше доли раздела)
+    const shares = { ux: 4, guidelines: 3, figma: 3 } as const;
+    const expected = sections.reduce((n, s) => n + Math.min(shares[s.id], warmupPool[s.id].filter((id) => !answers.has(id)).length), 0);
+    expect(second.filter((id) => !answers.has(id))).toHaveLength(expected);
+    expect(second).toHaveLength(10);
   });
 });
 
