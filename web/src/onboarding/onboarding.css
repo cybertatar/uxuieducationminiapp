@@ -1,4 +1,4 @@
-/* Кадр анимации-гайда: 400×480 (Telegram обрезает в чате медиа выше ~4:5), снимается с deviceScaleFactor 2 */
+/* Кадр анимации-гайда: 400×400 — Telegram обрезает медиа в чате: iOS выше ~4:5, Android почти до квадрата, снимается с deviceScaleFactor 2 */
 body {
   background: #fff;
 }
@@ -6,7 +6,7 @@ body {
 .ob {
   position: relative;
   width: 400px;
-  height: 480px;
+  height: 400px;
   overflow: hidden;
   /* Фирменный голубой с аватарки Кегля: своя подложка, которая не зависит от темы чата */
   background: radial-gradient(circle at 20% 105%, #c8f0d0 0, transparent 38%), radial-gradient(circle at 105% 10%, #7fd0f7 0, transparent 45%),
@@ -79,15 +79,15 @@ body {
 
 .ob__phone {
   position: absolute;
-  /* Скругление экрана 55 pt в масштабе плюс рамка */
-  border-radius: 35px;
+  /* Размеры корпуса — в pt экрана iPhone 17, --s — масштаб экрана в кадре. Скругление экрана 55 pt плюс рамка */
+  border-radius: calc(55px * var(--s) + 7px);
   background: #17171c;
   box-shadow: 0 24px 48px rgba(0, 40, 90, 0.35), inset 0 0 0 2px #3a3a42;
 }
 
 .ob__screen {
   position: relative;
-  border-radius: 28px;
+  border-radius: calc(55px * var(--s));
   overflow: hidden;
   background: var(--bg);
 }
@@ -95,12 +95,12 @@ body {
 /* Dynamic Island 126×37 pt, 11 pt от верха экрана */
 .ob__island {
   position: absolute;
-  top: 6px;
+  top: calc(11px * var(--s));
   left: 50%;
-  width: 64px;
-  height: 19px;
-  margin-left: -32px;
-  border-radius: 10px;
+  width: calc(126px * var(--s));
+  height: calc(37px * var(--s));
+  transform: translateX(-50%);
+  border-radius: 999px;
   background: #000;
   z-index: 10;
 }
@@ -108,11 +108,11 @@ body {
 /* Полоска «домой» 134×5 pt */
 .ob__home-indicator {
   position: absolute;
-  bottom: 4px;
+  bottom: calc(8px * var(--s));
   left: 50%;
-  width: 68px;
-  height: 2.5px;
-  margin-left: -34px;
+  width: calc(134px * var(--s));
+  height: calc(5px * var(--s));
+  transform: translateX(-50%);
   border-radius: 2px;
   background: #000;
   z-index: 10;
@@ -128,26 +128,26 @@ body {
 
 .ob__side--action {
   left: -3px;
-  top: 72px;
-  height: 15px;
+  top: calc(141px * var(--s));
+  height: calc(29px * var(--s));
 }
 
 .ob__side--volume-up {
   left: -3px;
-  top: 99px;
-  height: 29px;
+  top: calc(194px * var(--s));
+  height: calc(57px * var(--s));
 }
 
 .ob__side--volume-down {
   left: -3px;
-  top: 136px;
-  height: 29px;
+  top: calc(267px * var(--s));
+  height: calc(57px * var(--s));
 }
 
 .ob__side--power {
   right: -3px;
-  top: 116px;
-  height: 46px;
+  top: calc(227px * var(--s));
+  height: calc(90px * var(--s));
 }
 
 /* Содержимое рисуется в размере экрана iPhone 17 (402×874 pt) и уменьшается до телефона */
@@ -545,4 +545,20 @@ body {
   left: 24px;
   bottom: 88px;
   font-size: 14px;
+}
+
+/* ---------- Квадратный кадр приветствия ---------- */
+
+/* В левый верхний угол Telegram ставит значок «GIF»: плашку с именем убираем, заголовок опускаем */
+.ob--chat .ob__tag {
+  display: none;
+}
+
+.ob--chat .ob__heading {
+  top: 44px;
+  width: 172px;
+}
+
+.ob--chat .ob__steps {
+  margin-top: 0;
 }
