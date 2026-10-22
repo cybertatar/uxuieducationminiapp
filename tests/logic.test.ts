@@ -8,7 +8,7 @@ import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
 import { questionsByTrack, type Question, type TrackId } from '../content';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
-import type { UserRow } from '../src/db';
+import { parseSource, type UserRow } from '../src/db';
 
 describe('time', () => {
   it('считает локальную дату в поясе пользователя', () => {
@@ -123,6 +123,21 @@ describe('auth', () => {
   });
   it('отклоняет устаревшие данные', async () => {
     expect(await validateInitData(sign(fields), token, 30, now)).toBeNull();
+  });
+});
+
+describe('источник из ссылки', () => {
+  it('принимает метки из букв, цифр, _ и -', () => {
+    expect(parseSource('vc')).toBe('vc');
+    expect(parseSource('Chat_Figma-2')).toBe('chat_figma-2');
+  });
+
+  it('пустая или чужая метка — без источника', () => {
+    expect(parseSource('')).toBeNull();
+    expect(parseSource(undefined)).toBeNull();
+    expect(parseSource(null)).toBeNull();
+    expect(parseSource('vc ru')).toBeNull();
+    expect(parseSource('x'.repeat(65))).toBeNull();
   });
 });
 

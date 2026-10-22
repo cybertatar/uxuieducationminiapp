@@ -1,5 +1,5 @@
 import { correctOption, optionCount, questionById } from '../content';
-import { addActivity, addDailyAnswer, getAnswer, saveAnswer, updateUser, type UserRow } from './db';
+import { addActivity, addDailyAnswer, getAnswer, logAnswer, saveAnswer, updateUser, type UserRow } from './db';
 import { applyAnswer } from './review';
 import { applyActivity } from './streak';
 import { addDays, localDate, nextOccurrence } from './time';
@@ -9,14 +9,26 @@ export const today = (user: UserRow, now: number) => localDate(user.tz, now);
 /**
  * Записывает ответ и обновляет очередь повторения.
  * option — индекс в исходном массиве options (для «тапни на проблему»: 0 — попал, 1 — нет).
+ * Выбранный вариант уходит в журнал answer_log: по нему видно, с чем путают правильный ответ.
  */
-export async function recordAnswer(db: D1Database, user: UserRow, questionId: string, option: number, now: number) {
+export async function recordAnswer(
+  db: D1Database,
+  user: UserRow,
+  questionId: string,
+  option: number,
+  now: number,
+  via: 'app' | 'chat',
+) {
   const question = questionById.get(questionId);
   if (!question || !Number.isInteger(option) || option < 0 || option >= optionCount(question)) return null;
   const correct = option === correctOption(question);
   const prev = await getAnswer(db, user.id, questionId);
   const date = today(user, now);
-  await Promise.all([saveAnswer(db, user.id, questionId, applyAnswer(prev, correct, date), now), addDailyAnswer(db, user.id, date, correct)]);
+  await Promise.all([
+    saveAnswer(db, user.id, questionId, applyAnswer(prev, correct, date), now),
+    addDailyAnswer(db, user.id, date, correct),
+    logAnswer(db, user.id, questionId, option, correct, via, now),
+  ]);
   return { correct, question };
 }
 

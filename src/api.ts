@@ -4,7 +4,7 @@ import { questions, questionsByTrack, trackById, type TrackId } from '../content
 import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
 import { offerDailyQuestion } from './bot';
-import { activityCount, activityDates, getAnswers, history, upsertUser, type UserRow } from './db';
+import { activityCount, activityDates, getAnswers, history, parseSource, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession } from './select';
@@ -29,7 +29,9 @@ api.use('*', async (c, next) => {
   if (!tgUser) return c.json({ error: 'unauthorized' }, 401);
 
   const now = Date.now();
-  const user = await upsertUser(c.env.DB, tgUser, now);
+  // start_param из ссылки t.me/<бот>?startapp=<метка> входит в подписанный initData
+  const source = parseSource(new URLSearchParams(initData).get('start_param'));
+  const user = await upsertUser(c.env.DB, tgUser, now, source);
 
   // Часовой пояс берём с устройства: так стрик и напоминания совпадают с реальными сутками пользователя.
   const tz = c.req.header('X-Timezone');
@@ -115,7 +117,7 @@ api.get('/history', async (c) => {
 
 api.post('/answer', async (c) => {
   const { questionId, option } = await c.req.json<{ questionId: string; option: number }>();
-  const result = await recordAnswer(c.env.DB, c.get('user'), questionId, option, Date.now());
+  const result = await recordAnswer(c.env.DB, c.get('user'), questionId, option, Date.now(), 'app');
   if (!result) return c.json({ error: 'bad answer' }, 400);
   return c.json({ correct: result.correct });
 });
