@@ -1,6 +1,7 @@
 import type { Question } from './types';
 
 const L = {
+  text: { title: 'Figma: Explore text properties', url: 'https://help.figma.com/hc/en-us/articles/360039956634-Explore-text-properties' },
   guide: { title: 'Figma: Guide to auto layout', url: 'https://help.figma.com/hc/en-us/articles/360040451373-Guide-to-auto-layout-in-Figma' },
   constraints: { title: 'Figma: Apply constraints', url: 'https://help.figma.com/hc/en-us/articles/360039957734-Apply-constraints-to-define-how-layers-resize' },
 };
@@ -360,5 +361,57 @@ export const figmaAutoLayoutQuestions: Question[] = [
     explanation:
       'Пунктир отмечает линию, на которой стоят цифры цены. В неверном варианте подпись выровнена по нижнему краю рамки: у мелкого кегля другой межстрочный интервал, и подпись съезжает ниже этой линии.',
     links: [L.guide],
+  },
+  {
+    id: 'fl-024',
+    track: 'figma-auto-layout',
+    kind: 'hotspot',
+    topic: T.flow,
+    image: 'fl-panel',
+    zone: 'wrap',
+    text: 'Это панель автолейаута у ряда чипов. Тапни на настройку, после которой чипы начнут переноситься на новую строку.',
+    summary: 'Перенос — третье направление горизонтального автолейаута, Wrap.',
+    explanation:
+      'Стрелка вниз раскладывает слои столбиком, стрелка вправо — в одну строку, которая уходит за край. С Wrap всё, что не поместилось по ширине, переезжает на следующую строку, а расстояние между строками настраивается отдельно от gap между чипами.',
+    links: [L.guide],
+  },
+  {
+    id: 'fl-025',
+    track: 'figma-auto-layout',
+    kind: 'hotspot',
+    topic: T.resizing,
+    image: 'fl-panel',
+    zone: 'height',
+    text: 'Та же панель, теперь у карточки. Она должна подстраиваться по высоте под содержимое. Тапни на настройку, которую нужно поменять.',
+    summary: 'Высоту переключают с Fixed на Hug — фрейм обтянет содержимое.',
+    explanation:
+      'Сейчас высота зафиксирована на 180: длинный текст вылезет за край, а короткий оставит пустое место внизу. Hug contents пересчитывает высоту по детям, padding и gap. Ширина Fill остаётся как есть — карточка по-прежнему тянется по ширине родителя.',
+    links: [L.guide],
+  },
+  {
+    id: 'fl-026',
+    track: 'figma-auto-layout',
+    kind: 'hotspot',
+    topic: T.resizing,
+    image: 'fl-labels',
+    zone: 'hug',
+    text: 'Под выделенными слоями Figma подписывает, как они меняют размер. Тапни на слой, который не станет шире вместе с карточкой.',
+    summary: 'Hug × Hug: размер слоя зависит только от его содержимого.',
+    explanation:
+      'В подписи сначала идёт ширина, потом высота. Картинка и строка текста — Fill по ширине, они растянутся вслед за карточкой. Ширину кнопки определяют текст «Купить» и её внутренние отступы, родитель на неё не влияет.',
+    links: [L.guide],
+  },
+  {
+    id: 'fl-027',
+    track: 'figma-auto-layout',
+    topic: T.resizing,
+    image: 'fl-truncate',
+    text: 'Описание в карточке должно занимать не больше двух строк, а остальное прятать за многоточием. Что включить у текстового слоя?',
+    options: ['Truncate text и Max lines = 2', 'Clip content у карточки', 'Фиксированную высоту текстового слоя', 'Ignore auto layout у текста'],
+    correct: 0,
+    summary: 'Многоточие даёт Truncate text, а число строк задаёт Max lines.',
+    explanation:
+      'Clip content просто срежет текст по краю, без многоточия, а фиксированную высоту пришлось бы подгонять под кегль и межстрочный интервал. В настройках текста есть Truncate text: Figma скрывает лишнее и ставит «…». Max lines доступен, когда высота текста — Auto height или Hug.',
+    links: [L.text],
   },
 ];

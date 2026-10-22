@@ -297,4 +297,43 @@ export const figmaPropsQuestions: Question[] = [
       'Из строки «Large / Hover» непонятно, какое это свойство и какое значение, — набор подсветит ошибку в имени. Правильно — Size=Large, State=Hover. Надёжнее переименовывать свойства и значения в правой панели, а не в имени слоя.',
     links: [L.variants],
   },
+  {
+    id: 'fp-020',
+    track: 'figma-props',
+    kind: 'hotspot',
+    topic: T.nested,
+    image: 'fp-nested-panel',
+    zone: 'nested',
+    text: 'Это свойства экземпляра карточки. Тапни на свойства, которые пришли из вложенной кнопки.',
+    summary: 'Свойства вложенной кнопки видны в карточке, если их вывели наружу.',
+    explanation:
+      'В главном компоненте карточки для экземпляра Button включили Expose nested instances. Теперь Size и Label кнопки меняются прямо из панели карточки, не проваливаясь в слои. Title и Show badge — собственные свойства карточки.',
+    links: [L.props],
+  },
+  {
+    id: 'fp-021',
+    track: 'figma-props',
+    kind: 'image-choice',
+    topic: T.practice,
+    text: 'В какой панели экземпляра кнопки быстрее понять, что именно настраиваешь?',
+    options: ['fp-names-good', 'fp-names-bad'],
+    correct: 0,
+    summary: 'Свойства называют по смыслу: Size и State, а не Property 1.',
+    explanation:
+      'Property 1 и Variant2 Figma подставляет сама, когда из компонентов собирают набор вариантов. Если их не переименовать, каждому, кто возьмёт кнопку из библиотеки, придётся перебирать значения наугад. Те же имена увидят и разработчики в Dev Mode.',
+    links: [L.variants, L.props],
+  },
+  {
+    id: 'fp-022',
+    track: 'figma-props',
+    kind: 'image-choice',
+    topic: T.practice,
+    text: 'Кнопке нужны 20 разных иконок. Какой компонент проще поддерживать?',
+    options: ['fp-icons-swap', 'fp-icons-variants'],
+    correct: 0,
+    summary: 'Иконку меняют свойством instance swap, а не отдельным вариантом на каждую.',
+    explanation:
+      'Варианты перемножаются: 20 иконок при 3 размерах и 4 состояниях — уже 240 вариантов, и правка скругления превращается в 240 правок. Со свойством instance swap набор остаётся прежним, а иконка подставляется из библиотеки иконок.',
+    links: [L.props],
+  },
 ];
