@@ -13,3 +13,22 @@ export const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 /** 2026-10-25 → 25.10 */
 export const shortDate = (date: string) => date.slice(5).split('-').reverse().join('.');
+
+/**
+ * Часовой пояс по-человечески: America/Buenos_Aires → «Аргентина, UTC−3».
+ * Если браузер не знает русских названий, берём город из идентификатора: «Buenos Aires, UTC−3».
+ */
+export function timeZoneLabel(tz: string) {
+  const part = (timeZoneName: 'longGeneric' | 'shortOffset') => {
+    try {
+      return new Intl.DateTimeFormat('ru', { timeZone: tz, timeZoneName }).formatToParts().find((p) => p.type === 'timeZoneName')?.value;
+    } catch {
+      return undefined;
+    }
+  };
+  const name = part('longGeneric')?.replace(/, стандартное время$/, '') ?? tz.split('/').at(-1)!.replaceAll('_', ' ');
+  const offset = part('shortOffset')?.replace('GMT', 'UTC').replace('-', '−');
+  if (offset === 'UTC') return offset;
+  if (!offset) return name;
+  return `${name}, ${offset}`;
+}

@@ -1,5 +1,6 @@
 /** Типы ответов API — общие для воркера и фронтенда. */
 import type { TrackId } from '../content';
+import type { WeakTopic } from './stats';
 
 export interface Settings {
   dailyEnabled: boolean;
@@ -25,6 +26,8 @@ export interface Profile {
   /** attempts и correct — все ответы в теме, включая повторные: по ним считается точность. */
   tracks: { id: TrackId; total: number; answered: number; mastered: number; attempts: number; correct: number }[];
   reviewDue: number;
+  /** Темы, где больше всего ошибок, со статьёй по каждой — для списка «Что почитать» */
+  weakTopics: WeakTopic[];
   settings: Settings;
 }
 
