@@ -1,0 +1,75 @@
+name: Статистика
+
+# Сводка по боевой базе: Actions → Статистика → Run workflow, результат — в Summary запуска.
+# Репозиторий публичный, логи видны всем, поэтому только агрегаты: без имён, юзернеймов и id.
+on:
+  workflow_dispatch:
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Запросы к базе
+        run: |
+          q() {
+            echo "### $1" | tee -a "$GITHUB_STEP_SUMMARY"
+            npx wrangler d1 execute ux-quiz --remote --json --command "$2" \
+              | node -e '
+                const rows = JSON.parse(require("fs").readFileSync(0, "utf8"))[0].results;
+                if (!rows.length) { console.log("_пусто_\n"); process.exit(); }
+                const cols = Object.keys(rows[0]);
+                console.log("| " + cols.join(" | ") + " |\n|" + cols.map(() => "---").join("|") + "|");
+                for (const r of rows) console.log("| " + cols.map((c) => r[c] ?? "—").join(" | ") + " |");
+                console.log();' | tee -a "$GITHUB_STEP_SUMMARY"
+          }
+
+          q "Пользователи" "
+            SELECT
+              (SELECT COUNT(*) FROM users) AS всего,
+              (SELECT COUNT(DISTINCT user_id) FROM answers) AS ответили_хоть_раз,
+              (SELECT COUNT(*) FROM (SELECT user_id FROM answers GROUP BY user_id HAVING COUNT(*) >= 10)) AS ответили_на_10_и_больше,
+              (SELECT COUNT(*) FROM (SELECT user_id FROM activity GROUP BY user_id HAVING COUNT(*) >= 2)) AS занимались_2_дня_и_больше,
+              (SELECT COUNT(*) FROM users WHERE daily_enabled = 1) AS включили_вопрос_дня"
+
+          q "Ответы" "
+            SELECT
+              (SELECT COALESCE(SUM(attempts), 0) FROM answers) AS всего_ответов,
+              (SELECT COALESCE(ROUND(100.0 * SUM(correct_total) / SUM(attempts)), 0) FROM answers) AS процент_верных,
+              (SELECT COUNT(DISTINCT question_id) FROM answers) AS разных_вопросов"
+
+          q "Активные (по дню занятия)" "
+            SELECT
+              (SELECT COUNT(DISTINCT user_id) FROM activity WHERE date = date('now')) AS сегодня,
+              (SELECT COUNT(DISTINCT user_id) FROM activity WHERE date >= date('now', '-6 days')) AS за_7_дней,
+              (SELECT COUNT(DISTINCT user_id) FROM activity WHERE date >= date('now', '-29 days')) AS за_30_дней"
+
+          q "Новые пользователи по дням (UTC, последние 14)" "
+            SELECT date(created_at / 1000, 'unixepoch') AS день, COUNT(*) AS новых
+            FROM users GROUP BY день ORDER BY день DESC LIMIT 14"
+
+          q "Источники (метка в ссылке)" "
+            SELECT COALESCE(source, 'без метки') AS источник, COUNT(*) AS пришли
+            FROM users GROUP BY источник ORDER BY пришли DESC"
+
+          q "Где отвечают (с момента включения журнала)" "
+            SELECT via AS где, COUNT(*) AS ответов, COUNT(DISTINCT user_id) AS людей
+            FROM answer_log GROUP BY via"
+
+          # Тема вопроса живёт в content/, а не в базе: подставляем её через CTE
+          TRACKS=$(npx --yes tsx -e '
+            import { questions, trackById } from "./content";
+            console.log(questions.map((q) => `(${JSON.stringify(q.id).replace(/"/g, "\x27")}, ${JSON.stringify(trackById.get(q.track)!.title).replace(/"/g, "\x27")})`).join(","));')
+          q "Популярность тем" "
+            WITH t(question_id, тема) AS (VALUES $TRACKS)
+            SELECT t.тема, COUNT(DISTINCT a.user_id) AS людей, SUM(a.attempts) AS ответов
+            FROM answers a JOIN t USING (question_id) GROUP BY t.тема ORDER BY людей DESC"
