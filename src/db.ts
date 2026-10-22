@@ -17,6 +17,8 @@ export interface UserRow {
   streak_current: number;
   streak_best: number;
   last_active_date: string | null;
+  /** Предложение вопроса дня уже отправлено */
+  daily_offered: number;
 }
 
 /** Поля, которые можно менять через updateUser. */
