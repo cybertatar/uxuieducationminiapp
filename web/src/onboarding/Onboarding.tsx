@@ -58,12 +58,22 @@ const pop = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 + 2.7 * (x - 1) ** 3 + 1
  * Чат и приложение рисуются в настоящем размере экрана и уменьшаются целиком.
  */
 const SCREEN = { width: 402, height: 874 };
-// Telegram обрезает в чате медиа выше примерно 4:5, поэтому кадр 400×480: телефон целиком справа, текст и кот слева
-const SCREEN_SCALE = 446 / SCREEN.height;
-const PHONE = { x: 169, y: 10, bezel: 7 };
-const FINGER_FROM = { x: 330, y: 230 };
-/** Откуда летит конфетти — середина экрана телефона */
-const BURST = { x: PHONE.x + PHONE.bezel + 102, y: PHONE.y + 190 };
+/**
+ * Два варианта кадра:
+ * - chat — 400×480 для приветствия: Telegram обрезает в чате медиа выше примерно 4:5,
+ *   поэтому телефон целиком справа, текст и кот слева;
+ * - wide — 480×270 (16:9) для картинки в описании бота, которую BotFather просит 640×360:
+ *   телефон крупнее и обрезан сверху — главное (поле ввода и кнопка) внизу.
+ */
+const LAYOUTS = {
+  chat: { scale: 446 / SCREEN.height, phone: { x: 169, y: 10, bezel: 7 }, fingerFrom: { x: 330, y: 230 }, burst: { x: 278, y: 200 }, cat: 96 },
+  wide: { scale: 0.5, phone: { x: 237, y: -189, bezel: 7 }, fingerFrom: { x: 420, y: 110 }, burst: { x: 344, y: 150 }, cat: 80 },
+};
+export type Layout = keyof typeof LAYOUTS;
+
+const params = new URLSearchParams(location.search);
+const layout: Layout = params.get('layout') === 'wide' ? 'wide' : 'chat';
+const { scale: SCREEN_SCALE, phone: PHONE, fingerFrom: FINGER_FROM, burst: BURST, cat: CAT_SIZE } = LAYOUTS[layout];
 
 /** Конфетти: детерминированный «случайный» набор, чтобы каждый рендер давал те же кадры */
 const CONFETTI = Array.from({ length: 22 }, (_, i) => {
@@ -83,7 +93,7 @@ export function Onboarding() {
   const [t, setT] = useState(() => Number(new URLSearchParams(location.search).get('t') ?? 0));
   // Палец целится в центр настоящей кнопки меню: её положение меряем в кадре один раз
   const root = useRef<HTMLDivElement>(null);
-  const [button, setButton] = useState({ x: 205, y: 438 });
+  const [button, setButton] = useState({ x: 0, y: 0 });
   useLayoutEffect(() => {
     const menu = root.current?.querySelector('.ob__menu')?.getBoundingClientRect();
     const frame = root.current?.getBoundingClientRect();
@@ -128,25 +138,21 @@ export function Onboarding() {
   const fy = FINGER_FROM.y + (button.y - FINGER_FROM.y) * move;
 
   return (
-    <div className="ob" ref={root}>
+    <div className={`ob ob--${layout}`} ref={root}>
       <div className="ob__dots" aria-hidden />
 
       <header className="ob__heading">
         <span className="ob__tag">UX/UI Trainer</span>
         <div className="ob__steps">
           <h1 style={{ opacity: first, transform: `translateY(${(first - 1) * 10}px)` }}>
-            Нажми
-            <br />
-            «Тренажёр»
+            Нажми «Тренажёр»
             <br />
             внизу чата
           </h1>
           <h1 style={{ opacity: second, transform: `translateY(${(1 - second) * 10}px)` }}>
             Готово!
             <br />
-            Можно
-            <br />
-            учиться 🎉
+            Можно учиться 🎉
           </h1>
         </div>
       </header>
@@ -208,7 +214,7 @@ export function Onboarding() {
       <div className="ob__finger" style={{ left: fx, top: fy, opacity: finger, transform: `translate(-50%, -50%) scale(${1 - press * 0.2})` }} />
 
       <div className="ob__cat" style={{ transform: `translateY(${-jump - breathe}px)` }}>
-        <Cat mood={mood} size={96} />
+        <Cat mood={mood} size={CAT_SIZE} />
       </div>
       <Bubble scale={callout}>Мяу! Жми сюда 👉</Bubble>
       <Bubble scale={cheer}>Мур! Поехали 🐾</Bubble>

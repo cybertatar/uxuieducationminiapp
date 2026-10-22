@@ -455,3 +455,37 @@ body {
   position: absolute;
   border-radius: 1px;
 }
+
+/* ---------- Широкий кадр для описания бота: 480×270 → 640×360 ---------- */
+
+.ob--wide {
+  width: 480px;
+  height: 270px;
+  background: radial-gradient(circle at 8% 110%, #c8f0d0 0, transparent 34%), radial-gradient(circle at 100% 0, #7fd0f7 0, transparent 40%),
+    linear-gradient(160deg, #2aabee, #1e8fd8);
+}
+
+.ob--wide .ob__heading {
+  top: 18px;
+  left: 20px;
+  width: 210px;
+}
+
+.ob--wide .ob__steps {
+  height: 56px;
+  margin-top: 10px;
+}
+
+.ob--wide .ob__steps h1 {
+  font-size: 22px;
+}
+
+.ob--wide .ob__cat {
+  left: 18px;
+}
+
+.ob--wide .ob__bubble-cat {
+  left: 24px;
+  bottom: 88px;
+  font-size: 14px;
+}
