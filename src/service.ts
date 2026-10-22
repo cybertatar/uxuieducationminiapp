@@ -35,6 +35,12 @@ export async function recordActivity(db: D1Database, user: UserRow, now: number)
   return s;
 }
 
+/**
+ * Пора ли предложить вопрос дня: один раз, после первого занятия, если бот может писать и вопрос дня ещё не включён.
+ * На /start не предлагаем — второе сообщение выталкивало гайд по мини-аппу за экран.
+ */
+export const shouldOfferDaily = (user: UserRow) => user.can_message === 1 && user.daily_enabled === 0 && user.daily_offered === 0;
+
 /** Пересчитывает, когда слать вопрос дня и проверять стрик. Вызывать после любой смены настроек. */
 export function schedule(user: UserRow, now: number): Pick<UserRow, 'next_daily_at' | 'next_reminder_at'> {
   const active = user.can_message === 1;

@@ -8,6 +8,7 @@ import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
 import { questionsByTrack, type Question, type TrackId } from '../content';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
+import type { UserRow } from '../src/db';
 
 describe('time', () => {
   it('считает локальную дату в поясе пользователя', () => {
@@ -141,6 +142,21 @@ describe('тексты бота', () => {
     // Приветствие уходит подписью к анимации, а у подписи лимит 1024 символа
     expect(welcomeText('Аня').length).toBeLessThanOrEqual(1024);
     expect(welcomeText('А'.repeat(64)).length).toBeLessThanOrEqual(1024);
+  });
+});
+
+describe('предложение вопроса дня', async () => {
+  const { shouldOfferDaily } = await import('../src/service');
+  const user = (fields: Partial<UserRow>) => ({ can_message: 1, daily_enabled: 0, daily_offered: 0, ...fields }) as UserRow;
+
+  it('приходит один раз и только тем, кому бот может писать', () => {
+    expect(shouldOfferDaily(user({}))).toBe(true);
+    expect(shouldOfferDaily(user({ daily_offered: 1 }))).toBe(false);
+    expect(shouldOfferDaily(user({ can_message: 0 }))).toBe(false);
+  });
+
+  it('не приходит, если вопрос дня уже включён', () => {
+    expect(shouldOfferDaily(user({ daily_enabled: 1 }))).toBe(false);
   });
 });
 

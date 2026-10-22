@@ -3,7 +3,7 @@ import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQu
 import { getAnswers, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
-import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, today, updateSettings } from './service';
+import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
 import { ONBOARDING_VERSION } from './onboarding-version';
 import { appHintText, welcomeText } from './texts';
@@ -141,6 +141,33 @@ let onboardingFileId: string | undefined;
 
 let cachedBot: Bot | null = null;
 
+/**
+ * Предлагает присылать вопрос дня — один раз, после первого занятия (см. shouldOfferDaily).
+ * Флаг ставим до отправки, чтобы два почти одновременных завершения сессии не прислали предложение дважды.
+ */
+export async function offerDailyQuestion(db: D1Database, api: Api, user: UserRow) {
+  if (!shouldOfferDaily(user)) return;
+  await updateUser(db, user.id, { daily_offered: 1 });
+  user.daily_offered = 1;
+  try {
+    await api.sendMessage(
+      user.id,
+      'Первое занятие засчитано 🎉 Хочешь получать один вопрос в день прямо сюда? Ответ на него тоже сохраняет стрик 🔥\n\n' +
+        'Время и часовой пояс потом можно поменять в /settings.',
+      {
+        reply_markup: new InlineKeyboard()
+          .text('Утром, 9:00', 'o:09:00')
+          .text('Днём, 13:00', 'o:13:00')
+          .text('Вечером, 19:00', 'o:19:00')
+          .row()
+          .text('Пока не надо', 'o:no'),
+      },
+    );
+  } catch (err) {
+    await handleSendError(db, user, err);
+  }
+}
+
 export function getBot(env: Env): Bot {
   if (cachedBot) return cachedBot;
   const bot = new Bot(env.BOT_TOKEN);
@@ -167,20 +194,6 @@ export function getBot(env: Env): Bot {
     } catch (err) {
       console.error('onboarding animation failed', err);
       await ctx.reply(text, options);
-    }
-    if (!user.daily_enabled) {
-      await ctx.reply(
-        'Хочешь получать один вопрос в день прямо сюда? Ответ на него сохраняет стрик 🔥\n\n' +
-          'Время и часовой пояс потом можно поменять в /settings.',
-        {
-          reply_markup: new InlineKeyboard()
-            .text('Утром, 9:00', 'o:09:00')
-            .text('Днём, 13:00', 'o:13:00')
-            .text('Вечером, 19:00', 'o:19:00')
-            .row()
-            .text('Пока не надо', 'o:no'),
-        },
-      );
     }
   });
 
@@ -250,6 +263,8 @@ export function getBot(env: Env): Bot {
       },
     );
     await ctx.answerCallbackQuery({ text: correct ? 'Верно!' : 'Неверно' });
+    // Первый ответ в чате — тоже первое занятие: самое время предложить вопрос дня
+    await offerDailyQuestion(db, ctx.api, user);
   });
 
   bot.callbackQuery('q:next', async (ctx) => {

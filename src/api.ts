@@ -1,7 +1,9 @@
+import { Api } from 'grammy';
 import { Hono } from 'hono';
 import { questions, questionsByTrack, trackById, type TrackId } from '../content';
 import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
+import { offerDailyQuestion } from './bot';
 import { activityCount, activityDates, getAnswers, history, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
@@ -119,7 +121,10 @@ api.post('/answer', async (c) => {
 });
 
 api.post('/session/complete', async (c) => {
-  const s = await recordActivity(c.env.DB, c.get('user'), Date.now());
+  const user = c.get('user');
+  const s = await recordActivity(c.env.DB, user, Date.now());
+  // После первой сессии бот предлагает вопрос дня в чате — в фоне, чтобы не задерживать экран результатов
+  c.executionCtx.waitUntil(offerDailyQuestion(c.env.DB, new Api(c.env.BOT_TOKEN), user));
   const res: CompleteResponse = { current: s.current, best: s.best, extended: s.extended };
   return c.json(res);
 });
