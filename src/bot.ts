@@ -5,7 +5,7 @@ import type { Env } from './env';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
-import { welcomeText } from './texts';
+import { appHintText, welcomeText } from './texts';
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -135,6 +135,9 @@ function tzKeyboard(current: string) {
 
 // ---------- Бот ----------
 
+/** file_id анимации-гайда: после первой отправки Telegram не скачивает файл заново */
+let onboardingFileId: string | undefined;
+
 let cachedBot: Bot | null = null;
 
 export function getBot(env: Env): Bot {
@@ -154,10 +157,16 @@ export function getBot(env: Env): Bot {
 
   bot.command('start', async (ctx) => {
     const user = await loadUser(ctx);
-    await ctx.reply(
-      welcomeText(escape(user.first_name ?? 'дизайнер')),
-      { parse_mode: 'HTML', reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
-    );
+    const text = welcomeText(escape(user.first_name ?? 'дизайнер'));
+    const options = { parse_mode: 'HTML' as const, reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) };
+    // Анимация показывает, где открыть мини-апп: без неё многие так и пишут боту в чат
+    try {
+      const msg = await ctx.replyWithAnimation(onboardingFileId ?? `${env.WEBAPP_URL}/onboarding.mp4`, { caption: text, ...options });
+      onboardingFileId = msg.animation?.file_id;
+    } catch (err) {
+      console.error('onboarding animation failed', err);
+      await ctx.reply(text, options);
+    }
     if (!user.daily_enabled) {
       await ctx.reply(
         'Хочешь получать один вопрос в день прямо сюда? Ответ на него сохраняет стрик 🔥\n\n' +
@@ -304,6 +313,12 @@ export function getBot(env: Env): Bot {
         await show();
     }
     await ctx.answerCallbackQuery();
+  });
+
+  // Всё, что не команда и не кнопка: подсказываем, где живёт тренажёр. Регистрируется последним.
+  bot.on('message', async (ctx) => {
+    await loadUser(ctx);
+    await ctx.reply(appHintText, { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) });
   });
 
   bot.catch((err) => console.error('bot error', err.error));
