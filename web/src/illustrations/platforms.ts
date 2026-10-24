@@ -166,6 +166,80 @@ const gallery = (edge: boolean) => {
   );
 };
 
+/* ---------- HIG: таб-бар с нарушениями, контекстное меню, тулбар шита, page control, уведомления ---------- */
+
+/** Таб-бар: вкладка-действие «+», приглушённая вкладка и вкладка без подписи */
+const tabbarSpot = () => {
+  const xs = [48, 104, 160, 216, 272];
+  return (
+    screen(20, 10, 280, 182) +
+    title(36, 36, 'Лента') +
+    lines(36, 50, [200, 160, 220], 12, 6) +
+    rect(36, 92, 248, 44, 'block', 8) +
+    rect(20, 146, 280, 46, 'card', 0) +
+    path('M20 146H300', 'divider') +
+    icon('home', xs[0] - 7, 154, 14, 'stroke-accent') + text(xs[0], 182, 'Главная', { size: 8, cls: 'accent', anchor: 'middle' }) +
+    icon('search', xs[1] - 7, 154, 14) + text(xs[1], 182, 'Поиск', { size: 8, anchor: 'middle' }) +
+    circle(xs[2], 166, 14, 'accent') + icon('plus', xs[2] - 7, 159, 14, 'stroke-on-accent') +
+    `<g opacity="0.35">${icon('heart', xs[3] - 7, 154, 14)}${text(xs[3], 182, 'Избранное', { size: 8, anchor: 'middle' })}</g>` +
+    icon('user', xs[4] - 8, 158, 16)
+  );
+};
+
+/** Контекстное меню письма: «Удалить» в конце или в начале списка */
+const contextMenu = (deleteLast: boolean) => {
+  const items: [string, string, boolean][] = [
+    ['back', 'Ответить', false],
+    ['chevron', 'Переслать', false],
+    ['star', 'Пометить', false],
+  ];
+  const all = deleteLast ? [...items, ['trash', 'Удалить', true] as [string, string, boolean]] : [['trash', 'Удалить', true] as [string, string, boolean], ...items];
+  return (
+    tile(240, 176) +
+    card(40, 10, 160, 40, 10) +
+    lines(52, 22, [100, 70], 10, 5) +
+    card(40, 58, 160, 108, 12) +
+    all
+      .map(([ic, label, danger], i) => {
+        const y = 58 + i * 27;
+        return (i ? path(`M40 ${y}H200`, 'divider') : '') + text(54, y + 18, label, { size: 11, cls: danger ? 'danger' : 'ink' }) + icon(ic, 176, y + 7, 13, danger ? 'stroke-danger' : 'stroke');
+      })
+      .join('')
+  );
+};
+
+/** Шапка шита «Новое событие»: где стоят «Отмена» и выделенная «Готово» */
+const sheetToolbar = (doneTrailing: boolean) => {
+  const plain = (x: number, anchor: 'start' | 'end') => text(x, 47, 'Отмена', { size: 11, cls: 'accent', anchor });
+  const done = (x: number) => rect(x, 32, 60, 24, 'accent', 12) + text(x + 30, 48, 'Готово', { size: 10, weight: 700, cls: 'on-accent', anchor: 'middle' });
+  return (
+    tile(240, 96) +
+    card(8, 14, 224, 74, 14) +
+    rect(104, 20, 32, 4, 'block', 2) +
+    text(120, 47, 'Событие', { size: 11, weight: 700, cls: 'ink', anchor: 'middle' }) +
+    (doneTrailing ? plain(20, 'start') + done(160) : done(20) + plain(220, 'end')) +
+    lines(20, 68, [140, 100], 8, 4)
+  );
+};
+
+/** Онбординг с 15 точками page control */
+const manyDots = () =>
+  screen(80, 10, 160, 150) +
+  rect(96, 28, 128, 66, 'block', 10) +
+  lines(104, 106, [112, 90], 10, 5) +
+  Array.from({ length: 15 }, (_, i) => circle(118 + i * 6, 142, 2, i === 6 ? 'ink-shape' : 'line-shape')).join('');
+
+/** Уведомление банка на экране блокировки */
+const bankNotification = (detailed: boolean) =>
+  tile(240, 96) +
+  rect(8, 16, 224, 64, 'glass', 14) +
+  rect(18, 26, 26, 26, 'accent', 7) +
+  text(31, 44, '₽', { size: 13, weight: 700, cls: 'on-accent', anchor: 'middle' }) +
+  text(52, 34, detailed ? 'Перевод 25 000 ₽' : 'Новое поступление', { size: 10, weight: 700, cls: 'ink' }) +
+  text(222, 34, 'сейчас', { size: 8, anchor: 'end' }) +
+  text(52, 50, detailed ? 'От Анны К. на карту *4521.' : 'На вашу карту пришёл перевод.', { size: 9.5, cls: 'ink' }) +
+  (detailed ? text(52, 65, 'Баланс 142 300 ₽. Код входа: 4821', { size: 9.5, cls: 'ink' }) : '');
+
 export const platformsArt: Record<string, Illustration> = {
   // ---------- HIG ----------
   'a-alert-order-good': ill(240, 150, 'Алерт «Удалить фото?»: «Отменить» слева, «Удалить» красным справа', backdrop(240, 150) + iosAlert(26, 28, 188, 'Удалить фото?', 'Это действие нельзя отменить.', ['Отменить', 'accent'], ['Удалить', 'danger'])),
@@ -453,6 +527,20 @@ export const platformsArt: Record<string, Illustration> = {
   ),
   'm-edge-to-edge': ill(200, 230, 'Галерея фото на весь экран: снимки видны и под прозрачной строкой состояния, и под полоской жестов внизу', gallery(true)),
   'm-edge-boxed': ill(200, 230, 'Та же галерея в рамках: сверху и снизу глухие чёрные полосы системных панелей', gallery(false)),
+  'a-tabbar-spot': ill(
+    320,
+    202,
+    'Экран «Лента» с таб-баром: Главная, Поиск, круглая синяя кнопка «плюс» посередине, бледная вкладка Избранное и вкладка с иконкой профиля без подписи',
+    tabbarSpot(),
+    { action: [145, 150, 30, 38], dimmed: [201, 150, 30, 38], unlabeled: [257, 150, 30, 38] },
+  ),
+  'a-ctx-last': ill(240, 176, 'Контекстное меню письма: Ответить, Переслать, Пометить, а последним — красный пункт Удалить', contextMenu(true)),
+  'a-ctx-first': ill(240, 176, 'Контекстное меню письма: первым идёт красный пункт Удалить, за ним Ответить, Переслать и Пометить', contextMenu(false)),
+  'a-sheet-done-trailing': ill(240, 96, 'Шапка шита: слева текстовая кнопка «Отмена», в центре заголовок, справа выделенная кнопка «Готово»', sheetToolbar(true)),
+  'a-sheet-done-leading': ill(240, 96, 'Шапка шита: слева выделенная кнопка «Готово», в центре заголовок, справа текстовая кнопка «Отмена»', sheetToolbar(false)),
+  'a-many-dots': ill(320, 170, 'Экран онбординга, внизу пятнадцать точек page control, текущая — седьмая', manyDots()),
+  'a-notif-detailed': ill(240, 96, 'Уведомление банка: «Перевод 25 000 ₽. От Анны К. на карту *4521. Баланс 142 300 ₽. Код входа: 4821»', bankNotification(true)),
+  'a-notif-brief': ill(240, 96, 'Уведомление банка: «Новое поступление. На вашу карту пришёл перевод.»', bankNotification(false)),
 };
 
 export const platformTrackArt: Record<string, Illustration> = {
