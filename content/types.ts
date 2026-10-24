@@ -7,6 +7,7 @@ export type TrackId =
   | 'design-systems'
   | 'ux-writing'
   | 'usability-testing'
+  | 'visual-design'
   | 'figma-components'
   | 'figma-props'
   | 'figma-auto-layout'
