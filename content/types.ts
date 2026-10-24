@@ -7,10 +7,12 @@ export type TrackId =
   | 'design-systems'
   | 'ux-writing'
   | 'usability-testing'
+  | 'visual-design'
   | 'figma-components'
   | 'figma-props'
   | 'figma-auto-layout'
-  | 'figma-variables';
+  | 'figma-variables'
+  | 'figma-prototyping';
 
 export type SectionId = 'ux' | 'guidelines' | 'figma';
 

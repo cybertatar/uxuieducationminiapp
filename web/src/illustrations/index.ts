@@ -3,9 +3,11 @@ import { heuristicsArt } from './heuristics';
 import type { Illustration } from './kit';
 import { lawsArt } from './laws';
 import { platformsArt, platformTrackArt } from './platforms';
+import { prototypingArt, prototypingTrackArt } from './prototyping';
 import { researchArt, researchTrackArt } from './research';
 import { systemsArt, systemsTrackArt } from './systems';
 import { trackArt } from './tracks';
+import { visualArt, visualTrackArt } from './visual';
 import { wcagArt, wcagTrackArt } from './wcag';
 import { writingArt, writingTrackArt } from './writing';
 
@@ -20,6 +22,8 @@ export const illustrations: Record<string, Illustration> = {
   ...writingArt,
   ...researchArt,
   ...figmaArt,
+  ...visualArt,
+  ...prototypingArt,
   ...trackArt,
   ...platformTrackArt,
   ...wcagTrackArt,
@@ -27,4 +31,6 @@ export const illustrations: Record<string, Illustration> = {
   ...writingTrackArt,
   ...researchTrackArt,
   ...figmaTrackArt,
+  ...visualTrackArt,
+  ...prototypingTrackArt,
 };
