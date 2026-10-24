@@ -31,6 +31,7 @@ export const api = {
   history: () => request<HistoryResponse>('GET', '/history'),
   session: (body: SessionRequest) => request<SessionResponse>('POST', '/session', body),
   answer: (questionId: string, option: number) => request<AnswerResponse>('POST', '/answer', { questionId, option }),
+  lessonRead: (lessonId: string) => request<{ ok: true }>('POST', '/lessons/read', { lessonId }),
   complete: () => request<CompleteResponse>('POST', '/session/complete'),
   settings: (patch: SettingsPatch) => request<{ ok: true }>('PATCH', '/settings', patch),
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { trackById, tracks, type TrackId } from '../../../content';
+import { trackById, tracks, type Lesson, type TrackId } from '../../../content';
 import type { CompleteResponse } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
@@ -18,6 +18,14 @@ interface Props {
   onAgain: () => void;
   /** Итог разминки: вместо «Ещё 10 вопросов» зовём в тему, где больше всего ошибок, или к выбору темы */
   warmup?: { track: TrackId | null; onTrack: (track: TrackId) => void; onTracks: () => void };
+  /** Закрепление после урока: дальше — следующий урок, а после последнего — вопросы по всей теме */
+  lesson?: {
+    next: Lesson | null;
+    track: TrackId;
+    onNext: (id: string) => void;
+    onTrack: (track: TrackId) => void;
+    onLessons: () => void;
+  };
 }
 
 function headline(ratio: number): { mood: CatMood; text: string } {
@@ -41,7 +49,7 @@ function useCountUp(to: number, from: number, enabled: boolean) {
   return value;
 }
 
-export function Result({ result, canRepeat, starting, onHome, onAgain, warmup }: Props) {
+export function Result({ result, canRepeat, starting, onHome, onAgain, warmup, lesson }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
   const ratio = result.correct / result.total;
   const { mood, text } = headline(ratio);
@@ -101,6 +109,17 @@ export function Result({ result, canRepeat, starting, onHome, onAgain, warmup }:
         </div>
       )}
 
+      {lesson && (
+        <div className="card result__next">
+          <b>{lesson.next ? `Дальше: «${lesson.next.title}»` : 'Уроки по теме пройдены'}</b>
+          <span className="hint">
+            {lesson.next
+              ? lesson.next.description
+              : `Проверь себя на вопросах по всей теме «${trackById.get(lesson.track)!.title}»: там есть и то, чего не было в уроках.`}
+          </span>
+        </div>
+      )}
+
       {result.mistakes.length > 0 && (
         <>
           <h2 className="section-title">Что подтянуть</h2>
@@ -117,7 +136,18 @@ export function Result({ result, canRepeat, starting, onHome, onAgain, warmup }:
         </>
       )}
 
-      {warmup ? (
+      {lesson ? (
+        lesson.next ? (
+          <MainButton text="Следующий урок" onClick={() => lesson.onNext(lesson.next!.id)} secondary={{ text: 'Учебник', onClick: lesson.onLessons }} />
+        ) : (
+          <MainButton
+            text="Вопросы по теме"
+            onClick={() => lesson.onTrack(lesson.track)}
+            loading={starting}
+            secondary={{ text: 'Учебник', onClick: lesson.onLessons }}
+          />
+        )
+      ) : warmup ? (
         warmup.track ? (
           <MainButton
             text="Начать тему"

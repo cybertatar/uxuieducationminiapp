@@ -33,6 +33,7 @@ const profile: Profile = {
   tracks: [...trackById.keys()].map((id) => ({ id, total: 40, answered: 0, mastered: 0, attempts: 0, correct: 0 })),
   reviewDue: 0,
   weakTopics: [],
+  lessonsRead: [],
   settings: {
     dailyEnabled: false,
     dailyTime: '10:00',
@@ -267,6 +268,7 @@ export function Onboarding() {
                 section="all"
                 onSection={() => {}}
                 onStart={() => {}}
+                onLesson={() => {}}
                 onSettings={() => {}}
                 onCalendar={() => {}}
               />

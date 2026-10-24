@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
-import { questionsByTrack, sections, trackById, type SectionId, type TrackId } from '../../../content';
+import { lessons, questionsByTrack, readingMinutes, sections, trackById, tracks, type SectionId, type TrackId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
@@ -9,7 +9,7 @@ import { AUTHOR_URL, openLink, openTelegramLink } from '../tg';
 import { APP_VERSION } from '../version';
 import { Wireframe } from '../Wireframe';
 
-export type HomeTab = 'progress' | 'tracks';
+export type HomeTab = 'progress' | 'tracks' | 'learn';
 
 /** Фильтр на вкладке «Темы»: все разделы сразу или один */
 export type SectionFilter = 'all' | SectionId;
@@ -23,15 +23,24 @@ interface Props {
   section: SectionFilter;
   onSection: (section: SectionFilter) => void;
   onStart: (s: SessionMode) => void;
+  onLesson: (id: string) => void;
   onSettings: () => void;
   onCalendar: () => void;
 }
 
-/** Главная из двух вкладок: прогресс с трекером занятий и список тем. */
-export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onSettings, onCalendar }: Props) {
+/** Главная из трёх вкладок: прогресс с трекером занятий, список тем и учебник. */
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onLesson, onSettings, onCalendar }: Props) {
   return (
     <>
-      {!profile ? <HomeSkeleton /> : tab === 'progress' ? <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} /> : <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />}
+      {!profile ? (
+        <HomeSkeleton />
+      ) : tab === 'progress' ? (
+        <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} />
+      ) : tab === 'tracks' ? (
+        <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />
+      ) : (
+        <LearnTab profile={profile} onLesson={onLesson} />
+      )}
       <TabBar tab={tab} onTab={onTab} />
     </>
   );
@@ -353,6 +362,66 @@ function TrackList({ ids, progress, starting, onStart }: Pick<Props, 'starting' 
   );
 }
 
+/** Уроки по трекам в порядке тем; трек без уроков не показываем */
+const lessonTracks = tracks.filter((t) => lessons.some((l) => l.track === t.id));
+
+/** Учебник: темы простым языком для новичков, после каждого урока — вопросы на закрепление */
+function LearnTab({ profile, onLesson }: { profile: Profile; onLesson: Props['onLesson'] }) {
+  const read = new Set(profile.lessonsRead);
+  return (
+    <main className="screen">
+      <h1 className="visually-hidden">Учебник</h1>
+      <section className="hello">
+        <Cat mood="idle" size={76} />
+        <p className="hello__bubble">Здесь темы простым языком. Пара минут чтения — и три вопроса, чтобы закрепить.</p>
+      </section>
+
+      {lessonTracks.map((t) => {
+        const list = lessons.filter((l) => l.track === t.id);
+        const done = list.filter((l) => read.has(l.id)).length;
+        return (
+          <section key={t.id} className="learn__track" aria-labelledby={`learn-${t.id}`}>
+            <h2 id={`learn-${t.id}`} className="section-title">
+              {t.title}
+            </h2>
+            <p className="hint section-hint">
+              {done === list.length ? `Все ${list.length} ${plural(list.length, 'урок', 'урока', 'уроков')} прочитаны` : `Прочитано ${done} из ${list.length}`}
+            </p>
+            <ol className="group learn__list">
+              {list.map((l, i) => {
+                const isRead = read.has(l.id);
+                return (
+                  <li key={l.id}>
+                    <button className="cell learn__item" onClick={() => onLesson(l.id)}>
+                      <span className={`learn__num ${isRead ? 'is-read' : ''}`} aria-hidden>
+                        {isRead ? '✓' : i + 1}
+                      </span>
+                      <span className="learn__body">
+                        <span className="learn__title">{l.title}</span>
+                        <span className="hint">{l.description}</span>
+                        <span className="learn__meta">
+                          {readingMinutes(l)} мин{isRead && <span className="visually-hidden">, прочитано</span>}
+                        </span>
+                      </span>
+                      <span className="chevron" aria-hidden>
+                        ›
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        );
+      })}
+
+      <p className="hint learn__note">
+        Уроки — пересказ статей NN/g и других источников простыми словами. Ссылки на оригиналы — в конце каждого урока. Новые темы будут появляться постепенно.
+      </p>
+    </main>
+  );
+}
+
 const percent = (x: number) => `${Math.round(x * 100)}%`;
 
 /** Сколько освоено, цифры по ответам и занятиям, сильная тема и тема, которую стоит подтянуть */
@@ -453,7 +522,7 @@ function Reading({ topics }: { topics: Profile['weakTopics'] }) {
   );
 }
 
-/** Иконки вкладок 24×24: столбики прогресса и стопка карточек тем */
+/** Иконки вкладок 24×24: столбики прогресса, стопка карточек тем и раскрытая книга */
 const TAB_ICONS: Record<HomeTab, ReactNode> = {
   progress: (
     <>
@@ -470,9 +539,15 @@ const TAB_ICONS: Record<HomeTab, ReactNode> = {
       <rect x="13" y="13" width="7.5" height="7.5" rx="2.5" />
     </>
   ),
+  learn: (
+    <>
+      <path d="M3 6a2 2 0 0 1 2-2h4a2.75 2.75 0 0 1 2.25 1.17V20.5A2.75 2.75 0 0 0 9 19.25H5a2 2 0 0 1-2-2z" />
+      <path d="M21 6a2 2 0 0 0-2-2h-4a2.75 2.75 0 0 0-2.25 1.17V20.5A2.75 2.75 0 0 1 15 19.25h4a2 2 0 0 0 2-2z" />
+    </>
+  ),
 };
 
-const TAB_LABELS: Record<HomeTab, string> = { progress: 'Прогресс', tracks: 'Темы' };
+const TAB_LABELS: Record<HomeTab, string> = { progress: 'Прогресс', tracks: 'Темы', learn: 'Учебник' };
 
 /** Плавающий таббар-капсула над контентом */
 function TabBar({ tab, onTab }: Pick<Props, 'tab' | 'onTab'>) {
