@@ -983,6 +983,13 @@ button.card:active:not(:disabled) {
   font-size: 13px;
 }
 
+.author__version {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Ячейки и настройки ---------- */
 
 .group {

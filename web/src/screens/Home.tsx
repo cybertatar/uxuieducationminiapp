@@ -6,6 +6,7 @@ import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
 import { AUTHOR_URL, openLink, openTelegramLink } from '../tg';
+import { APP_VERSION } from '../version';
 import { Wireframe } from '../Wireframe';
 
 export type HomeTab = 'progress' | 'tracks';
@@ -126,6 +127,9 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
         <button className="link" onClick={() => openTelegramLink(AUTHOR_URL)}>
           Daniil Tyncherov
         </button>
+        <div className="author__version">
+          Версия {APP_VERSION}
+        </div>
       </footer>
     </main>
   );
