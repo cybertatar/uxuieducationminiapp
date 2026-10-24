@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { tracks, type TrackId } from '../../content';
+import { lessonById, nextLesson, tracks, type TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Home, type HomeTab, type SectionFilter } from './screens/Home';
+import { Lesson } from './screens/Lesson';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
 
-export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' };
+export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
 
 /** Куда звать после разминки: тема, где больше всего ошибок (при равенстве — раньше в списке тем). Без ошибок — null. */
 function warmupNext(result: QuizResult): TrackId | null {
@@ -25,6 +26,7 @@ type Screen =
   | { name: 'home' }
   | { name: 'quiz'; session: SessionMode; questionIds: string[] }
   | { name: 'result'; session: SessionMode; result: QuizResult }
+  | { name: 'lesson'; id: string }
   | { name: 'settings' }
   | { name: 'calendar' };
 
@@ -87,6 +89,16 @@ export function App() {
     refresh();
   };
 
+  const openLesson = (id: string) => setScreen({ name: 'lesson', id });
+
+  // Отметку ставим сразу: сеть не должна задерживать галочку в списке уроков
+  const markRead = (id: string) => {
+    setProfile((p) => (p && !p.lessonsRead.includes(id) ? { ...p, lessonsRead: [...p.lessonsRead, id] } : p));
+    api.lessonRead(id).catch(() => {
+      // Не критично: урок отметится при следующем прочтении
+    });
+  };
+
   if (error && !profile) {
     return (
       <main className="screen screen--center">
@@ -115,14 +127,33 @@ export function App() {
             onFinish={(result) => setScreen({ name: 'result', session: screen.session, result })}
           />
         );
+      case 'lesson': {
+        const lesson = lessonById.get(screen.id)!;
+        return (
+          <Lesson
+            key={lesson.id}
+            lesson={lesson}
+            read={profile?.lessonsRead.includes(lesson.id) ?? false}
+            starting={starting}
+            onBack={goHome}
+            onRead={() => markRead(lesson.id)}
+            onPractice={() => start({ mode: 'lesson', lesson: lesson.id })}
+          />
+        );
+      }
       case 'result': {
-        const next = screen.session.mode === 'warmup' ? warmupNext(screen.result) : undefined;
+        const { session } = screen;
+        const next = session.mode === 'warmup' ? warmupNext(screen.result) : undefined;
+        const toLessons = () => {
+          setTab('learn');
+          goHome();
+        };
         return (
           <Result
             result={screen.result}
             onHome={goHome}
             onAgain={() => start(screen.session)}
-            canRepeat={screen.session.mode === 'track'}
+            canRepeat={session.mode === 'track'}
             starting={starting}
             warmup={
               next === undefined
@@ -135,6 +166,17 @@ export function App() {
                       goHome();
                     },
                   }
+            }
+            lesson={
+              session.mode === 'lesson'
+                ? {
+                    next: nextLesson(session.lesson),
+                    track: lessonById.get(session.lesson)!.track,
+                    onNext: openLesson,
+                    onTrack: (track) => start({ mode: 'track', track }),
+                    onLessons: toLessons,
+                  }
+                : undefined
             }
           />
         );
@@ -156,6 +198,7 @@ export function App() {
               saveSection(s);
             }}
             onStart={start}
+            onLesson={openLesson}
             onSettings={() => setScreen({ name: 'settings' })}
             onCalendar={() => {
               setScreen({ name: 'calendar' });

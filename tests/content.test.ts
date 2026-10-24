@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { correctOption, isTextOnly, optionCount, questionById, questions, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
+import { correctOption, isTextOnly, lessons, nextLesson, optionCount, questionById, questions, readingMinutes, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
 import { illustrations } from '../web/src/illustrations';
 
 describe('контент', () => {
@@ -110,5 +110,59 @@ describe('гайд в приветствии', () => {
     const { ONBOARDING_VERSION } = await import('../src/onboarding-version');
     const hash = createHash('sha256').update(readFileSync('web/public/onboarding.mp4')).digest('hex');
     expect(hash.startsWith(ONBOARDING_VERSION)).toBe(true);
+  });
+});
+
+describe('уроки', () => {
+  it('id уроков уникальны', () => {
+    expect(new Set(lessons.map((l) => l.id)).size).toBe(lessons.length);
+  });
+
+  it('уроки одного трека идут подряд, иначе «Следующий урок» перепрыгнет в другую тему', () => {
+    const seen = new Set<string>();
+    lessons.forEach((l, i) => {
+      if (i > 0 && lessons[i - 1].track !== l.track) expect(seen.has(l.track), l.id).toBe(false);
+      seen.add(l.track);
+    });
+  });
+
+  it.each(lessons.map((l) => [l.id, l] as const))('%s заполнен корректно', (_, l) => {
+    expect(trackById.has(l.track)).toBe(true);
+    expect(l.title.length).toBeGreaterThan(3);
+    expect(l.description.length).toBeLessThanOrEqual(90);
+    expect(l.blocks.length).toBeGreaterThanOrEqual(3);
+    expect(l.takeaways.length).toBeGreaterThanOrEqual(2);
+    expect(l.takeaways.length).toBeLessThanOrEqual(4);
+    expect(l.sources.length).toBeGreaterThan(0);
+    for (const s of l.sources) expect(s.url).toMatch(/^https:\/\//);
+
+    // Закрепление — вопросы из того же трека, без повторов
+    expect(l.practice.length).toBe(3);
+    expect(new Set(l.practice).size).toBe(3);
+    for (const id of l.practice) expect(questionById.get(id)?.track, `вопрос ${id}`).toBe(l.track);
+
+    const images = l.blocks.flatMap((b) => (b.type === 'image' ? [b.image] : b.type === 'compare' ? [b.bad, b.good] : []));
+    for (const name of images) expect(illustrations[name], `иллюстрация ${name}`).toBeDefined();
+
+    // Ответ не должен быть подсказан картинкой из урока: вопрос с той же иллюстрацией решался бы узнаванием
+    for (const id of l.practice) {
+      const q = questionById.get(id)!;
+      const shown = [q.fix, 'image' in q ? q.image : undefined].filter(Boolean);
+      for (const name of shown) expect(images, `${id} показывает ${name} из урока`).not.toContain(name);
+    }
+
+    // Незакрытый ** показался бы звёздочками в тексте
+    const texts = l.blocks.flatMap((b) => (b.type === 'list' ? b.items : b.type === 'p' || b.type === 'life' || b.type === 'term' ? [b.text] : []));
+    for (const t of texts) expect(t.split('**').length % 2, t).toBe(1);
+
+    expect(readingMinutes(l)).toBeGreaterThanOrEqual(1);
+  });
+
+  it('урок дальше ведёт на следующий урок своей темы', () => {
+    for (const l of lessons) {
+      const next = nextLesson(l.id);
+      if (next) expect(next.track).toBe(l.track);
+    }
+    expect(nextLesson(lessons[lessons.length - 1].id)).toBeNull();
   });
 });

@@ -28,6 +28,8 @@ export interface Profile {
   reviewDue: number;
   /** Темы, где больше всего ошибок, со статьёй по каждой — для списка «Что почитать» */
   weakTopics: WeakTopic[];
+  /** id прочитанных уроков «Учебника» */
+  lessonsRead: string[];
   settings: Settings;
 }
 
@@ -44,7 +46,8 @@ export interface HistoryResponse {
   days: HistoryDay[];
 }
 
-export type SessionRequest = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' };
+/** lesson — вопросы на закрепление после урока */
+export type SessionRequest = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
 
 export interface SessionResponse {
   questionIds: string[];

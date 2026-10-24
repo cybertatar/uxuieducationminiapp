@@ -1,10 +1,10 @@
 import { Api } from 'grammy';
 import { Hono } from 'hono';
-import { questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
+import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
 import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
 import { offerDailyQuestion } from './bot';
-import { activityCount, activityDates, getAnswers, history, parseSource, upsertUser, type UserRow } from './db';
+import { activityCount, activityDates, getAnswers, history, lessonsRead, markLessonRead, parseSource, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
@@ -52,7 +52,11 @@ api.get('/me', async (c) => {
   // Неделя с понедельника, как в календаре
   const weekday = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
   const monday = addDays(date, -weekday);
-  const [active, activeDays] = await Promise.all([activityDates(c.env.DB, user.id, monday), activityCount(c.env.DB, user.id)]);
+  const [active, activeDays, read] = await Promise.all([
+    activityDates(c.env.DB, user.id, monday),
+    activityCount(c.env.DB, user.id),
+    lessonsRead(c.env.DB, user.id),
+  ]);
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(monday, i);
     return { date: d, active: active.has(d), isToday: d === date };
@@ -82,6 +86,8 @@ api.get('/me', async (c) => {
     }),
     reviewDue: questions.filter((q) => isDue(answers.get(q.id), date)).length,
     weakTopics: weakTopics(questions, answers),
+    // Урок могли убрать из учебника — такие отметки не показываем
+    lessonsRead: read.filter((id) => lessonById.has(id)),
     settings: {
       dailyEnabled: user.daily_enabled === 1,
       dailyTime: user.daily_time,
@@ -106,6 +112,11 @@ api.post('/session', async (c) => {
   if (body.mode === 'warmup') {
     return c.json({ questionIds: pickWarmupSession(questionById, answers) });
   }
+  if (body.mode === 'lesson') {
+    const lesson = lessonById.get(body.lesson);
+    if (!lesson) return c.json({ error: 'unknown lesson' }, 400);
+    return c.json({ questionIds: lesson.practice });
+  }
   if (!trackById.has(body.track)) return c.json({ error: 'unknown track' }, 400);
   return c.json({ questionIds: pickTrackSession(questionsByTrack(body.track as TrackId), answers, date) });
 });
@@ -123,6 +134,14 @@ api.post('/answer', async (c) => {
   const result = await recordAnswer(c.env.DB, c.get('user'), questionId, option, Date.now(), 'app');
   if (!result) return c.json({ error: 'bad answer' }, 400);
   return c.json({ correct: result.correct });
+});
+
+/** Урок прочитан: человек долистал до «Запомни главное» */
+api.post('/lessons/read', async (c) => {
+  const { lessonId } = await c.req.json<{ lessonId: string }>();
+  if (!lessonById.has(lessonId)) return c.json({ error: 'unknown lesson' }, 400);
+  await markLessonRead(c.env.DB, c.get('user').id, lessonId, Date.now());
+  return c.json({ ok: true });
 });
 
 api.post('/session/complete', async (c) => {

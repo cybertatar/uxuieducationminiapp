@@ -186,3 +186,13 @@ export async function usersDue(
     .all<UserRow>();
   return results;
 }
+
+export async function lessonsRead(db: D1Database, userId: number): Promise<string[]> {
+  const { results } = await db.prepare('SELECT lesson_id FROM lesson_reads WHERE user_id = ?').bind(userId).all<{ lesson_id: string }>();
+  return results.map((r) => r.lesson_id);
+}
+
+/** Запоминает только первое прочтение: повторные не перезаписывают дату */
+export async function markLessonRead(db: D1Database, userId: number, lessonId: string, now: number) {
+  await db.prepare('INSERT OR IGNORE INTO lesson_reads (user_id, lesson_id, read_at) VALUES (?, ?, ?)').bind(userId, lessonId, now).run();
+}

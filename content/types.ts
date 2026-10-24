@@ -106,3 +106,35 @@ export interface Section {
   title: string;
   tracks: TrackId[];
 }
+
+/**
+ * Блок текста урока. В строках можно выделять **жирным**.
+ * compare — две иллюстрации рядом: «Так себе» и «Лучше».
+ */
+export type LessonBlock =
+  | { type: 'p'; text: string }
+  | { type: 'h'; text: string }
+  | { type: 'list'; items: string[] }
+  /** Пример из жизни вне интерфейсов: на нём новичку проще понять идею */
+  | { type: 'life'; text: string }
+  /** Термин и его объяснение простыми словами */
+  | { type: 'term'; term: string; text: string }
+  | { type: 'image'; image: string; caption: string }
+  | { type: 'compare'; bad: string; good: string; caption: string };
+
+/** Урок в «Учебнике»: тема, пересказанная простым языком по первоисточникам, и вопросы на закрепление. */
+export interface Lesson {
+  /** Стабильный id: по нему хранится отметка «прочитано», менять нельзя. */
+  id: string;
+  track: TrackId;
+  title: string;
+  /** Одна строка в списке уроков: о чём урок и зачем его читать. */
+  description: string;
+  blocks: LessonBlock[];
+  /** «Запомни главное»: 2–4 коротких тезиса. */
+  takeaways: string[];
+  /** Вопросы из трека на закрепление: 3 штуки, задаются в этом порядке. */
+  practice: string[];
+  /** Статьи, по которым написан урок. Первая — основная. */
+  sources: Link[];
+}
