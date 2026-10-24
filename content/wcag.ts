@@ -51,6 +51,7 @@ const L = {
   inputPurpose: u('identify-input-purpose.html', 'Identify Input Purpose'),
   sensory: u('sensory-characteristics.html', 'Sensory Characteristics'),
   audio: u('audio-control.html', 'Audio Control'),
+  audioOnly: u('audio-only-and-video-only-prerecorded.html', 'Audio-only and Video-only (Prerecorded)'),
   charKeys: u('character-key-shortcuts.html', 'Character Key Shortcuts'),
   multipleWays: u('multiple-ways.html', 'Multiple Ways'),
   headingsLabels: u('headings-and-labels.html', 'Headings and Labels'),
@@ -1068,5 +1069,41 @@ export const wcagQuestions: Question[] = [
     explanation:
       'Крупный текст (от 18 pt или 14 pt полужирным) требует 3:1 на AA и 4.5:1 на AAA. Для иконок и границ контролов уровня AAA по контрасту нет — 3:1 остаётся пределом.',
     links: [L.nonText, L.contrast, L.contrastAAA],
+  },
+  {
+    id: 'w-070',
+    track: 'wcag',
+    topic: T.media,
+    text: 'Подкаст выложен на сайте только аудиофайлом. Что для него нужно по WCAG уровня A?',
+    options: ['Текстовая расшифровка', 'Субтитры', 'Аудиодескрипция', 'Ничего: аудио и так доступно'],
+    correct: 0,
+    summary: 'Для записанного аудио без видео нужна текстовая расшифровка.',
+    explanation:
+      'Критерий 1.2.1 уровня A требует текстовую альтернативу с тем же содержанием. Субтитры бывают только у видео, а глухой человек без расшифровки не узнает, о чём подкаст.',
+    links: [L.audioOnly],
+  },
+  {
+    id: 'w-071',
+    track: 'wcag',
+    topic: T.timing,
+    text: 'Какое ограничение по времени WCAG разрешает не продлевать?',
+    options: ['Время на ставку в живом аукционе', 'Сессия в интернет-банке', 'Заполнение анкеты', 'Чтение новости на сайте'],
+    correct: 0,
+    summary: 'Не продлевают, только если время — суть события, как на аукционе.',
+    explanation:
+      'Критерий 2.2.1 делает исключения для событий в реальном времени и случаев, где лимит — часть задачи. В остальных человеку дают отключить, продлить или настроить время.',
+    links: [L.timing],
+  },
+  {
+    id: 'w-072',
+    track: 'wcag',
+    topic: T.device,
+    text: 'Какому приложению WCAG разрешает работать только в одной ориентации экрана?',
+    options: ['Виртуальному пианино, которому нужна ширина экрана', 'Интернет-магазину', 'Мессенджеру', 'Приложению банка'],
+    correct: 0,
+    summary: 'Ориентацию фиксируют, только если без неё функция не работает.',
+    explanation:
+      'Критерий 1.3.4 допускает фиксацию, когда ориентация важна по сути: клавиатуре пианино нужна ширина. Магазину, мессенджеру и банку это не нужно — пусть подстраиваются.',
+    links: [L.orientation],
   },
 ];
