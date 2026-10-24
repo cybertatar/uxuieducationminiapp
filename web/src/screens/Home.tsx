@@ -5,8 +5,9 @@ import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
-import { AUTHOR_URL, openLink, openTelegramLink } from '../tg';
+import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { SectionPager } from '../SectionPager';
+import { StudyLinks } from '../StudyLinks';
 import { APP_VERSION } from '../version';
 import { Wireframe } from '../Wireframe';
 
@@ -39,7 +40,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
       {!profile ? (
         <HomeSkeleton />
       ) : tab === 'progress' ? (
-        <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} />
+        <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} onLesson={onLesson} />
       ) : tab === 'tracks' ? (
         <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />
       ) : (
@@ -52,7 +53,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
 
 type TabProps = Pick<Props, 'starting' | 'onStart'> & { profile: Profile };
 
-function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab }: TabProps & Pick<Props, 'onSettings' | 'onCalendar' | 'onTab'>) {
+function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab, onLesson }: TabProps & Pick<Props, 'onSettings' | 'onCalendar' | 'onTab' | 'onLesson'>) {
   const { streak } = profile;
   // Новичок ещё не прошёл ни одной сессии — сразу предлагаем начать, а не искать тесты на соседней вкладке
   const firstRun = streak.activeDays === 0;
@@ -126,7 +127,7 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
         </>
       )}
 
-      {profile.weakTopics.length > 0 && <Reading topics={profile.weakTopics} />}
+      {profile.weakTopics.length > 0 && <Reading topics={profile.weakTopics} onLesson={onLesson} />}
 
       <button className="cell" onClick={onSettings}>
         <span>🔔 Уведомления</span>
@@ -401,25 +402,23 @@ function Stats({ profile, starting, onStart }: TabProps) {
   );
 }
 
-/** Статьи по темам, где больше всего ошибок: тап открывает статью во встроенном браузере Telegram */
-function Reading({ topics }: { topics: Profile['weakTopics'] }) {
+/** Темы, где больше всего ошибок: урок учебника простым языком и статья-первоисточник */
+function Reading({ topics, onLesson }: { topics: Profile['weakTopics'] } & Pick<Props, 'onLesson'>) {
   return (
     <>
       <h2 className="section-title">Что почитать</h2>
-      <p className="hint section-hint">Статьи по темам, в которых у тебя больше всего ошибок.</p>
-      <div className="group reading">
+      <p className="hint section-hint">Уроки и статьи по темам, в которых у тебя больше всего ошибок.</p>
+      <div className="mistakes">
         {topics.map((t) => (
-          <button key={t.link.url} className="cell reading__item" onClick={() => openLink(t.link.url)}>
-            <span className="reading__body">
-              <span className="reading__title">{t.link.title}</span>
-              <span className="hint">
-                {t.topic} · <span className="nowrap">{t.mistakes} {plural(t.mistakes, 'ошибка', 'ошибки', 'ошибок')}</span>
+          <div key={`${t.track}|${t.topic}`} className="card mistake">
+            <span className="reading__head">
+              <span className="chip">{t.topic}</span>
+              <span className="hint nowrap">
+                {t.mistakes} {plural(t.mistakes, 'ошибка', 'ошибки', 'ошибок')}
               </span>
             </span>
-            <span className="reading__arrow" aria-hidden>
-              ↗
-            </span>
-          </button>
+            <StudyLinks track={t.track} topic={t.topic} links={[t.link]} onLesson={onLesson} />
+          </div>
         ))}
       </div>
     </>

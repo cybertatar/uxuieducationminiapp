@@ -1211,6 +1211,58 @@ button.card:active:not(:disabled) {
   gap: 8px;
 }
 
+/* ---------- Куда идти разбираться: урок и первоисточники ---------- */
+
+.study-links {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Урок учебника — плашка заметнее внешних ссылок: он короче и на русском */
+.study-links__lesson {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  text-align: left;
+  transition: transform 0.12s;
+}
+
+.study-links__lesson:active {
+  transform: scale(0.98);
+}
+
+.study-links__lesson svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  fill: var(--accent);
+}
+
+.study-links__lesson > span:not(.chevron) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.study-links__label {
+  font-size: 12px;
+  color: var(--hint);
+}
+
+.study-links__title {
+  font-weight: 600;
+  /* Как у .chip: чистый акцент на тонированной подложке не добирает 4,5:1 */
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+}
+
 /* ---------- Подпись автора ---------- */
 
 .author {
@@ -1264,25 +1316,12 @@ button.card:active:not(:disabled) {
   white-space: nowrap;
 }
 
-.reading__item {
-  text-align: left;
-}
-
-.reading__body {
-  flex: 1;
+.reading__head {
+  align-self: stretch;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.reading__title {
-  color: var(--link);
-  font-size: 15px;
-}
-
-.reading__arrow {
-  color: var(--hint);
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .cell--action {

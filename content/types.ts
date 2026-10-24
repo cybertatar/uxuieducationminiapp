@@ -130,6 +130,8 @@ export interface Lesson {
   title: string;
   /** Одна строка в списке уроков: о чём урок и зачем его читать. */
   description: string;
+  /** Темы вопросов трека (поле topic), которые урок объясняет: по ним из результатов ведём в урок. */
+  topics: string[];
   blocks: LessonBlock[];
   /** «Запомни главное»: 2–4 коротких тезиса. */
   takeaways: string[];

@@ -167,6 +167,24 @@ describe('уроки', () => {
     }
   });
 
+  it('темы урока есть среди вопросов трека, и у каждой темы один урок', () => {
+    const owner = new Map<string, string>();
+    for (const l of lessons) {
+      expect(l.topics.length, l.id).toBeGreaterThan(0);
+      const known = new Set(questions.filter((q) => q.track === l.track).map((q) => q.topic));
+      for (const topic of l.topics) {
+        expect(known.has(topic), `${l.id}: тема «${topic}»`).toBe(true);
+        const key = `${l.track}|${topic}`;
+        expect(owner.get(key), `тема «${topic}» уже в ${owner.get(key)}`).toBeUndefined();
+        owner.set(key, l.id);
+      }
+    }
+  });
+
+  it('вопросы на закрепление — из тем самого урока', () => {
+    for (const l of lessons) for (const id of l.practice) expect(l.topics, `${l.id}: ${id}`).toContain(questionById.get(id)!.topic);
+  });
+
   it('урок дальше ведёт на следующий урок своей темы', () => {
     for (const l of lessons) {
       const next = nextLesson(l.id);

@@ -1,4 +1,4 @@
-import type { Lesson, LessonBlock } from '../types';
+import type { Lesson, LessonBlock, TrackId } from '../types';
 import { heuristicsLessons } from './heuristics';
 import { uxLawsLessons } from './ux-laws';
 
@@ -6,6 +6,11 @@ import { uxLawsLessons } from './ux-laws';
 export const lessons: Lesson[] = [...heuristicsLessons, ...uxLawsLessons];
 
 export const lessonById = new Map(lessons.map((l) => [l.id, l]));
+
+const lessonByTopic = new Map(lessons.flatMap((l) => l.topics.map((topic) => [`${l.track}|${topic}`, l] as const)));
+
+/** Урок, который объясняет тему вопроса, — чтобы из результатов вести не только в статью, но и в учебник */
+export const lessonForTopic = (track: TrackId, topic: string): Lesson | undefined => lessonByTopic.get(`${track}|${topic}`);
 
 /** Следующий урок того же трека или null, если этот последний */
 export function nextLesson(id: string): Lesson | null {
