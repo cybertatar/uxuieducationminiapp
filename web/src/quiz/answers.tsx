@@ -277,8 +277,11 @@ export function SpotAnswer({ q, checked, onAnswer }: Props<SpotQuestion>) {
     onAnswer(next.length === zones.length ? verdict(zones.every((z) => next.some((m) => inZone(m, z)))) : null);
   };
 
+  const missed = zones.filter((z) => !marks.some((m) => inZone(m, z))).length;
   const hint = checked
-    ? 'Все проблемные зоны обведены, пунктиром — пропущенные'
+    ? missed
+      ? 'Все проблемные зоны обведены, пунктиром — пропущенные'
+      : 'Все проблемы найдены'
     : marks.length === zones.length
       ? 'Все метки стоят. Тап по метке снимает её'
       : `👆 Найди проблемы и тапни на каждую: отмечено ${marks.length} из ${zones.length}`;
