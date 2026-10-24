@@ -65,6 +65,28 @@ const siteHeader = (skip: boolean) =>
     ? rect(16, 14, 150, 30, 'focus-ring', 10) + button(20, 18, 142, 22, 'Перейти к содержимому', 'secondary', 8)
     : rect(18, 22, 46, 18, 'focus-ring', 5) + text(296, 160, 'ещё 11 нажатий Tab до статьи', { size: 9, anchor: 'end' }));
 
+/** Форма доставки с тремя проблемами: поле без подписи, ошибка только цветом, крошечный крестик */
+const deliveryFormSpot = () =>
+  screen(20, 10, 280, 236) +
+  title(36, 38, 'Доставка') +
+  icon('info', 252, 26, 14, 'stroke-muted') +
+  icon('close', 270, 27, 11, 'stroke') +
+  field(36, 66, 248, 28, { label: 'Имя', value: 'Анна' }) +
+  field(36, 114, 248, 28, { placeholder: 'Телефон' }) +
+  field(36, 174, 248, 28, { label: 'Индекс', value: '1010', state: 'error' }) +
+  button(36, 214, 248, 24, 'Продолжить');
+
+/** Карта: масштаб кнопками «+» и «−» или только жестом двумя пальцами */
+const mapZoom = (buttons: boolean) =>
+  tile(240, 150) +
+  rect(14, 12, 212, 126, 'block', 10) +
+  path('M14 70C60 50 90 96 140 74S200 40 226 56', 'stroke-muted', 'fill="none"') +
+  path('M70 12V138M14 104H226', 'stroke-muted') +
+  circle(120, 74, 7, 'danger') +
+  (buttons
+    ? rect(188, 64, 30, 60, 'card', 8) + icon('plus', 195, 70, 16) + path('M192 94H214', 'divider') + icon('minus', 195, 100, 16)
+    : rect(30, 112, 180, 20, 'card', 10) + text(120, 126, 'Сведите два пальца для масштаба', { size: 8, cls: 'ink', anchor: 'middle' }));
+
 export const wcagArt: Record<string, Illustration> = {
   'w-color-only': ill(
     320,
@@ -261,6 +283,15 @@ export const wcagArt: Record<string, Illustration> = {
   ),
   'w-skip-link': ill(320, 190, 'Первое нажатие Tab показывает поверх меню кнопку «Перейти к содержимому» с обводкой фокуса', siteHeader(true)),
   'w-skip-none': ill(320, 190, 'Первое нажатие Tab ставит фокус на первую ссылку меню; до статьи ещё 11 нажатий', siteHeader(false)),
+  'w-form-spot': ill(
+    320,
+    256,
+    'Форма «Доставка»: справа вверху маленькие иконки «i» и крестик вплотную; поле «Имя» с подписью; поле, где серым написано только «Телефон»; поле «Индекс» с красной рамкой без текста ошибки; кнопка «Продолжить»',
+    deliveryFormSpot(),
+    { close: [262, 20, 28, 26], phone: [36, 114, 248, 28], zip: [36, 166, 248, 36] },
+  ),
+  'w-map-buttons': ill(240, 150, 'Карта с кнопками «плюс» и «минус» для масштаба', mapZoom(true)),
+  'w-map-pinch': ill(240, 150, 'Карта без кнопок масштаба, только подсказка «Сведите два пальца для масштаба»', mapZoom(false)),
 };
 
 export const wcagTrackArt: Record<string, Illustration> = {
