@@ -126,6 +126,64 @@ const signupProblems = () =>
   field(36, 172, 248, 28, { label: 'Пароль', value: '••••••', state: 'error', hint: 'Ошибка' }) +
   button(36, 238, 248, 32, 'ОК');
 
+const wtile = (w: number, h: number) => rect(0, 0, w, h, 'tile', 12);
+
+/** Экран блокировки с четырьмя уведомлениями: два полезных, два пустых */
+const NOTIFS: [string, string, string][] = [
+  ['Доставка', 'Заказ №4821 в пункте выдачи', 'Хранится до 12 ноября, ул. Ленина, 5'],
+  ['Магазин', 'У нас для вас кое-что интересное!', 'Загляните скорее 👀'],
+  ['Сообщения', 'Анна', 'Буду в 7, возьму билеты'],
+  ['Банк', 'Откройте приложение', 'Чтобы узнать важную новость'],
+];
+const pushSpot = () =>
+  screen(20, 10, 280, 256) +
+  text(160, 40, '9:41', { size: 20, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  NOTIFS.map(([app, head, body], i) => {
+    const y = 56 + i * 50;
+    return rect(30, y, 260, 44, 'glass', 12) + rect(38, y + 8, 20, 20, 'accent', 5) + text(66, y + 15, app, { size: 8 }) + text(66, y + 28, head, { size: 10, weight: 700, cls: 'ink' }) + text(66, y + 40, body, { size: 9, cls: 'ink' });
+  }).join('');
+
+/** Форма, где обязательные поля отмечены звёздочкой или только фразой сверху */
+const requiredForm = (asterisks: boolean) =>
+  wtile(240, 200) +
+  screen(16, 8, 208, 184, 12) +
+  title(28, 32, 'Анкета', 12) +
+  (asterisks ? '' : text(28, 46, 'Все поля обязательны, кроме отчества', { size: 8 })) +
+  (
+    [
+      ['Фамилия', true],
+      ['Имя', true],
+      ['Отчество', false],
+      ['Телефон', true],
+    ] as const
+  )
+    .map(([label, req], i) => {
+      const y = 70 + i * 31;
+      return text(28, y - 4, label + (asterisks && req ? ' *' : '') + (asterisks && !req ? ' (необязательно)' : ''), { size: 8.5 }) + rect(28, y, 184, 14, 'field', 5);
+    })
+    .join('');
+
+/** Ввод даты рождения: поле для ввода или календарь, который листают с текущего месяца */
+const birthDate = (typed: boolean) =>
+  wtile(240, 150) +
+  screen(16, 8, 208, 134, 12) +
+  text(28, 32, 'Дата рождения', { size: 9 }) +
+  (typed
+    ? field(28, 38, 184, 26, { value: '14.03.1987' }) + text(28, 78, 'Формат: дд.мм.гггг', { size: 8 })
+    : rect(28, 38, 184, 96, 'card', 8) +
+      icon('back', 36, 44, 12) + text(120, 54, 'Ноябрь 2026', { size: 9, weight: 700, cls: 'ink', anchor: 'middle' }) + icon('chevron', 196, 44, 12) +
+      Array.from({ length: 21 }, (_, i) => text(44 + (i % 7) * 24, 76 + Math.floor(i / 7) * 18, String(i + 1), { size: 8, cls: 'ink', anchor: 'middle' })).join(''));
+
+/** Попап подписки: отказ с упрёком или нейтральный */
+const confirmshame = (shaming: boolean) =>
+  wtile(240, 170) +
+  card(24, 14, 192, 142, 14) +
+  text(120, 42, 'Скидка 10% за подписку', { size: 11, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  text(120, 60, 'Раз в неделю — подборка акций', { size: 9, anchor: 'middle' }) +
+  field(40, 72, 160, 24, { placeholder: 'Email' }) +
+  button(40, 104, 160, 24, 'Подписаться') +
+  text(120, 146, shaming ? 'Нет, я не люблю экономить' : 'Не сейчас', { size: 9, cls: 'accent', anchor: 'middle' });
+
 export const writingArt: Record<string, Illustration> = {
   'uw-toggle-short': ill(320, 180, 'Настройки уведомлений: переключатель «Скидки и акции» с пояснением «Не чаще раза в неделю»', toggles(false)),
   'uw-toggle-long': ill(
@@ -198,6 +256,19 @@ export const writingArt: Record<string, Illustration> = {
     signupProblems(),
     { placeholder: [36, 112, 248, 28], error: [36, 166, 248, 50], cta: [36, 238, 248, 32] },
   ),
+  'uw-push-spot': ill(
+    320,
+    276,
+    'Экран блокировки с четырьмя уведомлениями: «Заказ №4821 в пункте выдачи, хранится до 12 ноября»; «У нас для вас кое-что интересное! Загляните скорее»; «Анна: Буду в 7, возьму билеты»; «Откройте приложение, чтобы узнать важную новость»',
+    pushSpot(),
+    { teaser: [30, 106, 260, 44], openapp: [30, 206, 260, 44] },
+  ),
+  'uw-required-asterisk': ill(240, 200, 'Анкета: у полей Фамилия, Имя и Телефон звёздочки, у Отчества подпись «необязательно»', requiredForm(true)),
+  'uw-required-top': ill(240, 200, 'Анкета: сверху мелко «Все поля обязательны, кроме отчества», у самих полей отметок нет', requiredForm(false)),
+  'uw-date-typed': ill(240, 150, 'Поле «Дата рождения» с введённым значением 14.03.1987 и подсказкой формата', birthDate(true)),
+  'uw-date-picker': ill(240, 150, 'Поле «Дата рождения» в виде календаря, открытого на ноябре 2026 года со стрелками по месяцам', birthDate(false)),
+  'uw-shame': ill(240, 170, 'Попап «Скидка 10% за подписку» с полем email, кнопкой «Подписаться» и ссылкой отказа «Нет, я не люблю экономить»', confirmshame(true)),
+  'uw-neutral': ill(240, 170, 'Попап «Скидка 10% за подписку» с полем email, кнопкой «Подписаться» и ссылкой отказа «Не сейчас»', confirmshame(false)),
 };
 
 export const writingTrackArt: Record<string, Illustration> = {
