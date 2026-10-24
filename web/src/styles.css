@@ -1031,6 +1031,18 @@ button.card:active:not(:disabled) {
   font-variant-numeric: tabular-nums;
 }
 
+/* Тема в списке раздела: эмодзи трека в том же кружке, что и номер урока */
+.learn__emoji {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.learn__progress {
+  margin: 8px 0 2px;
+}
+
 .learn__num.is-read {
   background: color-mix(in srgb, var(--success) 18%, var(--surface));
   color: var(--success);

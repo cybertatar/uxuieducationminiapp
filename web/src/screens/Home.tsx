@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { lessons, questionsByTrack, readingMinutes, sections, trackById, tracks, type SectionId, type TrackId } from '../../../content';
+import { lessons, questionsByTrack, sections, trackById, type SectionId, type TrackId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
@@ -25,8 +25,10 @@ interface Props {
   section: SectionFilter;
   onSection: (section: SectionFilter) => void;
   onStart: (s: SessionMode) => void;
-  /** Открытая тема учебника: хранится в App, как и раздел тем */
-  learnTrack: TrackId;
+  /** Открытый раздел учебника: хранится в App, как и раздел тем */
+  learnSection: SectionId;
+  onLearnSection: (section: SectionId) => void;
+  /** Открыть тему учебника со списком уроков */
   onLearnTrack: (track: TrackId) => void;
   onLesson: (id: string) => void;
   onSettings: () => void;
@@ -34,7 +36,7 @@ interface Props {
 }
 
 /** Главная из трёх вкладок: прогресс с трекером занятий, список тем и учебник. */
-export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnTrack, onLearnTrack, onLesson, onSettings, onCalendar }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnSection, onLearnSection, onLearnTrack, onLesson, onSettings, onCalendar }: Props) {
   return (
     <>
       {!profile ? (
@@ -44,7 +46,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
       ) : tab === 'tracks' ? (
         <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />
       ) : (
-        <LearnTab profile={profile} learnTrack={learnTrack} onLearnTrack={onLearnTrack} onLesson={onLesson} />
+        <LearnTab profile={profile} learnSection={learnSection} onLearnSection={onLearnSection} onLearnTrack={onLearnTrack} />
       )}
       <TabBar tab={tab} onTab={onTab} />
     </>
@@ -254,70 +256,60 @@ function TrackList({ ids, progress, starting, onStart }: Pick<Props, 'starting' 
   );
 }
 
-/** Темы учебника — треки, у которых есть уроки, в порядке списка тем */
-export const learnTracks = tracks.filter((t) => lessons.some((l) => l.track === t.id)).map((t) => ({ id: t.id, title: t.title }));
+/** Разделы учебника — те, где у тем есть уроки; темы внутри раздела — в порядке списка тем */
+export const learnSections = sections
+  .map((s) => ({ id: s.id, title: s.title, tracks: s.tracks.filter((t) => lessons.some((l) => l.track === t)) }))
+  .filter((s) => s.tracks.length > 0);
 
-/** Учебник: темы простым языком, по пилюле на тему; после каждого урока — вопросы на закрепление */
-function LearnTab({ profile, learnTrack, onLearnTrack, onLesson }: { profile: Profile } & Pick<Props, 'learnTrack' | 'onLearnTrack' | 'onLesson'>) {
+/** Учебник: пилюли разделов, в разделе — темы с прогрессом; тап открывает тему с уроками */
+function LearnTab({ profile, learnSection, onLearnSection, onLearnTrack }: { profile: Profile } & Pick<Props, 'learnSection' | 'onLearnSection' | 'onLearnTrack'>) {
   const read = new Set(profile.lessonsRead);
   return (
     <main className="screen screen--tracks">
       <h1 className="visually-hidden">Учебник</h1>
       <SectionPager
-        label="Темы учебника"
+        label="Разделы учебника"
         idPrefix="learn"
-        items={learnTracks}
-        active={learnTrack}
-        onChange={onLearnTrack}
+        items={learnSections}
+        active={learnSection}
+        onChange={onLearnSection}
         renderPage={(id) => {
-          const list = lessons.filter((l) => l.track === id);
-          const done = list.filter((l) => read.has(l.id)).length;
-          const next = list.find((l) => !read.has(l.id));
+          const section = learnSections.find((s) => s.id === id)!;
+          const total = lessons.filter((l) => section.tracks.includes(l.track)).length;
           return (
             <>
               <p className="hint section-hint">
-                {list.length} {plural(list.length, 'урок', 'урока', 'уроков')} · {done === list.length ? 'все прочитаны' : `прочитано ${done}`}
+                {section.tracks.length} {plural(section.tracks.length, 'тема', 'темы', 'тем')} · {total} {plural(total, 'урок', 'урока', 'уроков')}
               </p>
-              {next && (
-                <button className="card learn__next" onClick={() => onLesson(next.id)}>
-                  <span className="learn__next-icon" aria-hidden>
-                    ▶
-                  </span>
-                  <span className="learn__body">
-                    <span className="hint">{done === 0 ? 'Начни с первого урока' : 'Продолжить'}</span>
-                    <span className="learn__title">{next.title}</span>
-                  </span>
-                  <span className="chevron" aria-hidden>
-                    ›
-                  </span>
-                </button>
-              )}
-              <ol className="group learn__list">
-                {list.map((l, i) => {
-                  const isRead = read.has(l.id);
+              <div className="group learn__list">
+                {section.tracks.map((t) => {
+                  const track = trackById.get(t)!;
+                  const list = lessons.filter((l) => l.track === t);
+                  const done = list.filter((l) => read.has(l.id)).length;
+                  const pct = Math.round((done / list.length) * 100);
                   return (
-                    <li key={l.id}>
-                      <button className="cell learn__item" onClick={() => onLesson(l.id)}>
-                        <span className={`learn__num ${isRead ? 'is-read' : ''}`} aria-hidden>
-                          {isRead ? '✓' : i + 1}
+                    <button key={t} className="cell learn__item" onClick={() => onLearnTrack(t)}>
+                      <span className="learn__num learn__emoji" aria-hidden>
+                        {track.emoji}
+                      </span>
+                      <span className="learn__body">
+                        <span className="learn__title">{track.title}</span>
+                        <span className="hint">
+                          {list.length} {plural(list.length, 'урок', 'урока', 'уроков')} · {done === list.length ? 'все прочитаны' : `прочитано ${done}`}
                         </span>
-                        <span className="learn__body">
-                          <span className="learn__title">{l.title}</span>
-                          <span className="hint">{l.description}</span>
-                          <span className="learn__meta">
-                            {readingMinutes(l)} мин{isRead && <span className="visually-hidden">, прочитано</span>}
-                          </span>
+                        <span className="progress learn__progress" role="progressbar" aria-label="Прочитано уроков" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                          <span className="progress__fill" style={{ width: `${pct}%` }} />
                         </span>
-                        <span className="chevron" aria-hidden>
-                          ›
-                        </span>
-                      </button>
-                    </li>
+                      </span>
+                      <span className="chevron" aria-hidden>
+                        ›
+                      </span>
+                    </button>
                   );
                 })}
-              </ol>
+              </div>
               <p className="hint learn__note">
-                Уроки — пересказ статей NN/g, Laws of UX и других источников простыми словами. После каждого — три вопроса, чтобы закрепить. Новые темы будут появляться постепенно.
+                Уроки — пересказ статей NN/g, Laws of UX, Apple, Google, W3C и справки Figma простыми словами. После каждого — три вопроса, чтобы закрепить.
               </p>
             </>
           );

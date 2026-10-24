@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { lessonById, nextLesson, tracks, type TrackId } from '../../content';
+import { lessonById, nextLesson, tracks, type SectionId, type TrackId } from '../../content';
 import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
-import { Home, learnTracks, type HomeTab, type SectionFilter } from './screens/Home';
+import { Home, learnSections, type HomeTab, type SectionFilter } from './screens/Home';
+import { LearnTrack } from './screens/LearnTrack';
 import { Lesson } from './screens/Lesson';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
@@ -26,13 +27,14 @@ type Screen =
   | { name: 'home' }
   | { name: 'quiz'; session: SessionMode; questionIds: string[] }
   | { name: 'result'; session: SessionMode; result: QuizResult }
+  | { name: 'learn-track'; track: TrackId }
   | { name: 'lesson'; id: string }
   | { name: 'settings' }
   | { name: 'calendar' };
 
 /** Последний открытый раздел тем и тему учебника помним на устройстве: кто учит Figma, не переключается каждый раз */
 const SECTION_KEY = 'tracks-section';
-const LEARN_KEY = 'learn-track';
+const LEARN_KEY = 'learn-section';
 
 function loadPref<T extends string>(key: string, fallback: T): T {
   try {
@@ -57,8 +59,8 @@ export function App() {
   const [starting, setStarting] = useState(false);
   const [tab, setTab] = useState<HomeTab>('progress');
   const [section, setSection] = useState<SectionFilter>(() => loadPref<SectionFilter>(SECTION_KEY, 'all'));
-  // Неизвестную тему (урок убрали из учебника) пейджер сам заменит первой
-  const [learnTrack, setLearnTrack] = useState<TrackId>(() => loadPref<TrackId>(LEARN_KEY, learnTracks[0].id));
+  // Неизвестный раздел пейджер сам заменит первым
+  const [learnSection, setLearnSection] = useState<SectionId>(() => loadPref<SectionId>(LEARN_KEY, learnSections[0].id));
 
   const refresh = useCallback(() => {
     api
@@ -93,6 +95,11 @@ export function App() {
   };
 
   const openLesson = (id: string) => setScreen({ name: 'lesson', id });
+  // Тема учебника: сюда ведут «Назад» из урока и «Учебник» после закрепления
+  const openLearnTrack = (track: TrackId) => {
+    setTab('learn');
+    setScreen({ name: 'learn-track', track });
+  };
 
   // Отметку ставим сразу: сеть не должна задерживать галочку в списке уроков
   const markRead = (id: string) => {
@@ -138,7 +145,7 @@ export function App() {
             lesson={lesson}
             read={profile?.lessonsRead.includes(lesson.id) ?? false}
             starting={starting}
-            onBack={goHome}
+            onBack={() => openLearnTrack(lesson.track)}
             onRead={() => markRead(lesson.id)}
             onPractice={() => start({ mode: 'lesson', lesson: lesson.id })}
           />
@@ -147,16 +154,6 @@ export function App() {
       case 'result': {
         const { session } = screen;
         const next = session.mode === 'warmup' ? warmupNext(screen.result) : undefined;
-        const toLessons = () => {
-          // Возвращаем на тему пройденного урока, даже если до этого была открыта другая
-          if (session.mode === 'lesson') {
-            const track = lessonById.get(session.lesson)!.track;
-            setLearnTrack(track);
-            savePref(LEARN_KEY, track);
-          }
-          setTab('learn');
-          goHome();
-        };
         return (
           <Result
             result={screen.result}
@@ -184,13 +181,15 @@ export function App() {
                     track: lessonById.get(session.lesson)!.track,
                     onNext: openLesson,
                     onTrack: (track) => start({ mode: 'track', track }),
-                    onLessons: toLessons,
+                    onLessons: () => openLearnTrack(lessonById.get(session.lesson)!.track),
                   }
                 : undefined
             }
           />
         );
       }
+      case 'learn-track':
+        return profile && <LearnTrack track={screen.track} profile={profile} onBack={goHome} onLesson={openLesson} />;
       case 'calendar':
         return profile && <Calendar profile={profile} onBack={goHome} />;
       case 'settings':
@@ -207,11 +206,12 @@ export function App() {
               setSection(s);
               savePref(SECTION_KEY, s);
             }}
-            learnTrack={learnTrack}
-            onLearnTrack={(t) => {
-              setLearnTrack(t);
-              savePref(LEARN_KEY, t);
+            learnSection={learnSection}
+            onLearnSection={(s) => {
+              setLearnSection(s);
+              savePref(LEARN_KEY, s);
             }}
+            onLearnTrack={openLearnTrack}
             onStart={start}
             onLesson={openLesson}
             onSettings={() => setScreen({ name: 'settings' })}
