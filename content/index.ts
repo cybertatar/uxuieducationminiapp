@@ -14,7 +14,7 @@ import { uxLaws } from './ux-laws';
 import { uxWritingQuestions } from './ux-writing';
 import type { ChoiceQuestion, ImageChoiceQuestion, Question, Section, Track, TrackId } from './types';
 
-export { lessonById, lessons, nextLesson, readingMinutes } from './lessons';
+export { lessonById, lessonForTopic, lessons, nextLesson, readingMinutes } from './lessons';
 export { WARMUP_SHARE, warmupPool } from './warmup';
 export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Lesson, LessonBlock, Link, MultiQuestion, OrderQuestion, Question, Section, SectionId, SpotQuestion, Track, TrackId } from './types';
 

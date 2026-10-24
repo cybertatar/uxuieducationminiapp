@@ -162,6 +162,7 @@ export function App() {
             result={screen.result}
             onHome={goHome}
             onAgain={() => start(screen.session)}
+            onLesson={openLesson}
             canRepeat={session.mode === 'track'}
             starting={starting}
             warmup={

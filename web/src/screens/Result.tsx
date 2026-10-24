@@ -5,8 +5,8 @@ import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { Cat, type CatMood } from '../Cat';
 import { days } from '../format';
-import { ExternalLink } from '../ExternalLink';
 import { Confetti } from '../quiz/Confetti';
+import { StudyLinks } from '../StudyLinks';
 import { haptic } from '../tg';
 import type { QuizResult } from './Quiz';
 
@@ -16,6 +16,8 @@ interface Props {
   starting: boolean;
   onHome: () => void;
   onAgain: () => void;
+  /** Открыть урок учебника по теме ошибки */
+  onLesson: (id: string) => void;
   /** Итог разминки: вместо «Ещё 10 вопросов» зовём в тему, где больше всего ошибок, или к выбору темы */
   warmup?: { track: TrackId | null; onTrack: (track: TrackId) => void; onTracks: () => void };
   /** Закрепление после урока: дальше — следующий урок, а после последнего — вопросы по всей теме */
@@ -49,7 +51,7 @@ function useCountUp(to: number, from: number, enabled: boolean) {
   return value;
 }
 
-export function Result({ result, canRepeat, starting, onHome, onAgain, warmup, lesson }: Props) {
+export function Result({ result, canRepeat, starting, onHome, onAgain, onLesson, warmup, lesson }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
   const ratio = result.correct / result.total;
   const { mood, text } = headline(ratio);
@@ -123,13 +125,13 @@ export function Result({ result, canRepeat, starting, onHome, onAgain, warmup, l
       {result.mistakes.length > 0 && (
         <>
           <h2 className="section-title">Что подтянуть</h2>
-          <p className="hint section-hint">Эти вопросы вернутся на повторение завтра.</p>
+          <p className="hint section-hint">Эти вопросы вернутся на повторение завтра. А пока можно прочитать урок или первоисточник.</p>
           <div className="mistakes">
             {result.mistakes.map((q) => (
               <div key={q.id} className="card mistake">
                 <span className="chip">{q.topic}</span>
                 <p className="mistake__summary">{q.summary}</p>
-                <ExternalLink link={q.links[0]} />
+                <StudyLinks track={q.track} topic={q.topic} links={q.links} onLesson={onLesson} />
               </div>
             ))}
           </div>
