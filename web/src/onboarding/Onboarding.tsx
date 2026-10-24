@@ -268,7 +268,8 @@ export function Onboarding() {
                 section="all"
                 onSection={() => {}}
                 onStart={() => {}}
-                learnTrack="heuristics"
+                learnSection="ux"
+                onLearnSection={() => {}}
                 onLearnTrack={() => {}}
                 onLesson={() => {}}
                 onSettings={() => {}}
