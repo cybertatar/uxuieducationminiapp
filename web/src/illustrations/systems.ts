@@ -99,6 +99,53 @@ const inspect = () =>
   inspectRow(164, 'Отступы', 'spacing/s', true) +
   inspectRow(192, 'Обводка', '#3A7BD5', false);
 
+/** Список семантических токенов: два названия описывают внешний вид, а не назначение */
+const tokenNamesSpot = () =>
+  screen(10, 10, 300, 200) +
+  title(24, 34, 'Токены', 12) +
+  path('M10 46H310', 'divider') +
+  ['color/action/primary', 'color/text/red', 'color/bg/surface', 'spacing/md', 'button/blue/bg', 'radius/card']
+    .map((n, i) => icon('sparkle', 24, 58 + i * 24, 12, 'stroke-muted') + text(44, 68 + i * 24, n, { size: 11, cls: 'ink' }))
+    .join('');
+
+/** Кривая анимации по контрольным точкам cubic-bezier в квадрате 100×100 */
+const curve = (p: [number, number, number, number], label: string) => {
+  const X = (v: number) => 40 + v * 170;
+  const Y = (v: number) => 100 - v * 76;
+  return (
+    tile(240, 124) +
+    path('M40 18V100H210', 'stroke-muted') +
+    path(`M${X(0)} ${Y(0)}C${X(p[0])} ${Y(p[1])} ${X(p[2])} ${Y(p[3])} ${X(1)} ${Y(1)}`, 'stroke-accent-bold', 'fill="none"') +
+    text(125, 116, 'время →', { size: 8, anchor: 'middle' }) +
+    text(40, 13, `↑ ${label}`, { size: 8 })
+  );
+};
+
+/** Доска инвентаризации: девять почти одинаковых синих кнопок с сайта */
+const inventoryBoard = () =>
+  card(10, 10, 300, 150, 10) +
+  title(24, 32, 'Кнопки: что нашли на сайте', 11) +
+  (
+    [
+      [6, 'Купить'],
+      [10, 'Купить'],
+      [2, 'КУПИТЬ'],
+      [16, 'Купить'],
+      [6, 'В корзину'],
+      [0, 'Купить'],
+      [8, 'Заказать'],
+      [12, 'купить'],
+      [4, 'Купить'],
+    ] as const
+  )
+    .map(([r, l], i) => {
+      const x = 24 + (i % 3) * 94;
+      const y = 46 + Math.floor(i / 3) * 36;
+      const w = [76, 70, 82][i % 3];
+      return rect(x, y, w, 26 - (i % 2) * 4, i % 4 === 3 ? 'accent-soft' : 'accent', r) + text(x + w / 2, y + 17 - (i % 2) * 2, l, { size: 9, weight: i % 3 === 0 ? 700 : 500, cls: 'on-accent', anchor: 'middle' });
+    })
+    .join('');
+
 export const systemsArt: Record<string, Illustration> = {
   'ds-atom': ill(140, 100, 'Отдельная кнопка «Найти»', tile(140, 100) + button(30, 38, 80, 26, 'Найти')),
   'ds-molecule': ill(140, 100, 'Форма поиска: подпись «Поиск по сайту», поле и кнопка с лупой', tile(140, 100) + searchForm(12, 44, 116)),
@@ -174,6 +221,16 @@ export const systemsArt: Record<string, Illustration> = {
       button(70, 122, 100, 22, 'В корзину'),
   ),
   'ds-states-partial': ill(320, 190, 'Спецификация поля ввода: «по умолчанию», «заполнено» и две ошибки — пустое поле и неверный формат', states(false)),
+  'ds-names-spot': ill(
+    320,
+    220,
+    'Список токенов: color/action/primary, color/text/red, color/bg/surface, spacing/md, button/blue/bg, radius/card',
+    tokenNamesSpot(),
+    { red: [18, 80, 200, 22], blue: [18, 152, 200, 22] },
+  ),
+  'ds-curve-decel': ill(240, 124, 'Кривая: быстро набирает значение в начале и плавно замедляется к концу', curve([0, 0, 0.5, 1], 'значение')),
+  'ds-curve-accel': ill(240, 124, 'Кривая: медленно стартует и резко ускоряется к концу', curve([0.5, 0, 1, 1], 'значение')),
+  'ds-inventory': ill(320, 170, 'Доска инвентаризации: девять синих кнопок с разными скруглениями, размерами, регистром и подписями «Купить», «В корзину», «Заказать»', inventoryBoard()),
 };
 
 export const systemsTrackArt: Record<string, Illustration> = {
