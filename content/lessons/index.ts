@@ -1,9 +1,12 @@
 import type { Lesson, LessonBlock, TrackId } from '../types';
 import { heuristicsLessons } from './heuristics';
 import { uxLawsLessons } from './ux-laws';
+import { usabilityTestingLessons } from './usability-testing';
+import { uxWritingLessons } from './ux-writing';
+import { visualDesignLessons } from './visual-design';
 
 /** Уроки «Учебника». Внутри трека — в порядке изучения: от общего к частному. */
-export const lessons: Lesson[] = [...heuristicsLessons, ...uxLawsLessons];
+export const lessons: Lesson[] = [...heuristicsLessons, ...uxLawsLessons, ...uxWritingLessons, ...usabilityTestingLessons, ...visualDesignLessons];
 
 export const lessonById = new Map(lessons.map((l) => [l.id, l]));
 
