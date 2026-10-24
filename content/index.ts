@@ -2,6 +2,7 @@ import { designSystemsQuestions } from './design-systems';
 import { figmaAutoLayoutQuestions } from './figma-auto-layout';
 import { figmaComponentsQuestions } from './figma-components';
 import { figmaPropsQuestions } from './figma-props';
+import { figmaPrototypingQuestions } from './figma-prototyping';
 import { figmaVariablesQuestions } from './figma-variables';
 import { heuristics } from './heuristics';
 import { higQuestions } from './hig';
@@ -102,6 +103,13 @@ export const tracks: Track[] = [
     emoji: '🎨',
   },
   {
+    id: 'figma-prototyping',
+    title: 'Прототипирование',
+    description: 'Триггеры и действия, Smart animate, easing, оверлеи, скролл и потоки.',
+    art: 'track-figma-prototyping',
+    emoji: '▶️',
+  },
+  {
     id: 'design-systems',
     title: 'Дизайн-системы',
     description: 'Токены, компоненты, варианты и atomic design: как собрать систему и поддерживать её.',
@@ -114,7 +122,7 @@ export const tracks: Track[] = [
 export const sections: Section[] = [
   { id: 'ux', title: 'UX/UI', tracks: ['heuristics', 'ux-laws', 'ux-writing', 'usability-testing', 'visual-design'] },
   { id: 'guidelines', title: 'Гайдлайны', tracks: ['hig', 'material', 'wcag'] },
-  { id: 'figma', title: 'Figma', tracks: ['figma-components', 'figma-props', 'figma-auto-layout', 'figma-variables', 'design-systems'] },
+  { id: 'figma', title: 'Figma', tracks: ['figma-components', 'figma-props', 'figma-auto-layout', 'figma-variables', 'figma-prototyping', 'design-systems'] },
 ];
 
 export const questions: Question[] = [
@@ -131,6 +139,7 @@ export const questions: Question[] = [
   ...figmaPropsQuestions,
   ...figmaAutoLayoutQuestions,
   ...figmaVariablesQuestions,
+  ...figmaPrototypingQuestions,
 ];
 
 export const questionById = new Map(questions.map((q) => [q.id, q]));
