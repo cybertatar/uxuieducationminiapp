@@ -1064,17 +1064,24 @@ button.card:active:not(:disabled) {
 .lesson__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  font-size: 16px;
-  line-height: 1.5;
+  gap: var(--gap);
 }
 
-.lesson__body strong {
+/* Раздел урока — своя карточка; абзацы короткие и с воздухом между ними */
+.lesson__section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 18px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.lesson__section strong {
   font-weight: 600;
 }
 
 .lesson__h {
-  margin-top: 10px;
   font-size: 19px;
   font-weight: 700;
   line-height: 1.25;
@@ -1085,7 +1092,7 @@ button.card:active:not(:disabled) {
   padding-left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .lesson__list li::marker {
@@ -1105,14 +1112,14 @@ button.card:active:not(:disabled) {
 /* Пример из жизни: тёплая плашка, чтобы глаз сразу находил её в тексте */
 .lesson__life {
   --lesson-label: color-mix(in srgb, var(--flame) 75%, var(--text));
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--flame) 10%, var(--surface));
 }
 
 .lesson__term {
   margin: 0;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 12px;
   box-shadow: inset 3px 0 0 var(--accent);
   background: var(--bg);
