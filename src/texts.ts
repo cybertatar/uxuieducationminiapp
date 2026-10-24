@@ -1,7 +1,13 @@
 import { questions, sections, tracks } from '../content';
 
-/** «больше 130» — круглое число вопросов вниз до десятка, чтобы текст не устаревал с каждым новым вопросом */
-const questionsRounded = () => Math.floor((questions.length - 1) / 10) * 10;
+/**
+ * «больше 130», «больше 1000» — круглое число вопросов вниз, чтобы текст не устаревал с каждым новым вопросом:
+ * до 200 — до десятка, дальше — до сотни
+ */
+const questionsRounded = () => {
+  const step = questions.length > 200 ? 100 : 10;
+  return Math.floor((questions.length - 1) / step) * step;
+};
 
 /** Названия внутри фразы: «эвристики Нильсена», но «Apple HIG» и «UX» остаются как есть */
 const lower = (t: string) => (/^[А-ЯЁ]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t);
@@ -29,7 +35,7 @@ export const botDescription = () =>
   ].join('\n');
 
 /** Короткое описание в профиле бота (до 120 символов) */
-export const botShortDescription = () => 'Тесты для UX/UI: эвристики, законы UX, HIG, Material, WCAG, Figma, дизайн-системы, UX-райтинг 🐈';
+export const botShortDescription = () => 'Тесты для UX/UI: эвристики, HIG, Material, WCAG, типографика, Figma, прототипы, дизайн-системы 🐈';
 
 /**
  * Приветствие на /start — подпись к анимации-гайду. Короткое, чтобы гайд не уезжал за экран:
