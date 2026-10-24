@@ -126,6 +126,9 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
         <button className="link" onClick={() => openTelegramLink(AUTHOR_URL)}>
           Daniil Tyncherov
         </button>
+        <div className="author__version">
+          Версия {__APP_VERSION__} ({__APP_COMMIT__})
+        </div>
       </footer>
     </main>
   );
