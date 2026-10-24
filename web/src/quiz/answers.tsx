@@ -280,11 +280,11 @@ export function SpotAnswer({ q, checked, onAnswer }: Props<SpotQuestion>) {
   const missed = zones.filter((z) => !marks.some((m) => inZone(m, z))).length;
   const hint = checked
     ? missed
-      ? 'Все проблемные зоны обведены, пунктиром — пропущенные'
-      : 'Все проблемы найдены'
+      ? 'Верные места обведены, пунктиром — пропущенные'
+      : 'Всё отмечено верно'
     : marks.length === zones.length
       ? 'Все метки стоят. Тап по метке снимает её'
-      : `👆 Найди проблемы и тапни на каждую: отмечено ${marks.length} из ${zones.length}`;
+      : `👆 Тапни на каждое место: отмечено ${marks.length} из ${zones.length}`;
 
   return (
     <div className="hotspot-wrap">
