@@ -46,7 +46,7 @@ const L = {
   tooltips: m3('components/tooltips/guidelines', 'Tooltips'),
   carousel: m3('components/carousel/guidelines', 'Carousel'),
   search: m3('components/search/guidelines', 'Search'),
-  breakpoints: m3('foundations/layout/applying-layout/window-size-classes', 'Window size classes'),
+  breakpoints: { title: 'Android Developers: Window size classes', url: 'https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes' },
   corners: m3('styles/shape/corner-radius-scale', 'Corner radius scale'),
   elevation: m3('styles/elevation/applying-elevation', 'Elevation'),
   stateLayers: m3('foundations/interaction/states/state-layers', 'State layers'),
