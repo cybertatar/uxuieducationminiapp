@@ -900,6 +900,83 @@ const fiveCheckboxes = () =>
   title(76, 32, 'Уведомления', 12) +
   ['Заказы', 'Скидки', 'Новинки', 'Отзывы', 'Новости'].map((l, i) => checkbox(76, 44 + i * 22, i % 2 === 0) + text(100, 56 + i * 22, l, { size: 10, cls: 'ink' })).join('');
 
+/* ---------- Автолейаут: auto spacing, grid в fr, что растянется, constraints ---------- */
+
+/** Три элемента в строке: x — левые края, отрезки показывают промежутки */
+const distRow = (xs: number[]) =>
+  rect(0, 0, 240, 80, 'tile', 12) +
+  rect(10, 16, 220, 48, 'tonal', 8) +
+  xs.map((x) => rect(x, 24, 40, 32, 'accent', 6)).join('') +
+  [10, ...xs.map((x) => x + 40)]
+    .map((from, i) => {
+      const to = i < xs.length ? xs[i] : 230;
+      return to - from > 4 ? path(`M${from + 1} 70H${to - 1}M${from + 1} 67v6M${to - 1} 67v6`, 'stroke-accent') : '';
+    })
+    .join('');
+
+/** Grid-фрейм 800 px с колонками 1fr, 2fr, 1fr */
+const gridFr = () =>
+  text(160, 18, '800', { size: 10, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  path('M20 24H300M20 20v8M300 20v8', 'stroke') +
+  rect(20, 34, 280, 90, 'tonal', 8) +
+  [
+    [20, 70, '1fr'],
+    [90, 140, '2fr'],
+    [230, 70, '1fr'],
+  ]
+    .map(([x, w, l]) => rect((x as number) + 4, 42, (w as number) - 8, 74, 'card', 6) + text((x as number) + (w as number) / 2, 84, l as string, { size: 12, weight: 700, cls: 'accent', anchor: 'middle' }))
+    .join('') +
+  text(160, 140, 'padding 0 · gap 0', { size: 9, anchor: 'middle' });
+
+/** Карточка в режиме выделения: у каждого слоя подпись, как он меняет размер */
+const resizeSpot = () =>
+  card(20, 10, 280, 262, 12) +
+  selection(34, 24, 252, 52) +
+  rect(38, 28, 244, 44, 'block', 8) +
+  sizeLabel(160, 80, 'Fill × Fixed') +
+  selection(34, 118, 252, 14) +
+  lines(34, 122, [190], 10, 6) +
+  sizeLabel(160, 136, 'Fill × Hug') +
+  selection(34, 178, 252, 4) +
+  path('M36 180H284', 'divider') +
+  sizeLabel(160, 186, 'Fill × Fixed') +
+  selection(34, 226, 70, 18) +
+  text(36, 240, '4 990 ₽', { size: 13, weight: 700, cls: 'ink' }) +
+  sizeLabel(69, 250, 'Hug × Hug') +
+  selection(196, 222, 90, 28) +
+  button(198, 224, 86, 24, 'Купить') +
+  sizeLabel(241, 254, 'Fixed × Fixed');
+
+/** Экран до и после растягивания: плавающая кнопка держится у правого нижнего угла */
+const fabResize = () =>
+  text(60, 16, 'До', { size: 9, anchor: 'middle' }) +
+  screen(14, 22, 92, 120, 10) +
+  lines(24, 34, [60, 48, 66, 40], 12) +
+  circle(86, 122, 12, 'accent') +
+  icon('plus', 79, 115, 14, 'stroke-on-accent') +
+  arrow(116, 82) +
+  text(222, 16, 'После', { size: 9, anchor: 'middle' }) +
+  screen(144, 22, 156, 150, 10) +
+  lines(154, 34, [60, 48, 66, 40], 12) +
+  circle(280, 152, 12, 'accent') +
+  icon('plus', 273, 145, 14, 'stroke-on-accent');
+
+/** Таб-бар: вкладки Fill делят ширину поровну, Hug — по ширине подписи и прижаты влево */
+const TABS: [string, string][] = [['home', 'Главная'], ['search', 'Каталог'], ['cart', 'Корзина'], ['user', 'Профиль']];
+const tabBarFill = (fill: boolean) => {
+  let x = 14;
+  return (
+    rect(0, 0, 240, 76, 'tile', 12) +
+    card(8, 14, 224, 50, 10) +
+    TABS.map(([ic, label], i) => {
+      const w = fill ? 54 : label.length * 5 + 10;
+      const out = (fill ? '' : rect(x, 20, w, 38, 'block', 6)) + (fill && i ? path(`M${14 + i * 54} 22v34`, 'divider') : '') + icon(ic, x + w / 2 - 7, 24, 14, i === 0 ? 'stroke-accent' : 'stroke') + text(x + w / 2, 52, label, { size: 7.5, anchor: 'middle', cls: i === 0 ? 'accent' : 'text' });
+      x += w + (fill ? 0 : 2);
+      return out;
+    }).join('')
+  );
+};
+
 export const figmaArt: Record<string, Illustration> = {
   'fc-ov-setup': ill(320, 116, 'Главный компонент — синяя кнопка «Купить»; его экземпляр — синяя кнопка, текст в которой переопределён на «Оплатить»', overrideSetup()),
   'fc-ov-a': ill(140, 100, 'Экземпляр: зелёная кнопка «Оплатить»', overrideTile('Оплатить', true)),
@@ -1113,6 +1190,20 @@ export const figmaArt: Record<string, Illustration> = {
     { property: [30, 94, 260, 34], toggle: [30, 178, 260, 34] },
   ),
   'fp-checkboxes': ill(320, 170, 'Экран «Уведомления» с пятью чекбоксами: Заказы, Скидки, Новинки, Отзывы, Новости', fiveCheckboxes()),
+  'fl-dist-between': ill(240, 80, 'Три элемента: крайние прижаты к краям фрейма, между элементами равные промежутки', distRow([10, 100, 190])),
+  'fl-dist-evenly': ill(240, 80, 'Три элемента: промежутки между ними и отступы по краям одинаковые', distRow([35, 100, 165])),
+  'fl-dist-around': ill(240, 80, 'Три элемента: промежутки между ними вдвое больше отступов по краям', distRow([27, 100, 173])),
+  'fl-grid-fr': ill(320, 150, 'Grid-фрейм шириной 800 с тремя колонками: 1fr, 2fr и 1fr, padding 0 и gap 0', gridFr()),
+  'fl-resize-spot': ill(
+    320,
+    282,
+    'Карточка в режиме выделения: картинка Fill × Fixed, строка заголовка Fill × Hug, разделитель Fill × Fixed, цена Hug × Hug и кнопка «Купить» Fixed × Fixed',
+    resizeSpot(),
+    { image: [34, 24, 252, 70], title: [34, 116, 252, 36], divider: [34, 176, 252, 26] },
+  ),
+  'fl-fab': ill(320, 180, 'Экран до и после растягивания: круглая кнопка «плюс» в обоих случаях стоит у правого нижнего угла', fabResize()),
+  'fl-tabs-fill': ill(240, 76, 'Таб-бар: четыре вкладки одинаковой ширины делят всю панель', tabBarFill(true)),
+  'fl-tabs-hug': ill(240, 76, 'Таб-бар: вкладки разной ширины по длине подписи прижаты к левому краю, справа пусто', tabBarFill(false)),
 };
 
 export const figmaTrackArt: Record<string, Illustration> = {
