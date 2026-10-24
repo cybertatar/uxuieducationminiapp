@@ -716,6 +716,93 @@ const handmadeLayers = () =>
   layerAt(58, 200, textGlyph, '4 990 ₽') +
   layerAt(58, 228, frameGlyph, 'Button');
 
+/* ---------- Компоненты: сохранение переопределений, слоты, библиотеки ---------- */
+
+/** Кнопка с заливкой конкретного цвета и подписью-хексом под ней */
+const fillButton = (x: number, y: number, fill: string, label: string, hex: string, dark = false) =>
+  `<rect x="${x}" y="${y}" width="64" height="24" rx="7" fill="${fill}" class="wf-swatch"/>` +
+  text(x + 32, y + 16, 'Купить', { size: 9, weight: 600, cls: dark ? 'ink' : 'on-accent', anchor: 'middle' }) +
+  text(x + 32, y + 38, label, { size: 8.5, weight: 600, cls: 'ink', anchor: 'middle' }) +
+  text(x + 32, y + 50, hex, { size: 8, anchor: 'middle' });
+
+/** Экземпляр с розовой заливкой и набор вариантов с исходными заливками */
+const variantFills = () =>
+  card(10, 16, 104, 128, 10) +
+  instanceGlyph(18, 24) +
+  text(38, 36, 'Экземпляр', { size: 9, weight: 600, cls: 'ink' }) +
+  `<rect x="30" y="56" width="64" height="24" rx="7" fill="#f531b3"/>` +
+  text(62, 72, 'Купить', { size: 9, weight: 600, cls: 'on-accent', anchor: 'middle' }) +
+  text(62, 98, 'Primary, Default', { size: 8.5, weight: 600, cls: 'ink', anchor: 'middle' }) +
+  text(62, 112, 'заливку 1BC47D', { size: 8, anchor: 'middle' }) +
+  text(62, 123, 'перекрасили в F531B3', { size: 8, anchor: 'middle' }) +
+  path('M126 16h184v128h-184z', 'dash-accent', 'fill="none"') +
+  fillButton(140, 28, '#1bc47d', 'Primary, Default', '1BC47D') +
+  fillButton(228, 28, '#1bc47d', 'Primary, Hover', '1BC47D') +
+  fillButton(140, 88, '#0e8f5a', 'Primary, Pressed', '0E8F5A') +
+  fillButton(228, 88, '#ffffff', 'Secondary, Default', 'FFFFFF', true);
+
+/** Слои внутри компонента карточки: часть названа по смыслу, часть оставлена как есть */
+const layerNames = () =>
+  screen(20, 10, 280, 236) +
+  title(36, 36, 'Слои', 12) +
+  path('M20 48H300', 'divider') +
+  layerAt(40, 60, mainGlyph, 'Card', 'accent') +
+  layerAt(58, 88, rectGlyph, 'thumbnail') +
+  layerAt(58, 116, frameGlyph, 'Frame 427') +
+  layerAt(76, 144, textGlyph, 'title') +
+  layerAt(76, 172, textGlyph, 'price') +
+  layerAt(58, 200, rectGlyph, 'Rectangle 4') +
+  layerAt(58, 224, instanceGlyph, 'Button', 'accent');
+
+/** Шапка экземпляра в правой панели: имя компонента, библиотека, меню действий */
+const instanceHeader = () =>
+  screen(20, 10, 280, 176) +
+  title(36, 34, 'Design', 12) +
+  path('M20 46H300', 'divider') +
+  instanceGlyph(34, 56) +
+  text(56, 69, 'Button', { size: 12, weight: 700, cls: 'ink' }) +
+  chevronDown(108, 62) +
+  text(268, 70, '⋯', { size: 16, weight: 700, cls: 'ink', anchor: 'middle' }) +
+  icon('folder', 36, 84, 13, 'stroke-muted') +
+  text(56, 95, 'DS Core', { size: 10 }) +
+  icon('link', 104, 85, 11, 'stroke-muted') +
+  path('M20 110H300', 'divider') +
+  propLabel(118, 'Size') +
+  dropdown(118, 'Medium') +
+  propLabel(150, 'Label') +
+  field(140, 150, 144, 26, { value: 'Купить' });
+
+/** Группа аватаров со слотом: шесть аватаров при лимите в пять */
+const slotLimit = () =>
+  card(14, 20, 172, 88, 10) +
+  instanceGlyph(22, 28) +
+  text(42, 40, 'Avatar group', { size: 9, weight: 600, cls: 'ink' }) +
+  `<rect x="24" y="52" width="152" height="44" rx="6" fill="none" stroke="#e84fa8" stroke-width="1.6" stroke-dasharray="4 3"/>` +
+  [0, 1, 2, 3, 4, 5]
+    .map((i) => circle(44 + i * 24, 74, 14, 'card') + circle(44 + i * 24, 74, 12, ['accent', 'success', 'warning-shape', 'danger', 'ink-shape', 'accent-soft'][i]))
+    .join('') +
+  card(196, 20, 110, 88, 10) +
+  text(206, 40, 'Avatars · slot', { size: 9, weight: 600, cls: 'ink' }) +
+  `<rect x="206" y="52" width="90" height="20" rx="6" fill="#f59f00" opacity="0.18"/>` +
+  text(214, 66, '⚠ Limits · 6 / 5', { size: 9, weight: 600, cls: 'ink' }) +
+  text(206, 92, 'max 5 слоёв', { size: 8.5 });
+
+/** Окно обзора обновления: сейчас и после обновления, переключатель режима */
+const reviewUpdate = () =>
+  screen(10, 10, 300, 150) +
+  title(24, 34, 'Review update · Button', 11) +
+  rect(196, 22, 100, 20, 'block', 10) +
+  rect(198, 24, 54, 16, 'card', 8) +
+  text(225, 35, 'Side by side', { size: 7.5, weight: 600, cls: 'ink', anchor: 'middle' }) +
+  text(274, 35, 'Overlay', { size: 7.5, anchor: 'middle' }) +
+  path('M10 50H310', 'divider') +
+  text(84, 70, 'Сейчас', { size: 9, anchor: 'middle' }) +
+  button(44, 82, 80, 30, 'Купить', 'primary', 6) +
+  text(236, 70, 'Обновление', { size: 9, anchor: 'middle' }) +
+  button(196, 82, 80, 30, 'Купить', 'primary', 15) +
+  rect(196, 128, 80, 22, 'accent', 6) +
+  text(236, 143, 'Update all', { size: 9, weight: 600, cls: 'on-accent', anchor: 'middle' });
+
 export const figmaArt: Record<string, Illustration> = {
   'fc-ov-setup': ill(320, 116, 'Главный компонент — синяя кнопка «Купить»; его экземпляр — синяя кнопка, текст в которой переопределён на «Оплатить»', overrideSetup()),
   'fc-ov-a': ill(140, 100, 'Экземпляр: зелёная кнопка «Оплатить»', overrideTile('Оплатить', true)),
@@ -872,6 +959,38 @@ export const figmaArt: Record<string, Illustration> = {
     'Слои карточки товара: Фото — прямоугольник, Rating — группа, Кеды Classic — текст, Badge — экземпляр, 4 990 ₽ — текст, Button — фрейм',
     handmadeLayers(),
     { rating: [30, 110, 260, 28], button: [30, 222, 260, 28] },
+  ),
+  'fc-variant-fills': ill(
+    320,
+    156,
+    'Слева экземпляр Primary, Default: его заливку 1BC47D перекрасили в розовую F531B3. Справа набор вариантов: Primary, Default — 1BC47D; Primary, Hover — 1BC47D; Primary, Pressed — 0E8F5A; Secondary, Default — FFFFFF',
+    variantFills(),
+  ),
+  'fc-layer-names-spot': ill(
+    320,
+    256,
+    'Слои компонента Card: thumbnail, Frame 427 с текстами title и price внутри, Rectangle 4 и экземпляр Button',
+    layerNames(),
+    { frame: [30, 110, 260, 28], rect: [30, 194, 260, 26] },
+  ),
+  'fc-instance-header': ill(
+    320,
+    196,
+    'Правая панель с выделенным экземпляром: строка с именем Button и стрелкой, справа меню из трёх точек; ниже строка с названием библиотеки DS Core; затем свойства Size и Label',
+    instanceHeader(),
+    { library: [30, 80, 110, 22], menu: [252, 54, 32, 24], swap: [30, 52, 92, 24] },
+  ),
+  'fc-slot-limit': ill(
+    320,
+    124,
+    'Экземпляр Avatar group: в розовой пунктирной области слота шесть аватаров. Рядом панель слота Avatars: оранжевая плашка «Limits · 6 / 5» и подпись «max 5 слоёв»',
+    slotLimit(),
+  ),
+  'fc-review-update': ill(
+    320,
+    170,
+    'Окно Review update для Button: переключатель Side by side и Overlay, слева кнопка «как сейчас» с небольшим скруглением, справа обновлённая — со скруглением в форме пилюли, ниже кнопка Update all',
+    reviewUpdate(),
   ),
 };
 
