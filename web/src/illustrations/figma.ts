@@ -977,6 +977,72 @@ const tabBarFill = (fill: boolean) => {
   );
 };
 
+/* ---------- Переменные: режим по умолчанию, захардкоженные значения, выражения, конфликт режимов ---------- */
+
+/** Таблица коллекции Theme, где первым столбцом стоит Dark */
+const defaultModeTable = () =>
+  screen(10, 10, 300, 150) +
+  title(24, 34, 'Коллекция: Theme', 12) +
+  path('M10 46H310', 'divider') +
+  text(24, 66, 'Название', { size: 9 }) +
+  text(156, 67, 'Dark', { size: 10, weight: 700, cls: 'ink' }) +
+  text(236, 67, 'Light', { size: 10, weight: 700, cls: 'ink' }) +
+  path('M10 80H310', 'divider') +
+  (
+    [
+      ['color/bg/surface', '#1c1c1e', '1C1C1E', '#ffffff', 'FFFFFF'],
+      ['color/text/primary', '#f2f2f7', 'F2F2F7', '#1c1c1e', '1C1C1E'],
+    ] as const
+  )
+    .map(([name, d, dh, l, lh], i) => text(24, 104 + i * 32, name, { size: 10, cls: 'ink' }) + swatch(152, 93 + i * 32, d, dh) + swatch(232, 93 + i * 32, l, lh))
+    .join('');
+
+/** Семантическая коллекция: почти все значения — ссылки на палитру, два вписаны вручную */
+const semanticSpot = () =>
+  screen(10, 10, 300, 210) +
+  title(24, 34, 'Коллекция: Semantic', 12) +
+  path('M10 46H310', 'divider') +
+  (
+    [
+      ['color/bg/surface', 'gray/0'],
+      ['color/bg/muted', '#F2F2F7'],
+      ['color/text/primary', 'gray/900'],
+      ['color/text/muted', 'gray/500'],
+      ['color/action/primary', '#2B6FD6'],
+      ['color/action/danger', 'red/500'],
+    ] as const
+  )
+    .map(([name, v], i) => {
+      const y = 62 + i * 26;
+      const raw = v.startsWith('#');
+      return text(24, y + 11, name, { size: 10, cls: 'ink' }) + (raw ? swatch(196, y, v.toLowerCase(), v.slice(1)) : alias(196, y, v));
+    })
+    .join('');
+
+/** Взаимодействие Set variable с выражением и текущие значения переменных */
+const expressionPanel = () =>
+  screen(10, 10, 300, 150) +
+  title(24, 34, 'Кнопка «Оформить» · On click', 11) +
+  path('M10 46H310', 'divider') +
+  text(24, 68, 'Set variable  total', { size: 11, weight: 600, cls: 'ink' }) +
+  rect(24, 78, 272, 26, 'tonal', 6) +
+  text(34, 95, 'delivery + price * count', { size: 11, weight: 600, cls: 'ink' }) +
+  text(24, 128, 'price = 100', { size: 10 }) +
+  text(118, 128, 'count = 3', { size: 10 }) +
+  text(202, 128, 'delivery = 200', { size: 10 });
+
+/** Переключатель режима с иконкой конфликта у Superdark */
+const modeConflict = () =>
+  screen(40, 10, 240, 140) +
+  text(56, 34, 'Theme', { size: 11, weight: 700, cls: 'ink' }) +
+  card(56, 46, 208, 92, 10) +
+  ['Light', 'Dark', 'Superdark']
+    .map((m, i) => {
+      const y = 50 + i * 28;
+      return (i === 0 ? rect(60, y + 2, 200, 24, 'tonal', 6) + icon('check', 66, y + 6, 14, 'stroke-accent') : '') + text(88, y + 18, m, { size: 11, cls: 'ink' }) + (i === 2 ? icon('info', 236, y + 6, 15, 'stroke-accent') : '');
+    })
+    .join('');
+
 export const figmaArt: Record<string, Illustration> = {
   'fc-ov-setup': ill(320, 116, 'Главный компонент — синяя кнопка «Купить»; его экземпляр — синяя кнопка, текст в которой переопределён на «Оплатить»', overrideSetup()),
   'fc-ov-a': ill(140, 100, 'Экземпляр: зелёная кнопка «Оплатить»', overrideTile('Оплатить', true)),
@@ -1204,6 +1270,22 @@ export const figmaArt: Record<string, Illustration> = {
   'fl-fab': ill(320, 180, 'Экран до и после растягивания: круглая кнопка «плюс» в обоих случаях стоит у правого нижнего угла', fabResize()),
   'fl-tabs-fill': ill(240, 76, 'Таб-бар: четыре вкладки одинаковой ширины делят всю панель', tabBarFill(true)),
   'fl-tabs-hug': ill(240, 76, 'Таб-бар: вкладки разной ширины по длине подписи прижаты к левому краю, справа пусто', tabBarFill(false)),
+  'fv-default-mode': ill(
+    320,
+    170,
+    'Коллекция Theme: первый столбец — Dark, второй — Light. color/bg/surface: 1C1C1E и FFFFFF, color/text/primary: F2F2F7 и 1C1C1E',
+    defaultModeTable(),
+    { dark: [140, 48, 82, 30], light: [226, 48, 70, 30] },
+  ),
+  'fv-semantic-spot': ill(
+    320,
+    230,
+    'Коллекция Semantic: color/bg/surface ссылается на gray/0, color/bg/muted — значение F2F2F7, color/text/primary — ссылка на gray/900, color/text/muted — на gray/500, color/action/primary — значение 2B6FD6, color/action/danger — ссылка на red/500',
+    semanticSpot(),
+    { muted: [18, 82, 286, 22], action: [18, 160, 286, 22] },
+  ),
+  'fv-expression': ill(320, 170, 'Взаимодействие кнопки «Оформить»: On click, Set variable total = delivery + price * count. Значения: price = 100, count = 3, delivery = 200', expressionPanel()),
+  'fv-mode-conflict': ill(320, 160, 'Переключатель режима коллекции Theme: выбран Light, ниже Dark и Superdark, рядом с Superdark значок «i»', modeConflict()),
 };
 
 export const figmaTrackArt: Record<string, Illustration> = {
