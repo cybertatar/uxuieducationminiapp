@@ -19,7 +19,7 @@ import avatarYellow from '../../../brand/avatar-yellow.png';
 
 const BOT_URL = 't.me/uxuitrainer_bot';
 
-const visualCount = questions.filter((q) => q.kind === 'hotspot' || q.kind === 'image-choice' || ('image' in q && q.image)).length;
+const visualCount = questions.filter((q) => ('image' in q && q.image) || q.kind === 'image-choice' || (q.kind === 'multi' && q.images)).length;
 const TOTAL = 11;
 
 function Slide({ n, children, className = '' }: { n: number; children: ReactNode; className?: string }) {

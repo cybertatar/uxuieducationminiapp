@@ -117,6 +117,15 @@ const transferError = (clear: boolean) =>
     ? text(64, 157, 'Банк получателя не принял перевод.', { size: 9.5, cls: 'ink' }) + text(64, 171, 'Попробуйте позже или по номеру карты', { size: 9.5, cls: 'ink' })
     : text(64, 157, 'Ошибка 0x1F: транзакция отклонена', { size: 9.5, cls: 'ink' }) + text(64, 171, 'эквайером (RC 05, do not honor)', { size: 9.5, cls: 'ink' }));
 
+/** Форма регистрации с тремя проблемами: поле без подписи, ошибка без объяснения и кнопка «ОК» */
+const signupProblems = () =>
+  screen(20, 10, 280, 272) +
+  title(36, 40, 'Регистрация') +
+  field(36, 68, 248, 28, { label: 'Имя', value: 'Анна' }) +
+  field(36, 112, 248, 28, { placeholder: 'Email' }) +
+  field(36, 172, 248, 28, { label: 'Пароль', value: '••••••', state: 'error', hint: 'Ошибка' }) +
+  button(36, 238, 248, 32, 'ОК');
+
 export const writingArt: Record<string, Illustration> = {
   'uw-toggle-short': ill(320, 180, 'Настройки уведомлений: переключатель «Скидки и акции» с пояснением «Не чаще раза в неделю»', toggles(false)),
   'uw-toggle-long': ill(
@@ -182,6 +191,13 @@ export const writingArt: Record<string, Illustration> = {
     { label: [30, 90, 260, 44] },
   ),
   'uw-settings-clear': ill(320, 210, 'Те же настройки: переключатель называется «Текст сообщений на экране блокировки»', privacySettings(true)),
+  'uw-signup-spot': ill(
+    320,
+    292,
+    'Форма регистрации: поле «Имя» с подписью; поле, где серым написано только Email; поле «Пароль» с красной рамкой и подписью «Ошибка»; кнопка «ОК»',
+    signupProblems(),
+    { placeholder: [36, 112, 248, 28], error: [36, 166, 248, 50], cta: [36, 238, 248, 32] },
+  ),
 };
 
 export const writingTrackArt: Record<string, Illustration> = {

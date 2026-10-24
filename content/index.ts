@@ -10,10 +10,10 @@ import { usabilityTestingQuestions } from './usability-testing';
 import { wcagQuestions } from './wcag';
 import { uxLaws } from './ux-laws';
 import { uxWritingQuestions } from './ux-writing';
-import type { ChoiceQuestion, Question, Section, Track, TrackId } from './types';
+import type { ChoiceQuestion, ImageChoiceQuestion, Question, Section, Track, TrackId } from './types';
 
 export { WARMUP_SHARE, warmupPool } from './warmup';
-export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Link, Question, Section, SectionId, Track, TrackId } from './types';
+export type { ChoiceQuestion, HotspotQuestion, ImageChoiceQuestion, Link, MultiQuestion, OrderQuestion, Question, Section, SectionId, SpotQuestion, Track, TrackId } from './types';
 
 export const tracks: Track[] = [
   {
@@ -130,11 +130,15 @@ export const questionsByTrack = (track: TrackId) => questions.filter((q) => q.tr
 
 export const trackById = new Map(tracks.map((t) => [t.id, t]));
 
-/**
- * Ответ кодируется индексом. Для вопросов «тапни на проблему» 0 — попал в зону, 1 — промахнулся.
- */
-export const optionCount = (q: Question) => (q.kind === 'hotspot' ? 2 : q.options.length);
-export const correctOption = (q: Question) => (q.kind === 'hotspot' ? 0 : q.correct);
+/** Вопрос с одним выбором из вариантов: ответ — индекс варианта. */
+const isSingleChoice = (q: Question): q is ChoiceQuestion | ImageChoiceQuestion => q.kind === undefined || q.kind === 'choice' || q.kind === 'image-choice';
 
-/** Вопрос, который можно задать в чате с ботом: без картинок, только текст. */
+/**
+ * Ответ кодируется индексом. В остальных механиках («тапни», «по порядку», «выбери все», «найди все»)
+ * верность считает приложение: 0 — верно, 1 — нет.
+ */
+export const optionCount = (q: Question) => (isSingleChoice(q) ? q.options.length : 2);
+export const correctOption = (q: Question) => (isSingleChoice(q) ? q.correct : 0);
+
+/** Вопрос, который можно задать в чате с ботом: без картинок и особых механик, только текст. */
 export const isTextOnly = (q: Question): q is ChoiceQuestion => (q.kind ?? 'choice') === 'choice' && !(q as ChoiceQuestion).image;

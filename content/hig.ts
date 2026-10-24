@@ -734,4 +734,16 @@ export const higQuestions: Question[] = [
     fix: 'a-ios-add-toolbar',
     links: [L.toolbars, L.buttons],
   },
+  {
+    id: 'a-049',
+    track: 'hig',
+    kind: 'order',
+    topic: T.type,
+    text: 'Расставь текстовые стили iOS от самого крупного к самому мелкому (при стандартном размере текста).',
+    items: ['Large Title', 'Title 1', 'Title 3', 'Footnote', 'Caption 2'],
+    summary: 'Large Title 34 pt, Title 1 — 28, Title 3 — 20, Footnote — 13, Caption 2 — 11.',
+    explanation:
+      'Это встроенные стили Dynamic Type: при стандартной настройке Body — 17 pt, а остальные строятся вокруг него. Если в макете использовать эти стили, а не произвольные размеры, текст будет масштабироваться вместе с системной настройкой. А 11 pt у Caption 2 — это и есть минимальный размер текста, который HIG советует для iOS.',
+    links: [L.typography],
+  },
 ];

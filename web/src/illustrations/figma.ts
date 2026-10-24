@@ -703,6 +703,19 @@ const aliasNode = (x: number, name: string, value: string, primitive = false) =>
 const aliasChain = () =>
   aliasNode(4, 'button/bg', 'action') + arrow(97, 66) + aliasNode(114, 'color/action', 'blue/500') + arrow(207, 66) + aliasNode(224, 'blue/500', '2B6FD6', true) + text(160, 118, 'заливка кнопки → семантика → палитра', { size: 9, anchor: 'middle' });
 
+/** Слои карточки: Rating — группа, Button — обычный фрейм, хотя оба есть в библиотеке */
+const handmadeLayers = () =>
+  screen(20, 10, 280, 252) +
+  title(36, 36, 'Слои', 12) +
+  path('M20 48H300', 'divider') +
+  layerAt(40, 60, frameGlyph, 'Карточка товара') +
+  layerAt(58, 88, rectGlyph, 'Фото') +
+  layerAt(58, 116, groupGlyph, 'Rating') +
+  layerAt(58, 144, textGlyph, 'Кеды Classic') +
+  layerAt(58, 172, instanceGlyph, 'Badge', 'accent') +
+  layerAt(58, 200, textGlyph, '4 990 ₽') +
+  layerAt(58, 228, frameGlyph, 'Button');
+
 export const figmaArt: Record<string, Illustration> = {
   'fc-ov-setup': ill(320, 116, 'Главный компонент — синяя кнопка «Купить»; его экземпляр — синяя кнопка, текст в которой переопределён на «Оплатить»', overrideSetup()),
   'fc-ov-a': ill(140, 100, 'Экземпляр: зелёная кнопка «Оплатить»', overrideTile('Оплатить', true)),
@@ -852,6 +865,13 @@ export const figmaArt: Record<string, Illustration> = {
     128,
     'Цепочка: переменная button/bg ссылается на color/action, та — на blue/500 со значением 2B6FD6',
     aliasChain(),
+  ),
+  'fc-handmade-spot': ill(
+    320,
+    272,
+    'Слои карточки товара: Фото — прямоугольник, Rating — группа, Кеды Classic — текст, Badge — экземпляр, 4 990 ₽ — текст, Button — фрейм',
+    handmadeLayers(),
+    { rating: [30, 110, 260, 28], button: [30, 222, 260, 28] },
   ),
 };
 

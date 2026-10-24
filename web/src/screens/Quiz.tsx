@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { correctOption, questionById, trackById, type Question } from '../../../content';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
-import { ChoiceAnswers, HotspotAnswer, ImageAnswers, type Answer } from '../quiz/answers';
+import { ChoiceAnswers, HotspotAnswer, ImageAnswers, MultiAnswers, OrderAnswers, SpotAnswer, type Answer } from '../quiz/answers';
 import { Feedback } from '../quiz/Feedback';
 import { confirmDialog, haptic, setClosingConfirmation } from '../tg';
 import { Wireframe } from '../Wireframe';
@@ -112,7 +112,8 @@ export function Quiz({ questionIds, streakCounted, onExit, onFinish }: Props) {
         </div>
       </div>
 
-      {q.kind !== 'hotspot' && q.image && (
+      {/* В «тапни» и «найди все» картинка — сам ответ, она рисуется внутри механики */}
+      {q.kind !== 'hotspot' && q.kind !== 'spot' && q.image && (
         <div className="quiz__image">
           <Wireframe name={q.image} />
         </div>
@@ -122,8 +123,14 @@ export function Quiz({ questionIds, streakCounted, onExit, onFinish }: Props) {
       <div key={q.id} className={`answers ${checked && !isCorrect ? 'is-wrong' : ''}`}>
         {q.kind === 'hotspot' ? (
           <HotspotAnswer q={q} {...answerProps} />
+        ) : q.kind === 'spot' ? (
+          <SpotAnswer q={q} {...answerProps} />
         ) : q.kind === 'image-choice' ? (
           <ImageAnswers q={q} {...answerProps} />
+        ) : q.kind === 'order' ? (
+          <OrderAnswers q={q} {...answerProps} />
+        ) : q.kind === 'multi' ? (
+          <MultiAnswers q={q} {...answerProps} />
         ) : (
           <ChoiceAnswers q={q} {...answerProps} />
         )}
