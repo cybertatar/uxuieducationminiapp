@@ -1,4 +1,10 @@
 import type { Lesson, LessonBlock, TrackId } from '../types';
+import { designSystemsLessons } from './design-systems';
+import { figmaAutoLayoutLessons } from './figma-auto-layout';
+import { figmaComponentsLessons } from './figma-components';
+import { figmaPropsLessons } from './figma-props';
+import { figmaPrototypingLessons } from './figma-prototyping';
+import { figmaVariablesLessons } from './figma-variables';
 import { heuristicsLessons } from './heuristics';
 import { higLessons } from './hig';
 import { materialLessons } from './material';
@@ -9,7 +15,7 @@ import { visualDesignLessons } from './visual-design';
 import { wcagLessons } from './wcag';
 
 /** Уроки «Учебника». Внутри трека — в порядке изучения: от общего к частному. */
-export const lessons: Lesson[] = [...heuristicsLessons, ...uxLawsLessons, ...uxWritingLessons, ...usabilityTestingLessons, ...visualDesignLessons, ...higLessons, ...materialLessons, ...wcagLessons];
+export const lessons: Lesson[] = [...heuristicsLessons, ...uxLawsLessons, ...uxWritingLessons, ...usabilityTestingLessons, ...visualDesignLessons, ...higLessons, ...materialLessons, ...wcagLessons, ...figmaComponentsLessons, ...figmaPropsLessons, ...figmaAutoLayoutLessons, ...figmaVariablesLessons, ...figmaPrototypingLessons, ...designSystemsLessons];
 
 export const lessonById = new Map(lessons.map((l) => [l.id, l]));
 

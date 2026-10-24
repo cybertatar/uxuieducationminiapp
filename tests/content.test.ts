@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { correctOption, isTextOnly, lessons, nextLesson, optionCount, questionById, questions, readingMinutes, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
+import { correctOption, isTextOnly, lessonForTopic, lessons, nextLesson, optionCount, questionById, questions, readingMinutes, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
 import { illustrations } from '../web/src/illustrations';
 
 describe('контент', () => {
@@ -179,6 +179,11 @@ describe('уроки', () => {
         owner.set(key, l.id);
       }
     }
+  });
+
+  it('у каждой темы вопросов есть урок — из результатов есть куда вести', () => {
+    const missing = [...new Set(questions.filter((q) => !lessonForTopic(q.track, q.topic)).map((q) => `${q.track}: ${q.topic}`))];
+    expect(missing).toEqual([]);
   });
 
   it('вопросы на закрепление — из тем самого урока', () => {
