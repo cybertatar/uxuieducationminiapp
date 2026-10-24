@@ -7,6 +7,7 @@ import { heuristics } from './heuristics';
 import { higQuestions } from './hig';
 import { materialQuestions } from './material';
 import { usabilityTestingQuestions } from './usability-testing';
+import { visualDesignQuestions } from './visual-design';
 import { wcagQuestions } from './wcag';
 import { uxLaws } from './ux-laws';
 import { uxWritingQuestions } from './ux-writing';
@@ -43,6 +44,13 @@ export const tracks: Track[] = [
     description: 'Задания, модерация, выборка, метрики SUS и SEQ, приоритеты проблем.',
     art: 'track-usability-testing',
     emoji: '🔬',
+  },
+  {
+    id: 'visual-design',
+    title: 'Визуальный дизайн',
+    description: 'Типографика, иерархия, сетки и отступы, цвет, тёмная тема и кликабельность.',
+    art: 'track-visual-design',
+    emoji: '🖌️',
   },
   {
     id: 'hig',
@@ -104,7 +112,7 @@ export const tracks: Track[] = [
 
 /** Разделы экрана «Темы». Каждый трек — ровно в одном разделе, порядок совпадает с tracks. */
 export const sections: Section[] = [
-  { id: 'ux', title: 'UX', tracks: ['heuristics', 'ux-laws', 'ux-writing', 'usability-testing'] },
+  { id: 'ux', title: 'UX/UI', tracks: ['heuristics', 'ux-laws', 'ux-writing', 'usability-testing', 'visual-design'] },
   { id: 'guidelines', title: 'Гайдлайны', tracks: ['hig', 'material', 'wcag'] },
   { id: 'figma', title: 'Figma', tracks: ['figma-components', 'figma-props', 'figma-auto-layout', 'figma-variables', 'design-systems'] },
 ];
@@ -118,6 +126,7 @@ export const questions: Question[] = [
   ...designSystemsQuestions,
   ...uxWritingQuestions,
   ...usabilityTestingQuestions,
+  ...visualDesignQuestions,
   ...figmaComponentsQuestions,
   ...figmaPropsQuestions,
   ...figmaAutoLayoutQuestions,
