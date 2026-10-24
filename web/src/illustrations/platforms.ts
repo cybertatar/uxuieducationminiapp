@@ -240,6 +240,47 @@ const bankNotification = (detailed: boolean) =>
   text(52, 50, detailed ? 'От Анны К. на карту *4521.' : 'На вашу карту пришёл перевод.', { size: 9.5, cls: 'ink' }) +
   (detailed ? text(52, 65, 'Баланс 142 300 ₽. Код входа: 4821', { size: 9.5, cls: 'ink' }) : '');
 
+/* ---------- Material 3: экран с нарушениями, диалог, бейджи ---------- */
+
+/** Пилюля-кнопка Material: filled */
+const mdFilled = (x: number, y: number, w: number, label: string) => rect(x, y, w, 26, 'accent', 13) + text(x + w / 2, y + 17, label, { size: 9, weight: 600, cls: 'on-accent', anchor: 'middle' });
+
+/** Почта: две filled-кнопки в шапке, второй FAB и навигация без подписей */
+const mdScreenSpot = () =>
+  screen(20, 10, 280, 222) +
+  title(36, 37, 'Почта') +
+  mdFilled(150, 18, 70, 'Написать') +
+  mdFilled(224, 18, 70, 'Обновить') +
+  [56, 88, 120, 152].map((y) => circle(44, y + 10, 9) + lines(62, y + 4, [130, 170], 9, 5)).join('') +
+  fab(240, 94, 32) +
+  fab(232, 136, 48) +
+  mdNavbar(20, 188, 280, [['home', ''], ['search', ''], ['bell', ''], ['user', '']]);
+
+/** Диалог удаления: заголовок-тревога и кнопки в неправильном порядке */
+const mdDialogSpot = () =>
+  screen(20, 10, 200, 150) +
+  [44, 72, 100].map((y) => circle(38, y + 8, 8) + lines(54, y + 2, [90, 140])).join('') +
+  scrim(20, 10, 200, 150) +
+  card(36, 34, 168, 102, 20) +
+  text(52, 60, 'Внимание!', { size: 13, weight: 600, cls: 'ink' }) +
+  text(52, 80, 'Удалить 3 фото из альбома?', { size: 9 }) +
+  text(52, 93, 'Их нельзя будет вернуть.', { size: 9 }) +
+  text(118, 122, 'Удалить', { size: 11, weight: 700, cls: 'accent', anchor: 'end' }) +
+  text(186, 122, 'Отмена', { size: 11, weight: 700, cls: 'muted', anchor: 'end' });
+
+/** Пункт навигации с большим бейджем */
+const mdBadge = (label: string) => {
+  const w = label.length * 6 + 10;
+  return (
+    tile(240, 80) +
+    rect(96, 18, 48, 26, 'tonal', 13) +
+    icon('bell', 112, 23, 16, 'stroke-on-tonal') +
+    rect(124, 12, w, 16, 'danger', 8) +
+    text(124 + w / 2, 23.5, label, { size: 9, weight: 700, cls: 'on-accent', anchor: 'middle' }) +
+    text(120, 62, 'Уведомления', { size: 9, cls: 'ink', anchor: 'middle' })
+  );
+};
+
 export const platformsArt: Record<string, Illustration> = {
   // ---------- HIG ----------
   'a-alert-order-good': ill(240, 150, 'Алерт «Удалить фото?»: «Отменить» слева, «Удалить» красным справа', backdrop(240, 150) + iosAlert(26, 28, 188, 'Удалить фото?', 'Это действие нельзя отменить.', ['Отменить', 'accent'], ['Удалить', 'danger'])),
@@ -541,6 +582,22 @@ export const platformsArt: Record<string, Illustration> = {
   'a-many-dots': ill(320, 170, 'Экран онбординга, внизу пятнадцать точек page control, текущая — седьмая', manyDots()),
   'a-notif-detailed': ill(240, 96, 'Уведомление банка: «Перевод 25 000 ₽. От Анны К. на карту *4521. Баланс 142 300 ₽. Код входа: 4821»', bankNotification(true)),
   'a-notif-brief': ill(240, 96, 'Уведомление банка: «Новое поступление. На вашу карту пришёл перевод.»', bankNotification(false)),
+  'm-screen-spot': ill(
+    320,
+    242,
+    'Экран «Почта» в стиле Material: в шапке две залитые кнопки «Написать» и «Обновить», справа внизу две плавающие кнопки — маленькая и обычная, внизу навигация из четырёх иконок без подписей',
+    mdScreenSpot(),
+    { actions: [146, 14, 152, 34], fab2: [236, 90, 40, 40], nav: [24, 190, 272, 40] },
+  ),
+  'm-dialog-spot': ill(
+    240,
+    170,
+    'Диалог: заголовок «Внимание!», текст «Удалить 3 фото из альбома? Их нельзя будет вернуть.», слева кнопка «Удалить», справа серая неактивная «Отмена»',
+    mdDialogSpot(),
+    { title: [46, 44, 100, 24], buttons: [70, 108, 124, 22] },
+  ),
+  'm-badge-plus': ill(240, 80, 'Пункт навигации «Уведомления» с бейджем «999+»', mdBadge('999+')),
+  'm-badge-long': ill(240, 80, 'Пункт навигации «Уведомления» с бейджем «1 248»', mdBadge('1 248')),
 };
 
 export const platformTrackArt: Record<string, Illustration> = {
