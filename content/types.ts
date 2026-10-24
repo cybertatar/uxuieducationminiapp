@@ -61,7 +61,32 @@ export interface HotspotQuestion extends BaseQuestion {
   zone: string;
 }
 
-export type Question = ChoiceQuestion | ImageChoiceQuestion | HotspotQuestion;
+/** «Расставь по порядку»: items перечислены в правильном порядке, на экране — перемешанными. */
+export interface OrderQuestion extends BaseQuestion {
+  kind: 'order';
+  image?: string;
+  items: string[];
+}
+
+/** «Выбери все верные»: засчитывается, только если отмечены все верные и ни одного лишнего. */
+export interface MultiQuestion extends BaseQuestion {
+  kind: 'multi';
+  image?: string;
+  /** Тексты вариантов, а с images: true — ключи иллюстраций, они показываются сеткой. */
+  options: string[];
+  /** Индексы верных вариантов в options. */
+  correct: number[];
+  images?: boolean;
+}
+
+/** «Найди все проблемы»: на иллюстрации `image` нужно отметить каждую из зон `zones`. */
+export interface SpotQuestion extends BaseQuestion {
+  kind: 'spot';
+  image: string;
+  zones: string[];
+}
+
+export type Question = ChoiceQuestion | ImageChoiceQuestion | HotspotQuestion | OrderQuestion | MultiQuestion | SpotQuestion;
 
 export interface Track {
   id: TrackId;

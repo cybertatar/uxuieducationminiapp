@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { correctOption, optionCount, questionById, questions, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
+import { correctOption, isTextOnly, optionCount, questionById, questions, sections, trackById, tracks, WARMUP_SHARE, warmupPool } from '../content';
 import { illustrations } from '../web/src/illustrations';
 
 describe('контент', () => {
@@ -17,18 +17,48 @@ describe('контент', () => {
     for (const l of q.links) expect(l.url).toMatch(/^https:\/\//);
 
     const images = [q.fix, 'image' in q ? q.image : undefined].filter(Boolean) as string[];
-    if (q.kind === 'image-choice') images.push(...q.options);
+    if (q.kind === 'image-choice' || (q.kind === 'multi' && q.images)) images.push(...q.options);
     for (const name of images) expect(illustrations[name], `иллюстрация ${name}`).toBeDefined();
 
     if (q.kind === 'hotspot') {
       expect(illustrations[q.image].zones?.[q.zone], `зона ${q.zone}`).toBeDefined();
+    } else if (q.kind === 'spot') {
+      expect(q.zones.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(q.zones).size).toBe(q.zones.length);
+      for (const z of q.zones) expect(illustrations[q.image].zones?.[z], `зона ${z}`).toBeDefined();
+    } else if (q.kind === 'order') {
+      expect(q.items.length).toBeGreaterThanOrEqual(3);
+      expect(q.items.length).toBeLessThanOrEqual(6);
+      expect(new Set(q.items).size).toBe(q.items.length);
     } else {
       expect(q.options.length).toBeGreaterThanOrEqual(2);
       expect(q.options.length).toBeLessThanOrEqual(6);
       expect(new Set(q.options).size).toBe(q.options.length);
     }
+    if (q.kind === 'multi') {
+      // Хотя бы один верный и хотя бы один лишний, иначе «выбери все» превращается в «отметь всё»
+      expect(q.correct.length).toBeGreaterThanOrEqual(1);
+      expect(q.correct.length).toBeLessThan(q.options.length);
+      expect(new Set(q.correct).size).toBe(q.correct.length);
+      for (const i of q.correct) expect(i >= 0 && i < q.options.length, `индекс ${i}`).toBe(true);
+    }
     expect(correctOption(q)).toBeGreaterThanOrEqual(0);
     expect(correctOption(q)).toBeLessThan(optionCount(q));
+  });
+
+  it('зоны в «найди все проблемы» не перекрываются, иначе одна метка засчитается за две', () => {
+    const PAD = 10;
+    for (const q of questions) {
+      if (q.kind !== 'spot') continue;
+      const zs = q.zones.map((z) => illustrations[q.image].zones![z]);
+      for (let i = 0; i < zs.length; i++)
+        for (let j = i + 1; j < zs.length; j++) {
+          const [ax, ay, aw, ah] = zs[i];
+          const [bx, by, bw, bh] = zs[j];
+          const apart = ax + aw + 2 * PAD < bx || bx + bw + 2 * PAD < ax || ay + ah + 2 * PAD < by || by + bh + 2 * PAD < ay;
+          expect(apart, `${q.id}: ${q.zones[i]} и ${q.zones[j]}`).toBe(true);
+        }
+    }
   });
 
   it('у треков есть обложки', () => {
@@ -62,7 +92,7 @@ describe('разминка', () => {
         const q = questionById.get(id);
         expect(q, id).toBeDefined();
         expect(s.tracks, id).toContain(q!.track);
-        expect(q!.kind === 'hotspot' || q!.kind === 'image-choice' || !!(q as { image?: string }).image, id).toBe(true);
+        expect(!isTextOnly(q!), id).toBe(true);
       }
     }
   });
