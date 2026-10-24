@@ -59,7 +59,14 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
         </p>
       </header>
 
-      <article className="card lesson__body">{lesson.blocks.map(renderBlock)}</article>
+      <article className="lesson__body">
+        {sectionsOf(lesson.blocks).map((section, i) => (
+          <section key={i} className="card lesson__section">
+            {section.title && <h2 className="lesson__h">{section.title}</h2>}
+            {section.blocks.map(renderBlock)}
+          </section>
+        ))}
+      </article>
 
       <section className="card lesson__takeaways" ref={takeaways} aria-labelledby="takeaways-title">
         <h2 id="takeaways-title" className="lesson__takeaways-title">
@@ -85,14 +92,18 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
   );
 }
 
+/** Каждый подзаголовок открывает новую карточку: так длинный урок не сливается в одну простыню */
+function sectionsOf(blocks: LessonBlock[]) {
+  const sections: { title?: string; blocks: LessonBlock[] }[] = [{ blocks: [] }];
+  for (const b of blocks) {
+    if (b.type === 'h') sections.push({ title: b.text, blocks: [] });
+    else sections[sections.length - 1].blocks.push(b);
+  }
+  return sections.filter((s) => s.title || s.blocks.length > 0);
+}
+
 function renderBlock(b: LessonBlock, i: number): ReactNode {
   switch (b.type) {
-    case 'h':
-      return (
-        <h2 key={i} className="lesson__h">
-          {b.text}
-        </h2>
-      );
     case 'list':
       return (
         <ul key={i} className="lesson__list">

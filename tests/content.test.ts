@@ -158,6 +158,15 @@ describe('уроки', () => {
     expect(readingMinutes(l)).toBeGreaterThanOrEqual(1);
   });
 
+  // Уроки читают с телефона: длинный абзац превращается в простыню, которую хочется пролистать
+  it.each(lessons.map((l) => [l.id, l] as const))('%s: абзацы короткие', (_, l) => {
+    for (const b of l.blocks) {
+      if (b.type === 'p' || b.type === 'life') expect(b.text.length, b.text).toBeLessThanOrEqual(200);
+      if (b.type === 'term') expect(b.text.length, b.text).toBeLessThanOrEqual(180);
+      if (b.type === 'list') for (const item of b.items) expect(item.length, item).toBeLessThanOrEqual(140);
+    }
+  });
+
   it('урок дальше ведёт на следующий урок своей темы', () => {
     for (const l of lessons) {
       const next = nextLesson(l.id);
