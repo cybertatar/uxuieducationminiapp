@@ -803,6 +803,103 @@ const reviewUpdate = () =>
   rect(196, 128, 80, 22, 'accent', 6) +
   text(236, 143, 'Update all', { size: 9, weight: 600, cls: 'on-accent', anchor: 'middle' });
 
+/* ---------- Свойства и варианты: набор, прототип, порядок в наборе ---------- */
+
+/** Маленькая кнопка-вариант: цвет по состоянию и размер */
+const variantChip = (x: number, y: number, state: 'default' | 'hover' | 'disabled', large: boolean) => {
+  const w = large ? 64 : 48;
+  const h = large ? 26 : 20;
+  const cls = state === 'default' ? 'accent' : state === 'hover' ? 'accent-soft' : 'block';
+  return rect(x, y, w, h, cls, 6) + text(x + w / 2, y + h / 2 + 3.5, 'Купить', { size: large ? 9.5 : 8, weight: 600, cls: state === 'disabled' ? 'muted' : 'on-accent', anchor: 'middle' });
+};
+
+/** Набор вариантов, где в левом верхнем углу случайно оказался Large, Disabled */
+const defaultVariant = () =>
+  path('M14 26h292v118h-292z', 'dash-accent', 'fill="none"') +
+  layerAt(14, 4, mainGlyph, 'Button', 'accent', 10) +
+  (
+    [
+      ['disabled', true, 'Large, Disabled'],
+      ['default', true, 'Large, Default'],
+      ['hover', true, 'Large, Hover'],
+      ['default', false, 'Small, Default'],
+      ['hover', false, 'Small, Hover'],
+      ['disabled', false, 'Small, Disabled'],
+    ] as const
+  )
+    .map(([st, large, label], i) => {
+      const x = 28 + (i % 3) * 94;
+      const y = 40 + Math.floor(i / 3) * 52;
+      return variantChip(x + (large ? 0 : 8), y + (large ? 0 : 3), st, large) + text(x + 32, y + 40, label, { size: 8, anchor: 'middle' });
+    })
+    .join('');
+
+/** Вкладка Prototype у экземпляра: своё взаимодействие и пришедшее из компонента */
+const protoPanel = () =>
+  screen(20, 10, 280, 178) +
+  title(36, 34, 'Prototype', 12) +
+  path('M20 46H300', 'divider') +
+  text(36, 66, 'Interactions', { size: 10, weight: 700, cls: 'ink' }) +
+  rect(36, 76, 248, 32, 'block', 6) +
+  text(48, 96, 'On click → Navigate to «Корзина»', { size: 10, cls: 'ink' }) +
+  text(36, 132, 'Variant interactions', { size: 10, weight: 700, cls: 'ink' }) +
+  rect(36, 142, 248, 32, 'tonal', 6) +
+  text(48, 162, 'While hovering → Change to Hover', { size: 10, cls: 'ink' });
+
+/** Набор вариантов: сетка с подписями строк и столбцов или одна колонка вперемешку */
+const variantSet = (tidy: boolean) => {
+  const states = ['default', 'hover', 'disabled'] as const;
+  if (tidy)
+    return (
+      rect(0, 0, 240, 170, 'tile', 12) +
+      states.map((st, i) => text(62 + i * 70, 38, st, { size: 8, anchor: 'middle' })).join('') +
+      ['L', 'S'].map((sz, j) => text(14, 69 + j * 44, sz, { size: 9, weight: 700, cls: 'ink', anchor: 'middle' })).join('') +
+      path('M24 46h214v96h-214z', 'dash-accent', 'fill="none"') +
+      [0, 1].map((j) => states.map((st, i) => variantChip(j === 0 ? 30 + i * 70 : 38 + i * 70, j === 0 ? 56 : 103, st, j === 0)).join('')).join('')
+    );
+  const order: [(typeof states)[number], boolean][] = [
+    ['hover', false],
+    ['default', true],
+    ['disabled', false],
+    ['hover', true],
+    ['default', false],
+    ['disabled', true],
+  ];
+  let y = 8;
+  return (
+    rect(0, 0, 240, 170, 'tile', 12) +
+    path('M80 4h80v162h-80z', 'dash-accent', 'fill="none"') +
+    order
+      .map(([st, large]) => {
+        const out = variantChip(large ? 88 : 96, y, st, large);
+        y += (large ? 26 : 20) + 3;
+        return out;
+      })
+      .join('')
+  );
+};
+
+/** Панель свойств: часть названий понятна, часть — нет */
+const propNamesSpot = () =>
+  screen(20, 10, 280, 222) +
+  instanceGlyph(34, 22) +
+  title(56, 35, 'Button', 12) +
+  path('M20 48H300', 'divider') +
+  propLabel(56, 'Size') +
+  dropdown(56, 'Large') +
+  propLabel(98, 'Property 2') +
+  dropdown(98, 'Variant3') +
+  propLabel(140, 'Show icon') +
+  toggle(140) +
+  propLabel(182, 'Toggle 1') +
+  toggle(182);
+
+/** Пять чекбоксов в форме настроек */
+const fiveCheckboxes = () =>
+  screen(60, 8, 200, 154, 12) +
+  title(76, 32, 'Уведомления', 12) +
+  ['Заказы', 'Скидки', 'Новинки', 'Отзывы', 'Новости'].map((l, i) => checkbox(76, 44 + i * 22, i % 2 === 0) + text(100, 56 + i * 22, l, { size: 10, cls: 'ink' })).join('');
+
 export const figmaArt: Record<string, Illustration> = {
   'fc-ov-setup': ill(320, 116, 'Главный компонент — синяя кнопка «Купить»; его экземпляр — синяя кнопка, текст в которой переопределён на «Оплатить»', overrideSetup()),
   'fc-ov-a': ill(140, 100, 'Экземпляр: зелёная кнопка «Оплатить»', overrideTile('Оплатить', true)),
@@ -868,7 +965,7 @@ export const figmaArt: Record<string, Illustration> = {
     210,
     'Панель свойств экземпляра Button: Size — выпадающий список Medium, Show icon — включённый переключатель, Label — поле «Купить», Icon — превью компонента Arrow right',
     propsPanel(),
-    { boolean: [30, 88, 260, 30], swap: [30, 156, 260, 34] },
+    { boolean: [30, 88, 260, 30], swap: [30, 156, 260, 34], variant: [30, 54, 260, 30], text: [30, 122, 260, 30] },
   ),
   'fl-resize-fill': ill(
     320,
@@ -992,6 +1089,30 @@ export const figmaArt: Record<string, Illustration> = {
     'Окно Review update для Button: переключатель Side by side и Overlay, слева кнопка «как сейчас» с небольшим скруглением, справа обновлённая — со скруглением в форме пилюли, ниже кнопка Update all',
     reviewUpdate(),
   ),
+  'fp-default-variant': ill(
+    320,
+    150,
+    'Набор вариантов Button из шести кнопок в две строки. Верхняя строка: Large, Disabled; Large, Default; Large, Hover. Нижняя: Small, Default; Small, Hover; Small, Disabled',
+    defaultVariant(),
+    { topleft: [24, 34, 80, 50] },
+  ),
+  'fp-proto-panel': ill(
+    320,
+    198,
+    'Вкладка Prototype у экземпляра кнопки: в разделе Interactions — On click → Navigate to «Корзина», в разделе Variant interactions — While hovering → Change to Hover',
+    protoPanel(),
+    { variant: [30, 138, 260, 40], own: [30, 72, 260, 40] },
+  ),
+  'fp-set-tidy': ill(240, 170, 'Набор вариантов сеткой: строки L и S подписаны слева, столбцы default, hover и disabled — сверху', variantSet(true)),
+  'fp-set-messy': ill(240, 170, 'Набор вариантов одной колонкой: большие и маленькие кнопки в разных состояниях идут вперемешку, без подписей', variantSet(false)),
+  'fp-props-spot': ill(
+    320,
+    242,
+    'Панель свойств экземпляра Button: Size — Large; Property 2 — Variant3; Show icon — включено; Toggle 1 — включено',
+    propNamesSpot(),
+    { property: [30, 94, 260, 34], toggle: [30, 178, 260, 34] },
+  ),
+  'fp-checkboxes': ill(320, 170, 'Экран «Уведомления» с пятью чекбоксами: Заказы, Скидки, Новинки, Отзывы, Новости', fiveCheckboxes()),
 };
 
 export const figmaTrackArt: Record<string, Illustration> = {
