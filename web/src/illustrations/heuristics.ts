@@ -18,6 +18,8 @@ import {
   type Illustration,
 } from './kit';
 
+const tile = (w: number, h: number) => rect(0, 0, w, h, 'tile', 12);
+
 /** Экран телефона с заголовком и кнопкой «назад» */
 const phone = (x: number, y: number, w: number, h: number, heading: string) =>
   screen(x, y, w, h) + icon('back', x + 10, y + 12, 14) + title(x + 32, y + 24, heading);
@@ -86,6 +88,52 @@ const chatBubbles = (status: boolean) =>
       text(218, 148, 'отправляется…', { size: 8, cls: 'muted', anchor: 'end' })
     : // Только время: когда написано — видно, дошло ли — нет
       text(210, 94, '12:40', { size: 7, cls: 'on-accent', anchor: 'end' }) + text(210, 126, '12:41', { size: 7, cls: 'on-accent', anchor: 'end' }));
+
+/** Корзина с тремя нарушениями: корзина-иконка вплотную к «+», промокод с кодом ошибки, итог без индикатора */
+const cartSpot = () =>
+  phone(20, 10, 280, 244, 'Корзина') +
+  [0, 1].map((i) => {
+    const y = 50 + i * 52;
+    return (
+      card(36, y, 248, 44, 8) + rect(44, y + 7, 30, 30, 'block', 6) + text(82, y + 19, i ? 'Кеды Classic' : 'Футболка', { size: 10, cls: 'ink' }) + text(82, y + 33, i ? '4 990 ₽' : '1 990 ₽', { size: 9 }) +
+      rect(206, y + 12, 70, 22, 'block', 11) + icon('minus', 212, y + 16, 13) + text(234, y + 27, '1', { size: 10, weight: 700, cls: 'ink', anchor: 'middle' }) + icon('plus', 244, y + 16, 13) + icon('trash', 260, y + 16, 13, 'stroke-danger')
+    );
+  }).join('') +
+  field(36, 164, 160, 26, { value: 'ЛЕТО25', state: 'error', hint: 'ERR_402' }) +
+  button(204, 164, 80, 26, 'Применить', 'secondary') +
+  text(36, 240, 'Итого:', { size: 12, cls: 'ink' }) +
+  text(284, 240, '—', { size: 14, weight: 700, cls: 'ink', anchor: 'end' });
+
+/** Настройки без кнопки «назад», с жаргоном и двумя кнопками с одним смыслом */
+const settingsSpot = () =>
+  screen(20, 10, 280, 214) +
+  title(36, 38, 'Уведомления') +
+  text(36, 72, 'Новые заказы', { size: 11, cls: 'ink' }) +
+  rect(250, 60, 34, 20, 'accent', 10) + circle(274, 70, 8, 'card') +
+  path('M36 88H284', 'divider') +
+  text(36, 116, 'FCM push-токен', { size: 11, cls: 'ink' }) +
+  rect(250, 104, 34, 20, 'block', 10) + circle(260, 114, 8, 'card') +
+  path('M36 132H284', 'divider') +
+  text(36, 160, 'Скидки и акции', { size: 11, cls: 'ink' }) +
+  rect(250, 148, 34, 20, 'accent', 10) + circle(274, 158, 8, 'card') +
+  button(36, 186, 118, 28, 'Применить', 'secondary') +
+  button(166, 186, 118, 28, 'Сохранить');
+
+/** Экран входа: только форма или форма в окружении баннеров и бейджей */
+const loginScreen = (noisy: boolean) =>
+  tile(240, 200) +
+  screen(20, 8, 200, 184, 12) +
+  (noisy
+    ? rect(30, 16, 180, 30, 'warning-shape', 6) + text(120, 35, '−50% СЕГОДНЯ!', { size: 10, weight: 700, cls: 'ink', anchor: 'middle' }) +
+      title(30, 64, 'Вход', 12) +
+      rect(150, 52, 60, 16, 'danger', 8) + text(180, 63, 'НОВИНКА', { size: 7.5, weight: 700, cls: 'on-accent', anchor: 'middle' })
+    : title(30, 44, 'Вход', 14)) +
+  field(30, noisy ? 74 : 62, 180, 24, { placeholder: 'Email' }) +
+  field(30, noisy ? 104 : 96, 180, 24, { placeholder: 'Пароль' }) +
+  button(30, noisy ? 134 : 132, 180, 26, 'Войти') +
+  (noisy
+    ? rect(30, 164, 86, 22, 'block', 6) + text(73, 178, 'Скачай app', { size: 8, anchor: 'middle' }) + rect(124, 164, 86, 22, 'accent-soft', 6) + text(167, 178, 'Акции дня', { size: 8, cls: 'on-accent', anchor: 'middle' })
+    : text(120, 176, 'Забыли пароль?', { size: 9, cls: 'accent', anchor: 'middle' }));
 
 export const heuristicsArt: Record<string, Illustration> = {
   'h-pay-double': ill(
@@ -565,4 +613,20 @@ export const heuristicsArt: Record<string, Illustration> = {
     'Тот же чат: у отправленных сообщений только время, отметок о доставке нет',
     phone(10, 10, 220, 150, 'Анна') + chatBubbles(false),
   ),
+  'h-cart-spot': ill(
+    320,
+    264,
+    'Корзина: у каждого товара счётчик «минус, 1, плюс» и сразу за плюсом красная иконка корзины; промокод ЛЕТО25 с красной рамкой и подписью ERR_402; внизу «Итого: —»',
+    cartSpot(),
+    { trash: [256, 60, 26, 74], promo: [30, 160, 170, 42], total: [30, 226, 260, 20] },
+  ),
+  'h-settings-spot': ill(
+    320,
+    234,
+    'Экран «Уведомления» без кнопки назад: переключатели «Новые заказы», «FCM push-токен», «Скидки и акции» и внизу две кнопки «Применить» и «Сохранить»',
+    settingsSpot(),
+    { back: [20, 14, 60, 34], jargon: [30, 100, 160, 26], buttons: [30, 182, 260, 36] },
+  ),
+  'h-login-clean': ill(240, 200, 'Экран входа: заголовок, поля email и пароль, кнопка «Войти» и ссылка «Забыли пароль?»', loginScreen(false)),
+  'h-login-noisy': ill(240, 200, 'Экран входа с жёлтым баннером «−50% сегодня!», бейджем «Новинка», полями и кнопкой, а внизу плашки «Скачай app» и «Акции дня»', loginScreen(true)),
 };
