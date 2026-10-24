@@ -4,7 +4,7 @@ import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
-import { Home, type HomeTab, type SectionFilter } from './screens/Home';
+import { Home, learnTracks, type HomeTab, type SectionFilter } from './screens/Home';
 import { Lesson } from './screens/Lesson';
 import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
@@ -30,20 +30,21 @@ type Screen =
   | { name: 'settings' }
   | { name: 'calendar' };
 
-/** Последний открытый раздел тем помним на устройстве: кто учит Figma, не переключается каждый раз */
+/** Последний открытый раздел тем и тему учебника помним на устройстве: кто учит Figma, не переключается каждый раз */
 const SECTION_KEY = 'tracks-section';
+const LEARN_KEY = 'learn-track';
 
-function loadSection(): SectionFilter {
+function loadPref<T extends string>(key: string, fallback: T): T {
   try {
-    return (localStorage.getItem(SECTION_KEY) as SectionFilter | null) ?? 'all';
+    return (localStorage.getItem(key) as T | null) ?? fallback;
   } catch {
-    return 'all';
+    return fallback;
   }
 }
 
-function saveSection(section: SectionFilter) {
+function savePref(key: string, value: string) {
   try {
-    localStorage.setItem(SECTION_KEY, section);
+    localStorage.setItem(key, value);
   } catch {
     // Хранилище недоступно — просто не запоминаем
   }
@@ -55,7 +56,9 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [starting, setStarting] = useState(false);
   const [tab, setTab] = useState<HomeTab>('progress');
-  const [section, setSection] = useState<SectionFilter>(loadSection);
+  const [section, setSection] = useState<SectionFilter>(() => loadPref<SectionFilter>(SECTION_KEY, 'all'));
+  // Неизвестную тему (урок убрали из учебника) пейджер сам заменит первой
+  const [learnTrack, setLearnTrack] = useState<TrackId>(() => loadPref<TrackId>(LEARN_KEY, learnTracks[0].id));
 
   const refresh = useCallback(() => {
     api
@@ -145,6 +148,12 @@ export function App() {
         const { session } = screen;
         const next = session.mode === 'warmup' ? warmupNext(screen.result) : undefined;
         const toLessons = () => {
+          // Возвращаем на тему пройденного урока, даже если до этого была открыта другая
+          if (session.mode === 'lesson') {
+            const track = lessonById.get(session.lesson)!.track;
+            setLearnTrack(track);
+            savePref(LEARN_KEY, track);
+          }
           setTab('learn');
           goHome();
         };
@@ -195,7 +204,12 @@ export function App() {
             section={section}
             onSection={(s) => {
               setSection(s);
-              saveSection(s);
+              savePref(SECTION_KEY, s);
+            }}
+            learnTrack={learnTrack}
+            onLearnTrack={(t) => {
+              setLearnTrack(t);
+              savePref(LEARN_KEY, t);
             }}
             onStart={start}
             onLesson={openLesson}

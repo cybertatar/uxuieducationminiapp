@@ -912,6 +912,11 @@ button.card:active:not(:disabled) {
   margin-top: 4px;
 }
 
+/* Страница — колонка фиксированной высоты: без этого карточки с overflow: hidden сжимались бы, а не прокручивались */
+.section-page > * {
+  flex-shrink: 0;
+}
+
 .tracks {
   display: flex;
   flex-direction: column;
@@ -973,10 +978,24 @@ button.card:active:not(:disabled) {
 
 /* ---------- Учебник: список уроков ---------- */
 
-.learn__track {
+/* «Продолжить»: следующий непрочитанный урок темы */
+.learn__next {
   display: flex;
-  flex-direction: column;
-  gap: var(--gap);
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.learn__next-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font-size: 15px;
 }
 
 .learn__list {

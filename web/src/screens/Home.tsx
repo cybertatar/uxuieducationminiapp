@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { lessons, questionsByTrack, readingMinutes, sections, trackById, tracks, type SectionId, type TrackId } from '../../../content';
 import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
@@ -6,6 +6,7 @@ import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
 import { AUTHOR_URL, openLink, openTelegramLink } from '../tg';
+import { SectionPager } from '../SectionPager';
 import { APP_VERSION } from '../version';
 import { Wireframe } from '../Wireframe';
 
@@ -23,13 +24,16 @@ interface Props {
   section: SectionFilter;
   onSection: (section: SectionFilter) => void;
   onStart: (s: SessionMode) => void;
+  /** Открытая тема учебника: хранится в App, как и раздел тем */
+  learnTrack: TrackId;
+  onLearnTrack: (track: TrackId) => void;
   onLesson: (id: string) => void;
   onSettings: () => void;
   onCalendar: () => void;
 }
 
 /** Главная из трёх вкладок: прогресс с трекером занятий, список тем и учебник. */
-export function Home({ profile, starting, tab, onTab, section, onSection, onStart, onLesson, onSettings, onCalendar }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnTrack, onLearnTrack, onLesson, onSettings, onCalendar }: Props) {
   return (
     <>
       {!profile ? (
@@ -39,7 +43,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
       ) : tab === 'tracks' ? (
         <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />
       ) : (
-        <LearnTab profile={profile} onLesson={onLesson} />
+        <LearnTab profile={profile} learnTrack={learnTrack} onLearnTrack={onLearnTrack} onLesson={onLesson} />
       )}
       <TabBar tab={tab} onTab={onTab} />
     </>
@@ -177,142 +181,29 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
 
 const FILTERS: { id: SectionFilter; title: string }[] = [{ id: 'all', title: 'Все' }, ...sections.map((s) => ({ id: s.id, title: s.title }))];
 
-/**
- * Темы по разделам. Разделы — страницы горизонтальной ленты со scroll-snap:
- * на телефоне их листают свайпом, как папки в Telegram, а пилюли сверху следуют за лентой.
- * Экран не прокручивается целиком: у каждого раздела своя прокрутка, поэтому пилюли всегда на месте,
- * а свайп из середины списка не дёргает страницу.
- */
+/** Темы по разделам: пилюли сверху, разделы листаются свайпом */
 function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
-  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
-  const tabRow = useRef<HTMLDivElement>(null);
-  const pager = useRef<HTMLDivElement>(null);
-  const pages = useRef<(HTMLDivElement | null)[]>([]);
-  /** Куда лента едет после тапа по пилюле: промежуточные страницы по пути не выбираем */
-  const target = useRef<number | null>(null);
-  const activeIndex = Math.max(0, FILTERS.findIndex((f) => f.id === section));
-  const active = FILTERS[activeIndex].id;
   const progress = new Map(profile.tracks.map((t) => [t.id, t]));
-
-  // При открытии и смене ширины экрана встаём ровно на текущую страницу.
-  // На смену раздела не реагируем: во время свайпа это дёрнуло бы ленту под пальцем.
-  const indexRef = useRef(activeIndex);
-  indexRef.current = activeIndex;
-  useLayoutEffect(() => {
-    const el = pager.current;
-    if (!el) return;
-    const snap = () => {
-      if (target.current === null) el.scrollLeft = indexRef.current * el.clientWidth;
-    };
-    snap();
-    window.addEventListener('resize', snap);
-    return () => window.removeEventListener('resize', snap);
-  }, []);
-
-  // Палец перехватил ленту на полпути после тапа или анимация закончилась — снова слушаем свайпы
-  useEffect(() => {
-    const el = pager.current;
-    if (!el) return;
-    const release = () => (target.current = null);
-    el.addEventListener('scrollend', release);
-    el.addEventListener('touchstart', release, { passive: true });
-    return () => {
-      el.removeEventListener('scrollend', release);
-      el.removeEventListener('touchstart', release);
-    };
-  }, []);
-
-  // Активная пилюля всегда видна, даже если ряд не влез в узкий экран
-  useEffect(() => {
-    const row = tabRow.current;
-    const tab = tabs.current[activeIndex];
-    if (!row || !tab) return;
-    const left = tab.offsetLeft - row.offsetLeft;
-    if (left < row.scrollLeft || left + tab.offsetWidth > row.scrollLeft + row.clientWidth) {
-      row.scrollTo({ left: left - (row.clientWidth - tab.offsetWidth) / 2, behavior: 'smooth' });
-    }
-  }, [activeIndex]);
-
-  const change = (i: number) => {
-    if (i === activeIndex) return;
-    onSection(FILTERS[i].id);
-  };
-
-  const go = (i: number) => {
-    const el = pager.current;
-    if (!el || i === activeIndex) return;
-    target.current = i;
-    change(i);
-    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
-  };
-
-  const onScroll = () => {
-    const el = pager.current;
-    if (!el) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    if (target.current !== null) {
-      if (i === target.current && Math.abs(el.scrollLeft - i * el.clientWidth) < 2) target.current = null;
-      return;
-    }
-    // Пилюля переключается, как только страница перевалила за середину — как в Telegram
-    if (i !== activeIndex && i >= 0 && i < FILTERS.length) change(i);
-  };
-
-  // Стрелки переключают вкладки, как положено у role="tablist"
-  const onKeyDown = (e: KeyboardEvent) => {
-    const next = { ArrowRight: activeIndex + 1, ArrowLeft: activeIndex - 1, Home: 0, End: FILTERS.length - 1 }[e.key];
-    if (next === undefined) return;
-    e.preventDefault();
-    const j = (next + FILTERS.length) % FILTERS.length;
-    go(j);
-    tabs.current[j]?.focus();
-  };
-
   return (
     <main className="screen screen--tracks" aria-busy={starting}>
       <h1 className="visually-hidden">Темы</h1>
-      <div className="section-tabs" role="tablist" aria-label="Разделы тем" onKeyDown={onKeyDown} ref={tabRow}>
-        {FILTERS.map((f, i) => (
-          <button
-            key={f.id}
-            ref={(el) => {
-              tabs.current[i] = el;
-            }}
-            id={`section-${f.id}`}
-            role="tab"
-            aria-selected={f.id === active}
-            aria-controls={`section-panel-${f.id}`}
-            tabIndex={f.id === active ? 0 : -1}
-            className={`section-tab ${f.id === active ? 'is-active' : ''}`}
-            onClick={() => go(i)}
-          >
-            {f.title}
-          </button>
-        ))}
-      </div>
-      <div className="section-pager" ref={pager} onScroll={onScroll}>
-        {FILTERS.map((f, i) => {
-          const shown = f.id === 'all' ? sections : sections.filter((s) => s.id === f.id);
+      <SectionPager
+        label="Разделы тем"
+        idPrefix="section"
+        items={FILTERS}
+        active={section}
+        onChange={onSection}
+        renderPage={(id) => {
+          const shown = id === 'all' ? sections : sections.filter((s) => s.id === id);
           const trackCount = shown.reduce((n, s) => n + s.tracks.length, 0);
-          const count = shown.reduce((n, s) => n + s.tracks.reduce((m, id) => m + questionsByTrack(id).length, 0), 0);
+          const count = shown.reduce((n, s) => n + s.tracks.reduce((m, t) => m + questionsByTrack(t).length, 0), 0);
           return (
-            <div
-              key={f.id}
-              ref={(el) => {
-                pages.current[i] = el;
-              }}
-              id={`section-panel-${f.id}`}
-              role="tabpanel"
-              aria-labelledby={`section-${f.id}`}
-              // Соседние страницы видны только во время свайпа — ни фокусу, ни скринридеру они не нужны
-              inert={f.id !== active}
-              className="section-page"
-            >
+            <>
               <p className="hint section-hint">
                 {trackCount} {plural(trackCount, 'тема', 'темы', 'тем')} · {count} {questionsWord(count)}
               </p>
               {shown.map((s) =>
-                f.id === 'all' ? (
+                id === 'all' ? (
                   <section key={s.id} className="section-page__group" aria-labelledby={`group-${s.id}`}>
                     <h2 id={`group-${s.id}`} className="section-title">
                       {s.title}
@@ -323,10 +214,10 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
                   <TrackList key={s.id} ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
                 ),
               )}
-            </div>
+            </>
           );
-        })}
-      </div>
+        }}
+      />
     </main>
   );
 }
@@ -362,62 +253,75 @@ function TrackList({ ids, progress, starting, onStart }: Pick<Props, 'starting' 
   );
 }
 
-/** Уроки по трекам в порядке тем; трек без уроков не показываем */
-const lessonTracks = tracks.filter((t) => lessons.some((l) => l.track === t.id));
+/** Темы учебника — треки, у которых есть уроки, в порядке списка тем */
+export const learnTracks = tracks.filter((t) => lessons.some((l) => l.track === t.id)).map((t) => ({ id: t.id, title: t.title }));
 
-/** Учебник: темы простым языком для новичков, после каждого урока — вопросы на закрепление */
-function LearnTab({ profile, onLesson }: { profile: Profile; onLesson: Props['onLesson'] }) {
+/** Учебник: темы простым языком, по пилюле на тему; после каждого урока — вопросы на закрепление */
+function LearnTab({ profile, learnTrack, onLearnTrack, onLesson }: { profile: Profile } & Pick<Props, 'learnTrack' | 'onLearnTrack' | 'onLesson'>) {
   const read = new Set(profile.lessonsRead);
   return (
-    <main className="screen">
+    <main className="screen screen--tracks">
       <h1 className="visually-hidden">Учебник</h1>
-      <section className="hello">
-        <Cat mood="idle" size={76} />
-        <p className="hello__bubble">Здесь темы простым языком. Пара минут чтения — и три вопроса, чтобы закрепить.</p>
-      </section>
-
-      {lessonTracks.map((t) => {
-        const list = lessons.filter((l) => l.track === t.id);
-        const done = list.filter((l) => read.has(l.id)).length;
-        return (
-          <section key={t.id} className="learn__track" aria-labelledby={`learn-${t.id}`}>
-            <h2 id={`learn-${t.id}`} className="section-title">
-              {t.title}
-            </h2>
-            <p className="hint section-hint">
-              {done === list.length ? `Все ${list.length} ${plural(list.length, 'урок', 'урока', 'уроков')} прочитаны` : `Прочитано ${done} из ${list.length}`}
-            </p>
-            <ol className="group learn__list">
-              {list.map((l, i) => {
-                const isRead = read.has(l.id);
-                return (
-                  <li key={l.id}>
-                    <button className="cell learn__item" onClick={() => onLesson(l.id)}>
-                      <span className={`learn__num ${isRead ? 'is-read' : ''}`} aria-hidden>
-                        {isRead ? '✓' : i + 1}
-                      </span>
-                      <span className="learn__body">
-                        <span className="learn__title">{l.title}</span>
-                        <span className="hint">{l.description}</span>
-                        <span className="learn__meta">
-                          {readingMinutes(l)} мин{isRead && <span className="visually-hidden">, прочитано</span>}
+      <SectionPager
+        label="Темы учебника"
+        idPrefix="learn"
+        items={learnTracks}
+        active={learnTrack}
+        onChange={onLearnTrack}
+        renderPage={(id) => {
+          const list = lessons.filter((l) => l.track === id);
+          const done = list.filter((l) => read.has(l.id)).length;
+          const next = list.find((l) => !read.has(l.id));
+          return (
+            <>
+              <p className="hint section-hint">
+                {list.length} {plural(list.length, 'урок', 'урока', 'уроков')} · {done === list.length ? 'все прочитаны' : `прочитано ${done}`}
+              </p>
+              {next && (
+                <button className="card learn__next" onClick={() => onLesson(next.id)}>
+                  <span className="learn__next-icon" aria-hidden>
+                    ▶
+                  </span>
+                  <span className="learn__body">
+                    <span className="hint">{done === 0 ? 'Начни с первого урока' : 'Продолжить'}</span>
+                    <span className="learn__title">{next.title}</span>
+                  </span>
+                  <span className="chevron" aria-hidden>
+                    ›
+                  </span>
+                </button>
+              )}
+              <ol className="group learn__list">
+                {list.map((l, i) => {
+                  const isRead = read.has(l.id);
+                  return (
+                    <li key={l.id}>
+                      <button className="cell learn__item" onClick={() => onLesson(l.id)}>
+                        <span className={`learn__num ${isRead ? 'is-read' : ''}`} aria-hidden>
+                          {isRead ? '✓' : i + 1}
                         </span>
-                      </span>
-                      <span className="chevron" aria-hidden>
-                        ›
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-        );
-      })}
-
-      <p className="hint learn__note">
-        Уроки — пересказ статей NN/g и других источников простыми словами. Ссылки на оригиналы — в конце каждого урока. Новые темы будут появляться постепенно.
-      </p>
+                        <span className="learn__body">
+                          <span className="learn__title">{l.title}</span>
+                          <span className="hint">{l.description}</span>
+                          <span className="learn__meta">
+                            {readingMinutes(l)} мин{isRead && <span className="visually-hidden">, прочитано</span>}
+                          </span>
+                        </span>
+                        <span className="chevron" aria-hidden>
+                          ›
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="hint learn__note">
+                Уроки — пересказ статей NN/g, Laws of UX и других источников простыми словами. После каждого — три вопроса, чтобы закрепить. Новые темы будут появляться постепенно.
+              </p>
+            </>
+          );
+        }}
+      />
     </main>
   );
 }
