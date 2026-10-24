@@ -1012,8 +1012,9 @@ button.card:active:not(:disabled) {
 .learn__item {
   justify-content: flex-start;
   align-items: flex-start;
-  padding-top: 12px;
-  padding-bottom: 12px;
+  gap: 14px;
+  padding-top: 16px;
+  padding-bottom: 16px;
   text-align: left;
   border-radius: 0;
 }
@@ -1031,16 +1032,38 @@ button.card:active:not(:disabled) {
   font-variant-numeric: tabular-nums;
 }
 
-/* Тема в списке раздела: эмодзи трека в том же кружке, что и номер урока */
+/* Темы раздела — отдельные карточки с воздухом, как треки на вкладке «Темы» */
+.learn__topics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.learn__topic {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 16px 18px 18px;
+  text-align: left;
+}
+
+.learn__topic .learn__body {
+  gap: 4px;
+}
+
 .learn__emoji {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  font-size: 18px;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  font-size: 24px;
 }
 
 .learn__progress {
-  margin: 8px 0 2px;
+  margin: 10px 0 0;
 }
 
 .learn__num.is-read {

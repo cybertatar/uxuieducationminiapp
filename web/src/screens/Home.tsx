@@ -281,15 +281,15 @@ function LearnTab({ profile, learnSection, onLearnSection, onLearnTrack }: { pro
               <p className="hint section-hint">
                 {section.tracks.length} {plural(section.tracks.length, 'тема', 'темы', 'тем')} · {total} {plural(total, 'урок', 'урока', 'уроков')}
               </p>
-              <div className="group learn__list">
+              <div className="learn__topics">
                 {section.tracks.map((t) => {
                   const track = trackById.get(t)!;
                   const list = lessons.filter((l) => l.track === t);
                   const done = list.filter((l) => read.has(l.id)).length;
                   const pct = Math.round((done / list.length) * 100);
                   return (
-                    <button key={t} className="cell learn__item" onClick={() => onLearnTrack(t)}>
-                      <span className="learn__num learn__emoji" aria-hidden>
+                    <button key={t} className="card learn__topic" onClick={() => onLearnTrack(t)}>
+                      <span className="learn__emoji" aria-hidden>
                         {track.emoji}
                       </span>
                       <span className="learn__body">
