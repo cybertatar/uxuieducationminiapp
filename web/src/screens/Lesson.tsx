@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { readingMinutes, trackById, type Lesson as LessonData, type LessonBlock } from '../../../content';
 import { BackButton, MainButton } from '../buttons';
 import { ExternalLink } from '../ExternalLink';
@@ -50,6 +50,7 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
   return (
     <main className="screen lesson">
       <BackButton onClick={onBack} />
+      <ReadingProgress end={takeaways} />
 
       <header className="lesson__head">
         <div className="lesson__top">
@@ -96,6 +97,48 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
 
       <MainButton text={`Закрепить: ${count} ${plural(count, 'вопрос', 'вопроса', 'вопросов')}`} onClick={onPractice} loading={starting} />
     </main>
+  );
+}
+
+/**
+ * Полоса чтения у верхнего края: сразу видно, насколько урок длинный и сколько осталось.
+ * 100% — когда «Запомни главное» целиком на экране; дальше идут только ссылки и кнопка.
+ */
+function ReadingProgress({ end }: { end: RefObject<HTMLElement | null> }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const el = end.current;
+      if (!el) return;
+      const bottom = el.getBoundingClientRect().bottom + window.scrollY;
+      const scrollable = bottom - window.innerHeight;
+      setProgress(scrollable <= 0 ? 1 : Math.min(1, Math.max(0, window.scrollY / scrollable)));
+    };
+    const schedule = () => {
+      frame ||= requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    // Высота урока может поменяться и без прокрутки: шрифты, поворот экрана
+    const observer = new ResizeObserver(schedule);
+    observer.observe(document.body);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [end]);
+
+  const pct = Math.round(progress * 100);
+  return (
+    <div className="reading-progress" role="progressbar" aria-label="Прочитано урока" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <span className="reading-progress__fill" style={{ transform: `scaleX(${progress})` }} />
+    </div>
   );
 }
 

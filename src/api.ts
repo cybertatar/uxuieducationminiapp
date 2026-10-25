@@ -2,20 +2,22 @@ import { Api, InlineKeyboard, InputFile } from 'grammy';
 import type { InlineQueryResult } from 'grammy/types';
 import { Hono } from 'hono';
 import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
-import type { CompleteResponse, HistoryResponse, Profile, ReportRequest, SessionRequest, SettingsPatch, ShareRequest, ShareResponse, SuggestRequest } from './api-types';
+import { DONATE_AMOUNTS, type CompleteResponse, type DonateResponse, type HistoryResponse, type Profile, type ReportRequest, type SessionRequest, type SettingsPatch, type ShareRequest, type ShareResponse, type SuggestRequest } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
-import { notifyOwnerAboutReport, notifyOwnerAboutSuggestion, offerDailyQuestion } from './bot';
+import { donationInvoice, notifyOwnerAboutReport, notifyOwnerAboutSuggestion, offerDailyQuestion } from './bot';
 import {
   activityCount,
   activityDates,
   addReport,
   addSuggestion,
+  donatedTotal,
   getAnswers,
   history,
   lessonsRead,
   getConfig,
   markLessonRead,
   parseSource,
+  updateUser,
   reportsSince,
   saveShareImage,
   suggestionsSince,
@@ -72,10 +74,11 @@ api.get('/me', async (c) => {
   // Неделя с понедельника, как в календаре
   const weekday = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
   const monday = addDays(date, -weekday);
-  const [active, activeDays, read] = await Promise.all([
+  const [active, activeDays, read, donated] = await Promise.all([
     activityDates(c.env.DB, user.id, monday),
     activityCount(c.env.DB, user.id),
     lessonsRead(c.env.DB, user.id),
+    donatedTotal(c.env.DB, user.id),
   ]);
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(monday, i);
@@ -108,6 +111,9 @@ api.get('/me', async (c) => {
     weakTopics: weakTopics(questions, answers),
     // Урок могли убрать из учебника — такие отметки не показываем
     lessonsRead: read.filter((id) => lessonById.has(id)),
+    // Тему могли убрать из тренажёра — тогда и продолжать нечего
+    lastTrack: user.last_track && trackById.has(user.last_track as TrackId) ? (user.last_track as TrackId) : null,
+    supporter: donated > 0,
     settings: {
       dailyEnabled: user.daily_enabled === 1,
       dailyTime: user.daily_time,
@@ -138,6 +144,7 @@ api.post('/session', async (c) => {
     return c.json({ questionIds: lesson.practice });
   }
   if (!trackById.has(body.track)) return c.json({ error: 'unknown track' }, 400);
+  if (user.last_track !== body.track) await updateUser(c.env.DB, user.id, { last_track: body.track });
   return c.json({ questionIds: pickTrackSession(questionsByTrack(body.track as TrackId), answers, date) });
 });
 
@@ -186,6 +193,14 @@ api.post('/suggest', async (c) => {
   const row = await addSuggestion(c.env.DB, user.id, suggestion, now);
   c.executionCtx.waitUntil(notifyOwnerAboutSuggestion(c.env.DB, new Api(c.env.BOT_TOKEN), row, user));
   return c.json({ ok: true });
+});
+
+/** «Поддержать проект»: счёт в звёздах Telegram, Mini App открывает его через WebApp.openInvoice */
+api.post('/donate', async (c) => {
+  const { amount } = await c.req.json<{ amount: number }>();
+  if (!(DONATE_AMOUNTS as readonly number[]).includes(amount)) return c.json({ error: 'bad amount' }, 400);
+  const res: DonateResponse = { url: await donationInvoice(new Api(c.env.BOT_TOKEN), c.get('user').id, amount) };
+  return c.json(res);
 });
 
 api.post('/session/complete', async (c) => {

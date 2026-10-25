@@ -36,16 +36,17 @@ interface Props {
   onSettings: () => void;
   onCalendar: () => void;
   onSuggest: () => void;
+  onSupport: () => void;
 }
 
 /** Главная из трёх вкладок: прогресс с трекером занятий, список тем и учебник. */
-export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnSection, onLearnSection, onLearnTrack, onLesson, onSettings, onCalendar, onSuggest }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnSection, onLearnSection, onLearnTrack, onLesson, onSettings, onCalendar, onSuggest, onSupport }: Props) {
   return (
     <>
       {!profile ? (
         <HomeSkeleton />
       ) : tab === 'progress' ? (
-        <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} onLesson={onLesson} />
+        <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} onLesson={onLesson} onSupport={onSupport} />
       ) : tab === 'tracks' ? (
         <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} onSuggest={onSuggest} />
       ) : (
@@ -58,7 +59,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
 
 type TabProps = Pick<Props, 'starting' | 'onStart'> & { profile: Profile };
 
-function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab, onLesson }: TabProps & Pick<Props, 'onSettings' | 'onCalendar' | 'onTab' | 'onLesson'>) {
+function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab, onLesson, onSupport }: TabProps & Pick<Props, 'onSettings' | 'onCalendar' | 'onTab' | 'onLesson' | 'onSupport'>) {
   const { streak } = profile;
   // Новичок ещё не прошёл ни одной сессии — сразу предлагаем начать, а не искать тесты на соседней вкладке
   const firstRun = streak.activeDays === 0;
@@ -74,6 +75,9 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
       </section>
 
       {firstRun && <FirstRun starting={starting} onStart={onStart} onTab={onTab} />}
+
+      {/* Новичку хватает разминки: «Продолжить» появится после первой засчитанной сессии */}
+      {!firstRun && profile.lastTrack && <Continue profile={profile} track={profile.lastTrack} starting={starting} onStart={onStart} />}
 
       {/* Вся карточка стрика ведёт в календарь занятий: поверх неё растянута прозрачная кнопка */}
       <section className="streak card">
@@ -140,6 +144,12 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
         <button className="link" onClick={() => openTelegramLink(AUTHOR_URL)}>
           Daniil Tyncherov
         </button>
+        {/* Донаты — только здесь, в подписи: без баннеров и просьб посреди занятий */}
+        <div className="author__support">
+          <button className="link" onClick={onSupport}>
+            {profile.supporter ? 'Спасибо за поддержку ⭐' : 'Поддержать проект ⭐'}
+          </button>
+        </div>
         <div className="author__version">
           Версия {APP_VERSION}
         </div>
@@ -163,6 +173,33 @@ function NotifyRow({ settings, onClick }: { settings: Profile['settings']; onCli
       </svg>
       <span className="streak__notify-text">{text}</span>
       <span className="streak__notify-action">{off ? 'Включить' : 'Изменить'} ›</span>
+    </button>
+  );
+}
+
+/** «Продолжить»: сразу в тему, где человек последний раз проходил тест, без поиска по вкладке «Темы» */
+function Continue({ profile, track, starting, onStart }: TabProps & { track: TrackId }) {
+  const t = profile.tracks.find((p) => p.id === track)!;
+  const info = trackById.get(track)!;
+  const pct = Math.round((t.mastered / t.total) * 100);
+  return (
+    <button className="card track continue" disabled={starting} onClick={() => onStart({ mode: 'track', track })}>
+      <span className="track__art" aria-hidden>
+        <Wireframe name={info.art} />
+      </span>
+      <span className="track__body">
+        <span className="continue__label">Продолжить</span>
+        <span className="track__title">{info.title}</span>
+        <span className="progress" role="progressbar" aria-label="Освоено вопросов" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+          <span className="progress__fill" style={{ width: `${pct}%` }} />
+        </span>
+        <span className="track__meta">{t.mastered === t.total ? 'Всё освоено — можно повторить' : `Освоено ${t.mastered} из ${t.total}`}</span>
+      </span>
+      <span className="continue__go" aria-hidden>
+        <svg viewBox="0 0 24 24">
+          <path d="M8 5.5v13l10.5-6.5z" />
+        </svg>
+      </span>
     </button>
   );
 }

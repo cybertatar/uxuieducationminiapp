@@ -49,4 +49,4 @@
 
 Проект некоммерческий и делается для дизайн-сообщества. Нашли неточность в вопросе или уроке или хотите предложить свой вопрос — [создайте issue](https://github.com/cybertatar/uxuieducationminiapp/issues).
 
-Автор — [Daniil Tyncherov](https://t.me/everlastinghate).
+Автор — [Daniil Tyncherov](https://t.me/everlastinghate). Тренажёр бесплатный и без рекламы. Если он помогает, автора можно поблагодарить звёздами Telegram: ссылка «Поддержать проект» есть внизу главной.

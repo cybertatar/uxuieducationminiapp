@@ -13,6 +13,7 @@ import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
 import { Suggest } from './screens/Suggest';
+import { Support } from './screens/Support';
 import { tg } from './tg';
 
 export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
@@ -34,6 +35,7 @@ type Screen =
   | { name: 'lesson'; id: string }
   | { name: 'settings' }
   | { name: 'calendar' }
+  | { name: 'support' }
   /** back — куда вернуться: на главную или к итогам сессии, не потеряв их */
   | { name: 'suggest'; track?: TrackId; back: Screen };
 
@@ -229,6 +231,8 @@ export function App() {
         return profile && <Calendar profile={profile} onBack={goHome} onSettings={() => setScreen({ name: 'settings' })} />;
       case 'suggest':
         return <Suggest track={screen.track} onBack={() => setScreen(screen.back)} />;
+      case 'support':
+        return <Support profile={profile} onBack={goHome} onProfile={setProfile} />;
       case 'settings':
         return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
       default:
@@ -253,6 +257,10 @@ export function App() {
             onLesson={openLesson}
             onSettings={() => setScreen({ name: 'settings' })}
             onSuggest={() => openSuggest({ name: 'home' })}
+            onSupport={() => {
+              setScreen({ name: 'support' });
+              window.scrollTo({ top: 0 });
+            }}
             onCalendar={() => {
               setScreen({ name: 'calendar' });
               window.scrollTo({ top: 0 });

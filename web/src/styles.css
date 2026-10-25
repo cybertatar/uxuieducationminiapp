@@ -837,6 +837,47 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
+/* «Продолжить»: карточка темы в одну строку — миниатюра, название с прогрессом и кнопка-плей */
+.track.continue {
+  flex-direction: row;
+  align-items: center;
+}
+
+.continue .track__art {
+  flex: none;
+  width: 76px;
+  padding: 8px 6px;
+}
+
+.continue .progress {
+  margin: 6px 0 2px;
+}
+
+.continue__label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+}
+
+.continue__go {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+}
+
+.continue__go svg {
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  fill: var(--accent-text);
+}
+
 /* «Предложить вопрос» — та же карточка, что «Повторение», но тоном акцента */
 .suggest-card__icon {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -1120,6 +1161,37 @@ button.card:active:not(:disabled) {
 
 /* ---------- Урок ---------- */
 
+/* Полоса чтения: прилипает под шапкой Telegram, ширина — как у колонки контента */
+.reading-progress {
+  position: fixed;
+  top: calc(var(--safe-top) + 4px);
+  left: 50%;
+  z-index: 5;
+  width: min(560px, 100%);
+  padding: 0 var(--side);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.reading-progress::before,
+.reading-progress__fill {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.reading-progress::before {
+  content: '';
+  background: color-mix(in srgb, var(--hint-raw) 22%, transparent);
+}
+
+.reading-progress__fill {
+  margin-top: -4px;
+  background: var(--accent);
+  transform-origin: left;
+  transition: transform 0.1s linear;
+}
+
 .lesson__head {
   display: flex;
   flex-direction: column;
@@ -1338,6 +1410,75 @@ button.card:active:not(:disabled) {
   font-size: 11px;
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
+}
+
+/* «Поддержать проект» в подписи автора: тихая ссылка, не кнопка */
+.author__support {
+  margin-top: 6px;
+}
+
+/* ---------- Поддержать проект ---------- */
+
+.support__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.support__text {
+  max-width: 360px;
+  color: var(--hint);
+}
+
+.support__amounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.support__amount {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: box-shadow 0.2s, transform 0.12s ease;
+}
+
+.support__amount.is-active {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.support__stars {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.support__error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.support-done {
+  align-items: center;
+  text-align: center;
+}
+
+.support-done__cat {
+  position: relative;
+}
+
+.support-done__title {
+  font-size: 24px;
+}
+
+.support-done__text {
+  max-width: 300px;
+  font-size: 15px;
 }
 
 /* ---------- Ячейки и настройки ---------- */

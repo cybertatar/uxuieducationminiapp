@@ -30,6 +30,10 @@ export interface Profile {
   weakTopics: WeakTopic[];
   /** id прочитанных уроков «Учебника» */
   lessonsRead: string[];
+  /** Тема, по которой человек последний раз начинал тест, — для «Продолжить» на главной */
+  lastTrack: TrackId | null;
+  /** Человек уже поддерживал проект звёздами: вместо просьбы — спасибо */
+  supporter: boolean;
   settings: Settings;
 }
 
@@ -131,6 +135,14 @@ export interface ReportRequest {
   comment?: string;
   answer?: ReportAnswer;
   context?: ReportContext;
+}
+
+/** Сколько звёзд Telegram можно отправить автору: выбор на экране «Поддержать проект» */
+export const DONATE_AMOUNTS = [50, 100, 250, 500] as const;
+
+export interface DonateResponse {
+  /** Ссылка на счёт для WebApp.openInvoice */
+  url: string;
 }
 
 /** Ограничения формы «Предложить вопрос»: одни и те же в приложении и на сервере */

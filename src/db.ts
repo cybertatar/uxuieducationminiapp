@@ -23,6 +23,8 @@ export interface UserRow {
   daily_offered: number;
   /** Метка из ссылки, по которой пользователь пришёл впервые */
   source: string | null;
+  /** Тема последнего теста — для «Продолжить» на главной */
+  last_track: string | null;
 }
 
 /** Поля, которые можно менять через updateUser. */
@@ -197,6 +199,21 @@ export async function lessonsRead(db: D1Database, userId: number): Promise<strin
 /** Запоминает только первое прочтение: повторные не перезаписывают дату */
 export async function markLessonRead(db: D1Database, userId: number, lessonId: string, now: number) {
   await db.prepare('INSERT OR IGNORE INTO lesson_reads (user_id, lesson_id, read_at) VALUES (?, ?, ?)').bind(userId, lessonId, now).run();
+}
+
+/** Сохраняет оплату звёздами. false — этот платёж уже записан: Telegram мог прислать обновление повторно */
+export async function addDonation(db: D1Database, userId: number, amount: number, chargeId: string, now: number): Promise<boolean> {
+  const res = await db
+    .prepare('INSERT OR IGNORE INTO donations (user_id, amount, charge_id, created_at) VALUES (?, ?, ?, ?)')
+    .bind(userId, amount, chargeId, now)
+    .run();
+  return res.meta.changes > 0;
+}
+
+/** Сколько звёзд человек отправил всего: 0 — ещё не поддерживал */
+export async function donatedTotal(db: D1Database, userId: number): Promise<number> {
+  const row = await db.prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM donations WHERE user_id = ?').bind(userId).first<{ total: number }>();
+  return row?.total ?? 0;
 }
 
 export async function saveShareImage(db: D1Database, id: string, data: Uint8Array, now: number, client: string | null = null): Promise<void> {

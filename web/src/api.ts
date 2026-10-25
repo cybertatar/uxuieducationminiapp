@@ -1,6 +1,7 @@
 import type {
   AnswerResponse,
   CompleteResponse,
+  DonateResponse,
   HistoryResponse,
   Profile,
   ReportRequest,
@@ -50,5 +51,6 @@ export const api = {
   report: (body: ReportRequest) => request<{ ok: true }>('POST', '/report', body),
   suggest: (body: SuggestRequest) => request<{ ok: true }>('POST', '/suggest', body),
   share: (body: ShareRequest) => request<ShareResponse>('POST', '/share', body),
+  donate: (amount: number) => request<DonateResponse>('POST', '/donate', { amount }),
   settings: (patch: SettingsPatch) => request<{ ok: true }>('PATCH', '/settings', patch),
 };

@@ -1,6 +1,8 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
 import { isTextOnly, questionById, questions, questionsByTrack, sections, trackById, type ChoiceQuestion, type Question } from '../content';
+import { DONATE_AMOUNTS } from './api-types';
 import {
+  addDonation,
   deleteShareImagesBefore,
   findMessageableUser,
   getAnswer,
@@ -237,6 +239,37 @@ function suggestionNews(status: SuggestionStatus, trackTitle: string, author: st
   return `Спасибо за вопрос по теме «${escape(trackTitle)}»! В этот раз он не вошёл в тренажёр, но присылай ещё: автор читает каждый.`;
 }
 
+// ---------- Поддержка звёздами ----------
+
+/** В payload счёта — кто и сколько: по нему pre_checkout_query отличает наши счета от чужих */
+const DONATE_PAYLOAD = /^donate:\d+:\d+$/;
+
+const stars = (n: number) => `${n} ${plural(n, 'звезда', 'звезды', 'звёзд')}`;
+
+/** Счёт на поддержку проекта в звёздах Telegram (XTR): provider_token для звёзд пустой */
+export function donationInvoice(api: Api, userId: number, amount: number): Promise<string> {
+  return api.createInvoiceLink(
+    'Поддержать UX-тренажёр',
+    'Тренажёр бесплатный и без рекламы. Звёзды помогают автору делать новые уроки, вопросы и темы.',
+    `donate:${userId}:${amount}`,
+    '',
+    'XTR',
+    [{ label: 'Поддержка проекта', amount }],
+  );
+}
+
+/** Автору — о каждой поддержке: кто и сколько */
+async function notifyOwnerAboutDonation(db: D1Database, api: Api, from: UserRow, amount: number) {
+  const owner = await findMessageableUser(db, OWNER_USERNAME);
+  if (!owner) return;
+  const who = escape(from.first_name ?? 'Без имени') + (from.username ? ` (@${escape(from.username)})` : '');
+  try {
+    await api.sendMessage(owner.id, `⭐ ${who} поддерживает проект: ${stars(amount)}`, { parse_mode: 'HTML' });
+  } catch (err) {
+    await handleSendError(db, owner, err);
+  }
+}
+
 // ---------- Бот ----------
 
 /** file_id анимации-гайда: после первой отправки Telegram не скачивает файл заново */
@@ -310,6 +343,31 @@ export function getBot(env: Env): Bot {
   bot.command('question', async (ctx) => {
     const user = await loadUser(ctx);
     await sendQuestion(ctx.api, ctx.chat.id, await nextQuestionFor(db, user, Date.now()), 'Вопрос');
+  });
+
+  // Правила Telegram для оплаты звёздами: у бота должна быть команда поддержки по платежам
+  bot.command('paysupport', (ctx) =>
+    ctx.reply(
+      'Если с оплатой звёздами что-то пошло не так или ты хочешь вернуть звёзды, напиши автору: @' +
+        OWNER_USERNAME +
+        '. Звёзды вернутся на твой счёт в Telegram.',
+    ),
+  );
+
+  // Перед оплатой Telegram спрашивает, принимаем ли счёт: на ответ есть 10 секунд
+  bot.on('pre_checkout_query', async (ctx) => {
+    const q = ctx.preCheckoutQuery;
+    // Ссылкой на счёт могли поделиться: платит тот, кто платит, и записываем поддержку на него
+    const ok = DONATE_PAYLOAD.test(q.invoice_payload) && q.currency === 'XTR' && (DONATE_AMOUNTS as readonly number[]).includes(q.total_amount);
+    await ctx.answerPreCheckoutQuery(ok, ok ? undefined : { error_message: 'Этот счёт устарел. Открой «Поддержать проект» в тренажёре ещё раз.' });
+  });
+
+  bot.on('message:successful_payment', async (ctx) => {
+    const user = await loadUser(ctx);
+    const p = ctx.message.successful_payment;
+    if (!(await addDonation(db, user.id, p.total_amount, p.telegram_payment_charge_id, Date.now()))) return;
+    await ctx.reply(`Спасибо за ${stars(p.total_amount)} ⭐ Это правда помогает делать тренажёр дальше. Кегль мурлычет 🐈`);
+    await notifyOwnerAboutDonation(db, ctx.api, user, p.total_amount);
   });
 
   bot.command('help', (ctx) =>
