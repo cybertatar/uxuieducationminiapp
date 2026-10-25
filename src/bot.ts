@@ -18,9 +18,11 @@ import {
   resolveReport,
   setConfig,
   suggestionCounts,
+  supportPinCounts,
   upsertUser,
   updateUser,
   usersDue,
+  usersWithoutSupportPin,
   type UserRow,
 } from './db';
 import type { Env } from './env';
@@ -30,7 +32,7 @@ import { authorName, nextQuestionId, questionSnippet, suggestionText, type Sugge
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
 import { ONBOARDING_VERSION } from './onboarding-version';
-import { appHintText, donateText, welcomeText } from './texts';
+import { appHintText, donateText, supportPinText, welcomeText } from './texts';
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -275,6 +277,26 @@ async function notifyOwnerAboutDonation(db: D1Database, api: Api, from: UserRow,
   }
 }
 
+/** Новым пользователям закреп приходит не сразу: сначала пусть освоятся */
+const PIN_AFTER_MS = 86_400_000;
+/** Сколько закрепов раздаём за минуту: с запасом от лимитов Telegram на рассылки */
+const PINS_PER_RUN = 20;
+
+/**
+ * Присылает без звука сообщение «Поддержать проект» с кнопками и закрепляет его в чате.
+ * id запоминаем, чтобы не закрепить дважды; при ошибке ставим 0 и больше не пробуем.
+ */
+async function pinSupport(db: D1Database, api: Api, user: UserRow, webApp: { url: string }) {
+  try {
+    const msg = await api.sendMessage(user.id, supportPinText, { reply_markup: donateKeyboard(webApp), disable_notification: true });
+    await api.pinChatMessage(user.id, msg.message_id, { disable_notification: true });
+    await updateUser(db, user.id, { support_pin_id: msg.message_id });
+  } catch (err) {
+    await updateUser(db, user.id, { support_pin_id: 0 });
+    await handleSendError(db, user, err);
+  }
+}
+
 // ---------- Бот ----------
 
 /** file_id анимации-гайда: после первой отправки Telegram не скачивает файл заново */
@@ -361,6 +383,24 @@ export function getBot(env: Env): Bot {
     await ctx.answerCallbackQuery();
     if (!(DONATE_AMOUNTS as readonly number[]).includes(amount)) return;
     await ctx.replyWithInvoice(INVOICE_TITLE, INVOICE_DESCRIPTION, `donate:${ctx.from.id}:${amount}`, 'XTR', invoicePrices(amount));
+  });
+
+  /**
+   * Закреп «Поддержать проект» для всех — только по команде автора:
+   * test — прислать себе, on — раздавать понемногу каждую минуту, off — остановить, status — сколько раздано.
+   */
+  bot.command('pinsupport', async (ctx) => {
+    if (ctx.from?.username?.toLowerCase() !== OWNER_USERNAME) return;
+    const user = await loadUser(ctx);
+    const arg = ctx.match.trim();
+    if (arg === 'test') return pinSupport(db, ctx.api, user, webApp);
+    if (arg === 'on' || arg === 'off') {
+      await setConfig(db, 'support_pin', arg === 'on' ? 'on' : null);
+      return ctx.reply(arg === 'on' ? `Раздача включена: по ${PINS_PER_RUN} человек в минуту, новым — через сутки после прихода.` : 'Раздача остановлена.');
+    }
+    const c = await supportPinCounts(db);
+    const on = (await getConfig(db, 'support_pin')) === 'on';
+    await ctx.reply(`Раздача ${on ? 'включена' : 'выключена'}. Закреплено: ${c.pinned}, не получилось: ${c.failed}, ждут: ${c.waiting}.\n\n/pinsupport test | on | off`);
   });
 
   // Правила Telegram для оплаты звёздами: у бота должна быть команда поддержки по платежам
@@ -660,6 +700,10 @@ export async function runScheduled(env: Env, now = Date.now()) {
     } catch (err) {
       await handleSendError(db, user, err);
     }
+  }
+
+  if ((await getConfig(db, 'support_pin')) === 'on') {
+    for (const user of await usersWithoutSupportPin(db, now - PIN_AFTER_MS, PINS_PER_RUN)) await pinSupport(db, api, user, webApp);
   }
 
   // Карточки «Поделиться» Telegram уже скачал — старше двух дней не нужны
