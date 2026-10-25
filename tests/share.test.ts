@@ -58,6 +58,11 @@ describe('поделиться', () => {
     expect(decodeShareImage('не base64!')).toBeNull();
     expect(decodeShareImage(undefined)).toBeNull();
     expect(decodeShareImage('A'.repeat(1_000_000))).toBeNull();
+    // Как у canvas на iPhone: APP0, затем DRI — Telegram такие обрезает
+    const withDri = btoa(String.fromCharCode(0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xdd, 0, 4, 0, 80, 0xff, 0xda, 0, 2));
+    expect(decodeShareImage(withDri)).toBeNull();
+    const plain = btoa(String.fromCharCode(0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xda, 0, 2, 0xff, 0xdd));
+    expect(decodeShareImage(plain)).not.toBeNull();
   });
 });
 
