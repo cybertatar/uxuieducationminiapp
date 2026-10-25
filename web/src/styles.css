@@ -1611,6 +1611,90 @@ button.card:active:not(:disabled) {
   gap: 6px;
 }
 
+/* «Что-то не так с вопросом?» — внизу разбора, тихо, чтобы не спорить с кнопкой «Дальше» */
+.report__toggle {
+  align-self: flex-start;
+  padding: 4px 0;
+  color: var(--hint);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+}
+
+.report__title {
+  font-weight: 600;
+}
+
+.report__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.report__reason {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 14px;
+}
+
+.report__reason.is-selected {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.report__comment {
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  resize: vertical;
+}
+
+.report__comment::placeholder {
+  color: var(--hint);
+}
+
+.report__error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.report__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.report__actions .button {
+  flex: 1;
+  min-height: 44px;
+}
+
+/* Разбор лежит на --surface: кнопки формы того же цвета слились бы с ним, поэтому они цвета страницы */
+.report__actions .button--secondary,
+.report__actions .button--primary:disabled {
+  background: var(--bg);
+}
+
+.report__done {
+  padding-top: 12px;
+  border-top: 1px solid var(--separator);
+  font-weight: 500;
+}
+
 /* «По порядку» и «выбери все»: номер или галочка вместо кружка */
 .answers__hint {
   margin: 0 4px 2px;

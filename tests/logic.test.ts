@@ -6,7 +6,9 @@ import { pickDailyQuestion, pickTrackSession, pickWarmupSession } from '../src/s
 import { applyActivity, streakAtRisk, visibleStreak } from '../src/streak';
 import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
-import { questionById, questionsByTrack, sections, warmupPool, type Question, type TrackId } from '../content';
+import { questionById, questions, questionsByTrack, sections, warmupPool, type ChoiceQuestion, type Question, type TrackId } from '../content';
+import { REPORT_COMMENT_MAX, REPORT_REASONS } from '../src/api-types';
+import { parseReport, reportText, type ReportRow } from '../src/reports';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
 import { parseSource, type UserRow } from '../src/db';
 
@@ -288,5 +290,58 @@ describe('календарь занятий', async () => {
     expect(w).toHaveLength(53);
     expect(w.at(-1)).toEqual(['2026-10-19', '2026-10-20', '2026-10-21', null, null, null, null]);
     expect(w[0][0]).toBe('2025-10-20');
+  });
+});
+
+describe('reports', () => {
+  const choice = questions.find((q) => (q.kind ?? 'choice') === 'choice' && !('image' in q && q.image))! as ChoiceQuestion;
+  const hotspot = questions.find((q) => q.kind === 'hotspot')!;
+  const row = (over: Partial<ReportRow> = {}): ReportRow => ({
+    id: 1,
+    user_id: 42,
+    question_id: choice.id,
+    reason: 'answer',
+    comment: null,
+    option: null,
+    status: 'new',
+    created_at: 0,
+    resolved_at: null,
+    ...over,
+  });
+  const from = { first_name: 'Аня', username: 'anya' };
+
+  it('принимает только существующий вопрос и причину из списка', () => {
+    expect(parseReport({ questionId: choice.id, reason: 'typo' }, questionById)).toEqual({ questionId: choice.id, reason: 'typo', comment: null, option: null });
+    expect(parseReport({ questionId: 'нет-такого', reason: 'typo' }, questionById)).toBeNull();
+    expect(parseReport({ questionId: choice.id, reason: 'toString' as never }, questionById)).toBeNull();
+  });
+
+  it('для «Другое» нужен комментарий, длинный обрезается', () => {
+    expect(parseReport({ questionId: choice.id, reason: 'other', comment: '   ' }, questionById)).toBeNull();
+    const long = parseReport({ questionId: choice.id, reason: 'other', comment: 'а'.repeat(REPORT_COMMENT_MAX + 100) }, questionById);
+    expect(long?.comment).toHaveLength(REPORT_COMMENT_MAX);
+  });
+
+  it('некорректный ответ не сохраняется', () => {
+    expect(parseReport({ questionId: choice.id, reason: 'typo', option: -1 }, questionById)?.option).toBeNull();
+    expect(parseReport({ questionId: choice.id, reason: 'typo', option: 1.5 }, questionById)?.option).toBeNull();
+  });
+
+  it('сообщение автору: причина, вопрос, ответ человека и кто прислал', () => {
+    const text = reportText(row({ option: choice.correct, comment: 'Спорно <b>' }), choice, from, 3);
+    expect(text).toContain(REPORT_REASONS.answer);
+    expect(text).toContain(choice.id);
+    expect(text).toContain(`«${choice.options[choice.correct].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}» — верно`);
+    expect(text).toContain('Спорно &lt;b&gt;');
+    expect(text).toContain('Аня @anya');
+    expect(text).toContain('всего сообщений о вопросе: 3');
+  });
+
+  it('в особых механиках вместо варианта — только верно или нет, а разобранное помечено', () => {
+    const text = reportText(row({ question_id: hotspot.id, option: 1, status: 'fixed' }), hotspot, { first_name: null, username: null }, 1);
+    expect(text).toContain('Ответ: неверно');
+    expect(text).toContain('Исправлено');
+    expect(text).toContain('id 42');
+    expect(text).not.toContain('всего сообщений');
   });
 });

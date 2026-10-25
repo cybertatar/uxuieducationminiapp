@@ -85,3 +85,25 @@ export interface ShareResponse {
   text: string;
   url: string;
 }
+
+/** Что не так с вопросом: ключ хранится в reports.reason, подпись видна в приложении и в сообщении автору. */
+export const REPORT_REASONS = {
+  answer: 'Неверный правильный ответ',
+  unclear: 'Непонятный вопрос или варианты',
+  image: 'Ошибка в картинке',
+  outdated: 'Устарело',
+  typo: 'Опечатка',
+  other: 'Другое',
+} as const;
+
+export const REPORT_COMMENT_MAX = 500;
+
+export type ReportReason = keyof typeof REPORT_REASONS;
+
+/** option — что человек ответил, как в POST /answer. Для «Другое» комментарий обязателен. */
+export interface ReportRequest {
+  questionId: string;
+  reason: ReportReason;
+  comment?: string;
+  option?: number;
+}

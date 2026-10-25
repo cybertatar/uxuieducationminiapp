@@ -136,7 +136,7 @@ export function Quiz({ questionIds, streakCounted, onExit, onFinish }: Props) {
         )}
       </div>
 
-      {checked && <Feedback key={`feedback-${q.id}`} q={q} correct={isCorrect} />}
+      {checked && <Feedback key={`feedback-${q.id}`} q={q} correct={isCorrect} option={answer!.option} />}
 
       {checked ? (
         <MainButton text={isLast ? 'Завершить' : 'Дальше'} onClick={next} />
