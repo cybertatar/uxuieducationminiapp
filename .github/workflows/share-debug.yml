@@ -1,0 +1,38 @@
+name: Диагностика карточек
+
+# Последние картинки «Поделиться»: размер, начало и конец файла (у целого JPEG — FFD8… и FFD9),
+# кто загрузил и как Telegram скачивал. Actions → Диагностика карточек → Run workflow, результат — в Summary.
+# В карточках нет имён и id пользователей, поэтому их можно показывать в публичных логах.
+on:
+  workflow_dispatch:
+
+jobs:
+  share-debug:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Последние картинки
+        run: |
+          URL=$(grep -E '^WEBAPP_URL' wrangler.toml | cut -d'"' -f2)
+          npx wrangler d1 execute ux-quiz --remote --json --command "
+            SELECT id, length(data) AS bytes, hex(substr(data, 1, 4)) AS head, hex(substr(data, -2)) AS tail,
+                   datetime(created_at / 1000, 'unixepoch') AS created, client, fetches
+            FROM share_images ORDER BY created_at DESC LIMIT 5" \
+            | URL="$URL" node -e '
+              const rows = JSON.parse(require("fs").readFileSync(0, "utf8"))[0].results;
+              if (!rows.length) console.log("_пусто_");
+              for (const r of rows) {
+                console.log(`### ${r.created} UTC — ${r.bytes} байт, ${r.head}…${r.tail}`);
+                console.log(`${process.env.URL}/share-img/${r.id}.jpg\n`);
+                console.log("Загрузил: `" + (r.client ?? "—") + "`\n");
+                console.log("Скачивания:\n```\n" + (r.fetches ?? "—") + "```\n");
+              }' | tee -a "$GITHUB_STEP_SUMMARY"
