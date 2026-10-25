@@ -12,6 +12,7 @@ import { parseReport, reportText, type ReportRow } from '../src/reports';
 import { authorName, nextQuestionId, normalizeSource, parseSuggestion, questionSnippet, suggestionText, type SuggestionRow } from '../src/suggestions';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
 import { parseSource, type UserRow } from '../src/db';
+import { shouldOfferSupport } from '../src/support';
 
 describe('time', () => {
   it('считает локальную дату в поясе пользователя', () => {
@@ -479,5 +480,29 @@ describe('suggestions', () => {
     expect(snippet).toContain("options: ['Размер по содержимому', 'Фиксированный размер'],");
     expect(snippet).toContain("explanation: 'Строка\\nс переносом',");
     expect(snippet).toContain("author: '@anya',");
+  });
+});
+
+describe('предложение поддержать проект', () => {
+  const DAY = 86_400_000;
+  const now = Date.UTC(2026, 9, 25, 12);
+  const state = (fields: Partial<Parameters<typeof shouldOfferSupport>[0]>) => ({ sessionsDone: 3, offeredAt: null, donatedAt: null, ...fields });
+
+  it('впервые — после третьего теста, не раньше', () => {
+    expect(shouldOfferSupport(state({ sessionsDone: 2 }), now)).toBeNull();
+    expect(shouldOfferSupport(state({ sessionsDone: 3 }), now)).toBe('first');
+    // Занимался до появления шторки: показываем, но без «3 теста позади»
+    expect(shouldOfferSupport(state({ sessionsDone: 40 }), now)).toBe('again');
+  });
+
+  it('повторно — не раньше чем через 21 день после показа', () => {
+    expect(shouldOfferSupport(state({ sessionsDone: 10, offeredAt: now - 20 * DAY }), now)).toBeNull();
+    expect(shouldOfferSupport(state({ sessionsDone: 10, offeredAt: now - 21 * DAY }), now)).toBe('again');
+  });
+
+  it('после доната — пауза 90 дней, потом снова по общему правилу', () => {
+    expect(shouldOfferSupport(state({ donatedAt: now - 89 * DAY }), now)).toBeNull();
+    expect(shouldOfferSupport(state({ donatedAt: now - 90 * DAY, offeredAt: now - 100 * DAY }), now)).toBe('again');
+    expect(shouldOfferSupport(state({ donatedAt: now - 90 * DAY, offeredAt: now - 5 * DAY }), now)).toBeNull();
   });
 });

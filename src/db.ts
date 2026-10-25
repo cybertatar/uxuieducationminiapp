@@ -27,8 +27,8 @@ export interface UserRow {
   last_track: string | null;
   /** Сколько сессий человек довёл до экрана итогов */
   sessions_done: number;
-  /** Предложение поддержать проект уже показано */
-  support_offered: number;
+  /** Когда последний раз показывали предложение поддержать проект, unix ms */
+  support_offered_at: number | null;
 }
 
 /** Поля, которые можно менять через updateUser. */
@@ -212,6 +212,12 @@ export async function addDonation(db: D1Database, userId: number, amount: number
     .bind(userId, amount, chargeId, now)
     .run();
   return res.meta.changes > 0;
+}
+
+/** Когда человек последний раз поддерживал проект, unix ms; null — не поддерживал */
+export async function lastDonationAt(db: D1Database, userId: number): Promise<number | null> {
+  const row = await db.prepare('SELECT MAX(created_at) AS at FROM donations WHERE user_id = ?').bind(userId).first<{ at: number | null }>();
+  return row?.at ?? null;
 }
 
 /** Сколько звёзд человек отправил всего: 0 — ещё не поддерживал */

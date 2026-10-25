@@ -65,8 +65,8 @@ export interface CompleteResponse {
   current: number;
   best: number;
   extended: boolean;
-  /** Пора один раз предложить поддержать проект: это третий пройденный тест, а человек ещё не поддерживал */
-  offerSupport: boolean;
+  /** Пора предложить поддержать проект: 'first' — впервые, 'again' — повторно; правило — в src/support.ts */
+  offerSupport: 'first' | 'again' | null;
 }
 
 export type SettingsPatch = Partial<Pick<Settings, 'dailyEnabled' | 'dailyTime' | 'reminderEnabled' | 'reminderTime'>> & {
@@ -141,9 +141,6 @@ export interface ReportRequest {
 
 /** Сколько звёзд Telegram можно отправить автору: выбор на экране «Поддержать проект» */
 export const DONATE_AMOUNTS = [50, 100, 250, 500] as const;
-
-/** После скольких пройденных тестов один раз предлагаем поддержать проект */
-export const SUPPORT_OFFER_AFTER = 3;
 
 /**
  * Другие способы поддержать — картой или переводом: ссылки на страницы сервисов донатов.

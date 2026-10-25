@@ -19,8 +19,8 @@ interface Props {
   /** Для предложения включить напоминание о стрике */
   profile: Profile | null;
   onProfile: (p: Profile) => void;
-  /** Сервер решил, что пора один раз предложить поддержать проект: покажем на главной */
-  onOfferSupport: () => void;
+  /** Сервер решил, что пора предложить поддержать проект: покажем на главной */
+  onOfferSupport: (kind: NonNullable<CompleteResponse['offerSupport']>) => void;
   onSettings: () => void;
   canRepeat: boolean;
   starting: boolean;
@@ -82,7 +82,7 @@ export function Result({ result, session, profile, onProfile, onOfferSupport, on
       .then((s) => {
         setStreak(s);
         if (s.extended) haptic.success();
-        if (s.offerSupport) onOfferSupport();
+        if (s.offerSupport) onOfferSupport(s.offerSupport);
       })
       .catch(() => {});
   }, []);

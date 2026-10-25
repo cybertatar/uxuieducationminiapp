@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { DONATE_AMOUNTS, DONATE_LINKS, SUPPORT_OFFER_AFTER, type Profile } from '../../../src/api-types';
+import { DONATE_AMOUNTS, DONATE_LINKS, type CompleteResponse, type Profile } from '../../../src/api-types';
+import { SUPPORT_OFFER_AFTER } from '../../../src/support';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { Cat } from '../Cat';
@@ -144,10 +145,10 @@ export function Support({ profile, onBack, onProfile }: Props) {
 }
 
 /**
- * Разовое предложение поддержать — после третьего пройденного теста, на главной.
- * Отметку «показано» ставим сразу при показе: второй раз не спросим, что бы человек ни выбрал.
+ * Предложение поддержать на главной: впервые после третьего пройденного теста, дальше не чаще раза в три недели
+ * (правило — src/support.ts). Отметку «показано» ставим сразу при показе, что бы человек ни выбрал.
  */
-export function SupportOffer({ onSupport, onClose }: { onSupport: () => void; onClose: () => void }) {
+export function SupportOffer({ kind, onSupport, onClose }: { kind: NonNullable<CompleteResponse['offerSupport']>; onSupport: () => void; onClose: () => void }) {
   const primary = useRef<HTMLButtonElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -169,10 +170,10 @@ export function SupportOffer({ onSupport, onClose }: { onSupport: () => void; on
       <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="support-offer-title" onClick={(e) => e.stopPropagation()}>
         <Cat mood="happy" size={72} />
         <h2 id="support-offer-title" className="sheet__title">
-          Уже {SUPPORT_OFFER_AFTER} теста позади!
+          {kind === 'first' ? `Уже ${SUPPORT_OFFER_AFTER} теста позади!` : 'Спасибо, что учишься с Кеглем!'}
         </h2>
         <p className="hint sheet__text">
-          Тренажёр бесплатный и без рекламы — и таким останется. Если он тебе помогает, можно поддержать автора. Это необязательно, и больше я об этом не спрошу.
+          Тренажёр бесплатный и без рекламы — и таким останется. Если он тебе помогает, можно поддержать автора. Это необязательно, и напомню я не раньше чем через три недели.
         </p>
         <div className="sheet__actions">
           <button ref={primary} className="button button--primary" onClick={onSupport}>

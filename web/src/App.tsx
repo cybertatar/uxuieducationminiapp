@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { lessonById, nextLesson, tracks, type SectionId, type TrackId } from '../../content';
-import type { Profile } from '../../src/api-types';
+import type { CompleteResponse, Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -74,7 +74,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [starting, setStarting] = useState(false);
   // Предложение поддержать ждёт возвращения на главную: экран итогов им не перебиваем
-  const [offerSupport, setOfferSupport] = useState(false);
+  const [offerSupport, setOfferSupport] = useState<CompleteResponse['offerSupport']>(null);
   const [tab, setTab] = useState<HomeTab>('progress');
   const [section, setSection] = useState<SectionFilter>(() => loadPref<SectionFilter>(SECTION_KEY, 'all'));
   // Неизвестный раздел пейджер сам заменит первым
@@ -155,11 +155,12 @@ export function App() {
       {renderScreen()}
       {offerSupport && screen.name === 'home' && profile && (
         <SupportOffer
+          kind={offerSupport}
           onSupport={() => {
-            setOfferSupport(false);
+            setOfferSupport(null);
             openSupport();
           }}
-          onClose={() => setOfferSupport(false)}
+          onClose={() => setOfferSupport(null)}
         />
       )}
       <OverscrollCat />
@@ -202,7 +203,7 @@ export function App() {
             session={session}
             profile={profile}
             onProfile={setProfile}
-            onOfferSupport={() => setOfferSupport(true)}
+            onOfferSupport={setOfferSupport}
             onSettings={() => setScreen({ name: 'settings' })}
             onHome={goHome}
             onAgain={() => start(screen.session)}
