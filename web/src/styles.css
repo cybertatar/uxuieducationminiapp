@@ -539,8 +539,9 @@ button.card:active:not(:disabled) {
 .year__scroll {
   overflow-x: auto;
   scrollbar-width: none;
-  margin: 0 -4px;
-  padding: 0 4px;
+  /* Запас со всех сторон под обводку сегодняшнего дня: прокручиваемый блок обрезает всё, что выходит за его края */
+  margin: -4px;
+  padding: 4px;
 }
 
 .year__scroll::-webkit-scrollbar {
