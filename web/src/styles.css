@@ -55,6 +55,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Подложка цвета фона под всей страницей, с запасом в полэкрана сверху и снизу.
+ * При «пружинке» прокрутки на iPhone за краем страницы виден нативный фон окна Telegram
+ * (в тёмной теме — чёрный), и setBackgroundColor в полноэкранном режиме его не меняет.
+ * Фиксированный слой закрывает эту полосу, даже если iOS сдвигает его вместе со страницей.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -50vh 0;
+  z-index: -1;
+  background: var(--bg);
+  pointer-events: none;
+}
+
 button {
   font: inherit;
   color: inherit;
