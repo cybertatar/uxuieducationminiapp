@@ -2262,3 +2262,119 @@ button.card:active:not(:disabled) {
 .calendar__notify {
   margin-top: var(--gap);
 }
+
+/* ---------- Пасхалка: кот за краями страницы при «пружинке» прокрутки ---------- */
+
+/* Спрятан за краем экрана и выезжает на величину перетягивания (--over), но не дальше своей высоты */
+.overscroll-cat {
+  --over: 0px;
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+  visibility: hidden;
+}
+
+.overscroll-cat.is-out {
+  visibility: visible;
+}
+
+.overscroll-cat:not(.is-out) * {
+  animation-play-state: paused !important;
+}
+
+/* Снизу: кот гоняется за клубком по полу экрана — туда и обратно */
+.overscroll-cat--bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-bottom: calc(var(--safe-bottom-device) + 6px);
+  transform: translateY(calc(100% - var(--over)));
+}
+
+.chase {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  width: max-content;
+  animation: chase 4.2s linear infinite;
+}
+
+/* На развороте зеркалим всю пару, чтобы клубок снова был впереди */
+@keyframes chase {
+  0% { transform: translateX(-120px) scaleX(1); }
+  49.99% { transform: translateX(100vw) scaleX(1); }
+  50% { transform: translateX(100vw) scaleX(-1); }
+  100% { transform: translateX(-120px) scaleX(-1); }
+}
+
+.run__frame--a { animation: run-a 0.26s steps(1) infinite; }
+.run__frame--b { animation: run-b 0.26s steps(1) infinite; }
+
+@keyframes run-a {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes run-b {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.yarn {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 1px;
+  animation: yarn-roll 0.5s linear infinite;
+}
+
+.yarn__wool { fill: var(--danger); }
+.yarn__thread { fill: color-mix(in srgb, var(--danger) 55%, var(--text)); }
+
+@keyframes yarn-roll {
+  to { rotate: 360deg; }
+}
+
+/* Сверху: под вырезом экрана висит, вытянувшись, и покачивается */
+.overscroll-cat--top {
+  left: 50%;
+  top: var(--tg-safe-area-inset-top, 0px);
+  padding-top: 4px;
+  transform: translate(-50%, calc(-100% + var(--over)));
+}
+
+/* Перекладина-край, за который он держится */
+.overscroll-cat--top::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: -14px;
+  right: -14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--hint);
+}
+
+.overscroll-cat--top .cat {
+  position: relative;
+  display: block;
+  transform-origin: 50% 0;
+  animation: cat-dangle 1.4s ease-in-out infinite;
+}
+
+@keyframes cat-dangle {
+  0%, 100% { rotate: -5deg; }
+  50% { rotate: 5deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chase,
+  .run__frame,
+  .yarn,
+  .overscroll-cat--top .cat {
+    animation: none;
+  }
+
+  .chase { margin: 0 auto; }
+  .run__frame--b { opacity: 0; }
+}

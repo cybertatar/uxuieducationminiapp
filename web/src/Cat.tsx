@@ -77,7 +77,7 @@ interface Run {
 }
 
 /** Склеиваем соседние одинаковые пиксели в строке в один rect */
-function toRuns(rows: string[]): Run[] {
+export function toRuns(rows: string[]): Run[] {
   const runs: Run[] = [];
   rows.forEach((row, y) => {
     let x = 0;
@@ -98,7 +98,7 @@ const runsFor = (mood: CatMood) => {
   return cache.get(mood)!;
 };
 
-const Pixels = ({ runs }: { runs: Run[] }) => (
+export const Pixels = ({ runs }: { runs: Run[] }) => (
   <>
     {runs.map((r, i) => (
       <rect key={i} x={r.x} y={r.y} width={r.w} height={1} className={r.cls} />

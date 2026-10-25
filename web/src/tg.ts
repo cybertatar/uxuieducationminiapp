@@ -13,6 +13,9 @@ export function initTelegram() {
   // Класс платформы — для правок под конкретный WebView (см. .tg-android в styles.css)
   document.documentElement.classList.add(`tg-${tg.platform}`);
   if (tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes();
+  // Фон окна — как у страниц: иначе при «пружинке» прокрутки на iPhone снизу видна полоса bg_color (в тёмной теме — чёрная)
+  if (tg.isVersionAtLeast('6.1')) tg.setBackgroundColor('secondary_bg_color');
+  if (tg.isVersionAtLeast('7.10')) tg.setBottomBarColor('secondary_bg_color');
   // Новый вид шапки: полноэкранный режим с плавающими кнопками Telegram вместо полосы «Закрыть».
   // Только на телефонах — на десктопе fullscreen развернул бы окно на весь монитор.
   // Отступы под системные кнопки и вырез экрана берём из --tg-(content-)safe-area-inset-* (см. styles.css).

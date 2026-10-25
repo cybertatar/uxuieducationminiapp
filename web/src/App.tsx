@@ -4,6 +4,7 @@ import type { Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
+import { OverscrollCat } from './OverscrollCat';
 import { Home, learnSections, type HomeTab, type SectionFilter } from './screens/Home';
 import { LearnTrack } from './screens/LearnTrack';
 import { Lesson } from './screens/Lesson';
@@ -133,7 +134,12 @@ export function App() {
     );
   }
 
-  return <ErrorBoundary onReset={goHome}>{renderScreen()}</ErrorBoundary>;
+  return (
+    <ErrorBoundary onReset={goHome}>
+      {renderScreen()}
+      <OverscrollCat />
+    </ErrorBoundary>
+  );
 
   function renderScreen() {
     switch (screen.name) {
