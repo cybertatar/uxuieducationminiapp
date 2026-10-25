@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { lessons, tracks } from '../content';
 import { parseSource } from '../src/db';
-import { shareCaption, shareContent, sharePlainText } from '../src/share';
+import { decodeShareImage, shareCaption, shareContent, sharePlainText } from '../src/share';
 
 const noStreak = { current: 0, best: 0 };
 
@@ -49,5 +49,14 @@ describe('поделиться', () => {
     expect(shareCaption(c)).toBe('<b>5 &lt; 6</b> &amp; ок');
     expect(sharePlainText(c)).toBe('5 < 6 & ок');
     for (const l of lessons) expect(shareCaption(shareContent({ kind: 'lesson', lessonId: l.id }, noStreak)!).length).toBeLessThan(1024);
+  });
+
+  it('карточка от клиента принимается, только если это JPEG разумного размера', () => {
+    const jpeg = btoa(String.fromCharCode(0xff, 0xd8, 0xff, 0xe0, 1, 2, 3));
+    expect(decodeShareImage(jpeg)?.length).toBe(7);
+    expect(decodeShareImage(btoa('<svg/>'))).toBeNull();
+    expect(decodeShareImage('не base64!')).toBeNull();
+    expect(decodeShareImage(undefined)).toBeNull();
+    expect(decodeShareImage('A'.repeat(1_000_000))).toBeNull();
   });
 });

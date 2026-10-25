@@ -1,6 +1,6 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
 import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion } from '../content';
-import { getAnswers, parseSource, upsertUser, updateUser, usersDue, type UserRow } from './db';
+import { deleteShareImagesBefore, getAnswers, parseSource, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
@@ -391,4 +391,7 @@ export async function runScheduled(env: Env, now = Date.now()) {
       await handleSendError(db, user, err);
     }
   }
+
+  // Карточки «Поделиться» Telegram уже скачал — старше двух дней не нужны
+  await deleteShareImagesBefore(db, now - 2 * 86_400_000).catch((err) => console.error('share images cleanup failed', err));
 }

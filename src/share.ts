@@ -82,3 +82,18 @@ export const shareCaption = (c: ShareContent) => c.lines.map((l) => escapeHtml(l
 
 /** Тот же текст без разметки — для t.me/share и системного «Поделиться» */
 export const sharePlainText = (c: ShareContent) => c.lines.map((l) => l.replace(/\*\*(.+?)\*\*/g, '$1')).join('\n');
+
+/** Сколько весит самая тяжёлая карточка 1280×720 с запасом: больше — значит, прислали не то */
+const MAX_IMAGE_BYTES = 600_000;
+
+/** JPEG из base64 от клиента, если это правда JPEG разумного размера; иначе null */
+export function decodeShareImage(base64: unknown): Uint8Array | null {
+  if (typeof base64 !== 'string' || base64.length > (MAX_IMAGE_BYTES * 4) / 3 + 4) return null;
+  let bytes: Uint8Array;
+  try {
+    bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  } catch {
+    return null;
+  }
+  return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff ? bytes : null;
+}

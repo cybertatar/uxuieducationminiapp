@@ -4,7 +4,7 @@ import type { Profile } from '../../../src/api-types';
 import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
-import { days, plural, questionsWord, WEEKDAYS } from '../format';
+import { days, plural, questionsWord, shortDate, WEEKDAYS } from '../format';
 import { notificationsOff, notificationsSummary } from '../notify';
 import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { SectionPager } from '../SectionPager';
@@ -69,7 +69,6 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
       <section className="hello">
         <Cat mood={mood} size={76} />
         <p className="hello__bubble">{phrase}</p>
-        <BellButton settings={profile.settings} onClick={onSettings} />
       </section>
 
       {firstRun && <FirstRun starting={starting} onStart={onStart} onTab={onTab} />}
@@ -105,6 +104,7 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
             </li>
           ))}
         </ol>
+        <NotifyRow settings={profile.settings} onClick={onSettings} />
       </section>
 
       {profile.reviewDue > 0 && (
@@ -147,18 +147,20 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
 }
 
 /**
- * Уведомления — в шапке, а не в конце ленты: под статистикой и «Что почитать» их не находили.
- * Пока всё выключено, на колокольчике точка — так он зовёт настроить.
+ * Уведомления — строкой внизу карточки стрика: напоминания нужны ради него, а карточку видят все.
+ * Иконка без подписи в шапке терялась рядом с облачком кота. Пока ничего не приходит, строка выделена и зовёт включить.
  */
-function BellButton({ settings, onClick }: { settings: Profile['settings']; onClick: () => void }) {
+function NotifyRow({ settings, onClick }: { settings: Profile['settings']; onClick: () => void }) {
   const off = notificationsOff(settings) || !!settings.pausedUntil;
+  const text = settings.pausedUntil ? `Уведомления на паузе до ${shortDate(settings.pausedUntil)}` : off ? 'Напоминания выключены' : notificationsSummary(settings);
   return (
-    <button className="bell" onClick={onClick} aria-label={`Уведомления: ${notificationsSummary(settings).toLowerCase()}`}>
+    <button className={`streak__notify ${off ? 'is-off' : ''}`} onClick={onClick}>
       <svg viewBox="0 0 24 24" aria-hidden>
         <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
         <path d="M10 21h4" />
       </svg>
-      {off && <span className="bell__dot" />}
+      <span className="streak__notify-text">{text}</span>
+      <span className="streak__notify-action">{off ? 'Включить' : 'Изменить'} ›</span>
     </button>
   );
 }

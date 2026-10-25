@@ -196,3 +196,17 @@ export async function lessonsRead(db: D1Database, userId: number): Promise<strin
 export async function markLessonRead(db: D1Database, userId: number, lessonId: string, now: number) {
   await db.prepare('INSERT OR IGNORE INTO lesson_reads (user_id, lesson_id, read_at) VALUES (?, ?, ?)').bind(userId, lessonId, now).run();
 }
+
+export async function saveShareImage(db: D1Database, id: string, data: Uint8Array, now: number): Promise<void> {
+  await db.prepare('INSERT INTO share_images (id, data, created_at) VALUES (?, ?, ?)').bind(id, data, now).run();
+}
+
+export async function getShareImage(db: D1Database, id: string): Promise<Uint8Array | null> {
+  const row = await db.prepare('SELECT data FROM share_images WHERE id = ?').bind(id).first<{ data: ArrayBuffer | number[] }>();
+  // D1 отдаёт BLOB массивом чисел или ArrayBuffer — Uint8Array понимает оба
+  return row ? new Uint8Array(row.data) : null;
+}
+
+export async function deleteShareImagesBefore(db: D1Database, before: number): Promise<void> {
+  await db.prepare('DELETE FROM share_images WHERE created_at < ?').bind(before).run();
+}

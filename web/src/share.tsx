@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import type { ShareRequest } from '../../src/api-types';
 import { api } from './api';
+import { renderShareCard, type ShareCardData } from './share-card';
 import { haptic, inTelegram, openTelegramLink, tg } from './tg';
 
 /**
  * Поделиться: в Telegram 8.0+ — карточка с картинкой и кнопкой через нативный выбор чата (WebApp.shareMessage),
  * в старых клиентах — t.me/share со ссылкой, в браузере — системное меню или копирование.
  */
-export async function share(req: ShareRequest): Promise<void> {
-  const { id, text, url } = await api.share(req);
+export async function share(req: ShareRequest, card?: ShareCardData): Promise<void> {
+  let image: string | undefined;
+  try {
+    image = card && renderShareCard(card);
+  } catch {
+    // Не нарисовалось — уйдёт общая картинка
+  }
+  const { id, text, url } = await api.share({ ...req, image });
   if (id && inTelegram && tg!.isVersionAtLeast('8.0')) {
     await new Promise<void>((resolve) => tg!.shareMessage(id, (sent) => {
       if (sent) haptic.success();
@@ -38,12 +45,14 @@ export function ShareIcon() {
 
 interface ShareButtonProps {
   request: ShareRequest;
+  /** Что нарисовать на картинке: цифры человека, а не общий макет */
+  card?: ShareCardData;
   label?: string;
   className?: string;
 }
 
 /** Кнопка «Поделиться»: пока готовим сообщение, повторные нажатия игнорируются */
-export function ShareButton({ request, label = 'Поделиться', className = '' }: ShareButtonProps) {
+export function ShareButton({ request, card, label = 'Поделиться', className = '' }: ShareButtonProps) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const onClick = async () => {
@@ -52,7 +61,7 @@ export function ShareButton({ request, label = 'Поделиться', className
     setBusy(true);
     setFailed(false);
     try {
-      await share(request);
+      await share(request, card);
     } catch {
       haptic.error();
       setFailed(true);

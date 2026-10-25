@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { trackById, tracks, type Lesson, type TrackId } from '../../../content';
+import { lessonById, trackById, tracks, type Lesson, type TrackId } from '../../../content';
 import type { CompleteResponse, Profile, SessionRequest } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
@@ -42,6 +42,13 @@ function headline(ratio: number): { mood: CatMood; text: string } {
   if (ratio >= 0.8) return { mood: 'celebrate', text: 'Отличный результат' };
   if (ratio >= 0.5) return { mood: 'happy', text: 'Хороший результат' };
   return { mood: 'sad', text: 'Есть над чем поработать' };
+}
+
+/** Подпись к карточке результата: тема, урок или тип сессии */
+function sessionTitle(s: SessionRequest): string {
+  if (s.mode === 'track') return trackById.get(s.track)!.title;
+  if (s.mode === 'lesson') return `Урок «${lessonById.get(s.lesson)!.title}»`;
+  return s.mode === 'warmup' ? 'Разминка' : 'Повторение';
 }
 
 /** Число, которое «докручивается» от from до to */
@@ -90,7 +97,12 @@ export function Result({ result, session, profile, onProfile, onSettings, canRep
         <p className="result__score">
           {result.correct} из {result.total} правильно
         </p>
-        <ShareButton className="result__share" label="Поделиться результатом" request={{ kind: 'result', session, correct: result.correct, total: result.total }} />
+        <ShareButton
+          className="result__share"
+          label="Поделиться результатом"
+          request={{ kind: 'result', session, correct: result.correct, total: result.total }}
+          card={{ kind: 'result', tag: sessionTitle(session), score: `${result.correct} из ${result.total}`, headline: text, answers: result.answers, mood }}
+        />
       </div>
 
       {streak && (
