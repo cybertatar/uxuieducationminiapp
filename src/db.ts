@@ -1,4 +1,5 @@
 import type { AnswerState } from './review';
+import type { QuestionStats, ReportRow } from './reports';
 
 export interface UserRow {
   id: number;
@@ -219,4 +220,56 @@ export async function getConfig(db: D1Database, key: string): Promise<string | n
 export async function setConfig(db: D1Database, key: string, value: string | null): Promise<void> {
   if (value === null) await db.prepare('DELETE FROM config WHERE key = ?').bind(key).run();
   else await db.prepare('INSERT INTO config (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2').bind(key, value).run();
+}
+
+export async function addReport(
+  db: D1Database,
+  userId: number,
+  r: { questionId: string; reason: string; comment: string | null; answer: object | null; context: object | null },
+  now: number,
+): Promise<ReportRow> {
+  const row = await db
+    .prepare('INSERT INTO reports (user_id, question_id, reason, comment, answer, context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *')
+    .bind(userId, r.questionId, r.reason, r.comment, r.answer && JSON.stringify(r.answer), r.context && JSON.stringify(r.context), now)
+    .first<ReportRow>();
+  return row!;
+}
+
+/** Как на вопрос отвечают все по журналу ответов: для сообщения автору о проблеме с вопросом */
+export async function questionStats(db: D1Database, questionId: string): Promise<QuestionStats> {
+  const { results } = await db
+    .prepare('SELECT option, correct, COUNT(*) AS n FROM answer_log WHERE question_id = ? GROUP BY option, correct')
+    .bind(questionId)
+    .all<{ option: number; correct: number; n: number }>();
+  const wrong = results.filter((r) => !r.correct).sort((a, b) => b.n - a.n)[0];
+  return {
+    answers: results.reduce((n, r) => n + r.n, 0),
+    correct: results.filter((r) => r.correct).reduce((n, r) => n + r.n, 0),
+    topWrong: wrong ? { option: wrong.option, n: wrong.n } : null,
+  };
+}
+
+export async function getReport(db: D1Database, id: number): Promise<ReportRow | null> {
+  return db.prepare('SELECT * FROM reports WHERE id = ?').bind(id).first<ReportRow>();
+}
+
+export async function reportsSince(db: D1Database, userId: number, since: number): Promise<number> {
+  const row = await db.prepare('SELECT COUNT(*) AS n FROM reports WHERE user_id = ? AND created_at >= ?').bind(userId, since).first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+export async function reportsForQuestion(db: D1Database, questionId: string): Promise<number> {
+  const row = await db.prepare('SELECT COUNT(*) AS n FROM reports WHERE question_id = ?').bind(questionId).first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+/** Меняет статус, только пока сообщение новое: повторное нажатие кнопки ничего не делает. false — уже разобрано. */
+export async function resolveReport(db: D1Database, id: number, status: 'fixed' | 'rejected', now: number): Promise<boolean> {
+  const res = await db.prepare("UPDATE reports SET status = ?, resolved_at = ? WHERE id = ? AND status = 'new'").bind(status, now, id).run();
+  return res.meta.changes > 0;
+}
+
+/** Автор бота по нику: ему уходят сообщения о проблемах в вопросах. null — автор ещё не писал боту или заблокировал его. */
+export async function findMessageableUser(db: D1Database, username: string): Promise<UserRow | null> {
+  return db.prepare('SELECT * FROM users WHERE lower(username) = ? AND can_message = 1').bind(username.toLowerCase()).first<UserRow>();
 }

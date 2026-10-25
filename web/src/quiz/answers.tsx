@@ -4,10 +4,17 @@ import { illustrations } from '../illustrations';
 import { haptic } from '../tg';
 import { Wireframe } from '../Wireframe';
 
-/** Ответ пользователя: индекс варианта, для «тапни на проблему» ещё и точка тапа. */
+/**
+ * Ответ пользователя: индекс варианта, для «тапни на проблему» ещё и точка тапа.
+ * picks и marks не влияют на проверку: их видит автор, если человек сообщит о проблеме с вопросом.
+ */
 export interface Answer {
   option: number;
   point?: [number, number];
+  /** «По порядку» — исходные индексы в порядке человека, «выбери все» — отмеченные */
+  picks?: number[];
+  /** «Найди все проблемы» — поставленные метки */
+  marks?: [number, number][];
 }
 
 interface Props<Q> {
@@ -19,7 +26,7 @@ interface Props<Q> {
 }
 
 /** Ответ механик, где верность считает приложение: 0 — верно, 1 — нет */
-const verdict = (ok: boolean): Answer => ({ option: ok ? 0 : 1 });
+const verdict = (ok: boolean, details: Omit<Answer, 'option'> = {}): Answer => ({ option: ok ? 0 : 1, ...details });
 
 function shuffle<T>(items: T[]): T[] {
   const a = [...items];
@@ -174,7 +181,7 @@ export function OrderAnswers({ q, checked, onAnswer }: Props<OrderQuestion>) {
     haptic.tap();
     const next = picks.includes(orig) ? picks.filter((p) => p !== orig) : [...picks, orig];
     setPicks(next);
-    onAnswer(next.length === q.items.length ? verdict(next.every((p, i) => p === i)) : null);
+    onAnswer(next.length === q.items.length ? verdict(next.every((p, i) => p === i), { picks: next }) : null);
   };
 
   return (
@@ -209,7 +216,7 @@ export function MultiAnswers({ q, checked, onAnswer }: Props<MultiQuestion>) {
     const next = chosen.includes(orig) ? chosen.filter((c) => c !== orig) : [...chosen, orig];
     setChosen(next);
     const exact = next.length === q.correct.length && next.every((c) => q.correct.includes(c));
-    onAnswer(next.length ? verdict(exact) : null);
+    onAnswer(next.length ? verdict(exact, { picks: next }) : null);
   };
 
   const stateOf = (orig: number) => {
@@ -274,7 +281,7 @@ export function SpotAnswer({ q, checked, onAnswer }: Props<SpotQuestion>) {
     haptic.tap();
     const next = near >= 0 ? marks.filter((_, i) => i !== near) : [...marks, p];
     setMarks(next);
-    onAnswer(next.length === zones.length ? verdict(zones.every((z) => next.some((m) => inZone(m, z)))) : null);
+    onAnswer(next.length === zones.length ? verdict(zones.every((z) => next.some((m) => inZone(m, z))), { marks: next }) : null);
   };
 
   const missed = zones.filter((z) => !marks.some((m) => inZone(m, z))).length;

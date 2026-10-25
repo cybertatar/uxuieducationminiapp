@@ -1,7 +1,25 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
-import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion } from '../content';
-import { deleteShareImagesBefore, getAnswers, getConfig, parseSource, setConfig, upsertUser, updateUser, usersDue, type UserRow } from './db';
+import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion, type Question } from '../content';
+import {
+  deleteShareImagesBefore,
+  findMessageableUser,
+  getAnswer,
+  getAnswers,
+  getConfig,
+  getReport,
+  getUser,
+  parseSource,
+  questionStats,
+  reportsForQuestion,
+  resolveReport,
+  setConfig,
+  upsertUser,
+  updateUser,
+  usersDue,
+  type UserRow,
+} from './db';
 import type { Env } from './env';
+import { reportText, type ReportRow } from './reports';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
@@ -36,8 +54,11 @@ export const TIME_ZONES: [string, string][] = [
   ['Europe/Berlin', 'Берлин'],
 ];
 
-/** Кто может подключить канал для карточек «Поделиться»: автор бота (тот же, что в подписи на главной) */
-const OWNER_USERNAME = 'everlastinghate';
+/**
+ * Автор бота (тот же, что в подписи на главной): только он может подключить канал для карточек «Поделиться»,
+ * и ему бот присылает сообщения о проблемах в вопросах.
+ */
+export const OWNER_USERNAME = 'everlastinghate';
 
 const tzName = (tz: string) => TIME_ZONES.find(([id]) => id === tz)?.[1] ?? tz;
 
@@ -135,6 +156,34 @@ function tzKeyboard(current: string) {
     if (i % 2 === 1) kb.row();
   });
   return kb.row().text('← Назад', 's:back');
+}
+
+// ---------- Сообщения о проблемах в вопросах ----------
+
+const reportKeyboard = (id: number) => new InlineKeyboard().text('✅ Исправлено', `r:fix:${id}`).text('🙅 Не ошибка', `r:no:${id}`);
+
+const shorten = (s: string, max = 80) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s);
+
+/** Текст сообщения автору: к словам человека бот добавляет его историю с вопросом и статистику ответов всех */
+async function reportMessage(db: D1Database, report: ReportRow, q: Question, from: Pick<UserRow, 'first_name' | 'username'>) {
+  const [history, stats, reports] = await Promise.all([getAnswer(db, report.user_id, q.id), questionStats(db, q.id), reportsForQuestion(db, q.id)]);
+  return reportText(report, q, { from, history, stats, reports });
+}
+
+/** Пересылает сообщение о проблеме автору. Если автор ещё не писал боту, сообщение остаётся только в таблице reports. */
+export async function notifyOwnerAboutReport(db: D1Database, api: Api, report: ReportRow, from: UserRow) {
+  const q = questionById.get(report.question_id);
+  const owner = await findMessageableUser(db, OWNER_USERNAME);
+  if (!q || !owner) return;
+  try {
+    await api.sendMessage(owner.id, await reportMessage(db, report, q, from), {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      reply_markup: reportKeyboard(report.id),
+    });
+  } catch (err) {
+    await handleSendError(db, owner, err);
+  }
 }
 
 // ---------- Бот ----------
@@ -333,6 +382,35 @@ export function getBot(env: Env): Bot {
         await show();
     }
     await ctx.answerCallbackQuery();
+  });
+
+  // Автор разобрал сообщение о проблеме. Если исправил — говорим спасибо тому, кто сообщил.
+  bot.callbackQuery(/^r:(fix|no):(\d+)$/, async (ctx) => {
+    if (ctx.from.username?.toLowerCase() !== OWNER_USERNAME) return ctx.answerCallbackQuery();
+    const id = Number(ctx.match[2]);
+    const status = ctx.match[1] === 'fix' ? 'fixed' : 'rejected';
+    const changed = await resolveReport(db, id, status, Date.now());
+    const report = await getReport(db, id);
+    const q = report && questionById.get(report.question_id);
+    if (!changed || !report || !q) return ctx.answerCallbackQuery({ text: changed ? 'Готово' : 'Уже разобрано' });
+
+    const reporter = await getUser(db, report.user_id);
+    await ctx.editMessageText(await reportMessage(db, report, q, reporter ?? { first_name: null, username: null }), {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+    });
+    if (status === 'fixed' && reporter?.can_message) {
+      try {
+        await ctx.api.sendMessage(
+          reporter.id,
+          `Спасибо за сообщение о проблеме 🐈 Вопрос «${escape(shorten(q.text))}» поправили.`,
+          { parse_mode: 'HTML', reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
+        );
+      } catch (err) {
+        await handleSendError(db, reporter, err);
+      }
+    }
+    await ctx.answerCallbackQuery({ text: status === 'fixed' ? 'Отмечено как исправленное' : 'Отмечено: не ошибка' });
   });
 
   // Всё, что не команда и не кнопка: подсказываем, где живёт тренажёр. Регистрируется последним.

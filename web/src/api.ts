@@ -3,6 +3,7 @@ import type {
   CompleteResponse,
   HistoryResponse,
   Profile,
+  ReportRequest,
   SessionRequest,
   SessionResponse,
   SettingsPatch,
@@ -14,6 +15,16 @@ import { tg } from './tg';
 const initData = tg?.initData || (import.meta.env.DEV ? 'dev' : '');
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+/** Ошибка API с HTTP-статусом: по нему экран решает, что сказать человеку */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method,
@@ -24,7 +35,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!res.ok) throw new Error(`${method} ${path}: ${res.status}`);
+  if (!res.ok) throw new ApiError(`${method} ${path}: ${res.status}`, res.status);
   return res.json() as Promise<T>;
 }
 
@@ -35,6 +46,7 @@ export const api = {
   answer: (questionId: string, option: number) => request<AnswerResponse>('POST', '/answer', { questionId, option }),
   lessonRead: (lessonId: string) => request<{ ok: true }>('POST', '/lessons/read', { lessonId }),
   complete: () => request<CompleteResponse>('POST', '/session/complete'),
+  report: (body: ReportRequest) => request<{ ok: true }>('POST', '/report', body),
   share: (body: ShareRequest) => request<ShareResponse>('POST', '/share', body),
   settings: (patch: SettingsPatch) => request<{ ok: true }>('PATCH', '/settings', patch),
 };

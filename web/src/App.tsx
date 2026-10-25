@@ -147,6 +147,7 @@ export function App() {
         return (
           <Quiz
             key={screen.questionIds.join()}
+            session={screen.session}
             questionIds={screen.questionIds}
             streakCounted={profile?.streak.todayDone ?? false}
             onExit={goHome}

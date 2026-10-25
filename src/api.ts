@@ -2,11 +2,26 @@ import { Api, InlineKeyboard, InputFile } from 'grammy';
 import type { InlineQueryResult } from 'grammy/types';
 import { Hono } from 'hono';
 import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
-import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch, ShareRequest, ShareResponse } from './api-types';
+import type { CompleteResponse, HistoryResponse, Profile, ReportRequest, SessionRequest, SettingsPatch, ShareRequest, ShareResponse } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
-import { offerDailyQuestion } from './bot';
-import { activityCount, activityDates, getAnswers, history, lessonsRead, getConfig, markLessonRead, parseSource, saveShareImage, upsertUser, type UserRow } from './db';
+import { notifyOwnerAboutReport, offerDailyQuestion } from './bot';
+import {
+  activityCount,
+  activityDates,
+  addReport,
+  getAnswers,
+  history,
+  lessonsRead,
+  getConfig,
+  markLessonRead,
+  parseSource,
+  reportsSince,
+  saveShareImage,
+  upsertUser,
+  type UserRow,
+} from './db';
 import type { Env } from './env';
+import { parseReport, REPORTS_PER_DAY } from './reports';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
 import { decodeShareImage, shareCaption, shareContent, sharePlainText } from './share';
@@ -143,6 +158,18 @@ api.post('/lessons/read', async (c) => {
   const { lessonId } = await c.req.json<{ lessonId: string }>();
   if (!lessonById.has(lessonId)) return c.json({ error: 'unknown lesson' }, 400);
   await markLessonRead(c.env.DB, c.get('user').id, lessonId, Date.now());
+  return c.json({ ok: true });
+});
+
+/** «Сообщить о проблеме» с экрана вопроса: сохраняем и в фоне пересылаем автору вместе с данными об ответе */
+api.post('/report', async (c) => {
+  const user = c.get('user');
+  const report = parseReport(await c.req.json<Partial<ReportRequest>>(), questionById);
+  if (!report) return c.json({ error: 'bad report' }, 400);
+  const now = Date.now();
+  if ((await reportsSince(c.env.DB, user.id, now - 86_400_000)) >= REPORTS_PER_DAY) return c.json({ error: 'too many reports' }, 429);
+  const row = await addReport(c.env.DB, user.id, report, now);
+  c.executionCtx.waitUntil(notifyOwnerAboutReport(c.env.DB, new Api(c.env.BOT_TOKEN), row, user));
   return c.json({ ok: true });
 });
 

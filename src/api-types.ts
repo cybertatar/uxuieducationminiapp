@@ -85,3 +85,50 @@ export interface ShareResponse {
   text: string;
   url: string;
 }
+
+/** Что не так с вопросом: ключ хранится в reports.reason, подпись видна в приложении и в сообщении автору. */
+export const REPORT_REASONS = {
+  answer: 'Неверный правильный ответ',
+  unclear: 'Непонятный вопрос или варианты',
+  image: 'Ошибка в картинке',
+  outdated: 'Устарело',
+  typo: 'Опечатка',
+  other: 'Другое',
+} as const;
+
+export const REPORT_COMMENT_MAX = 500;
+
+export type ReportReason = keyof typeof REPORT_REASONS;
+
+/**
+ * Что человек успел ответить на момент жалобы — бот покажет это автору, чтобы не переспрашивать.
+ * option — как в POST /answer; picks — исходные индексы: в «по порядку» в порядке человека, в «выбери все» отмеченные;
+ * points — тапы в «тапни» и метки в «найди все» в координатах иллюстрации.
+ */
+export interface ReportAnswer {
+  option: number;
+  checked: boolean;
+  picks?: number[];
+  points?: [number, number][];
+}
+
+/** Где человек был, когда нажал «Сообщить о проблеме»: сессия, место в ней, устройство и версия приложения */
+export interface ReportContext {
+  session?: SessionRequest;
+  position?: number;
+  total?: number;
+  app?: string;
+  platform?: string;
+  tgVersion?: string;
+  scheme?: string;
+  viewport?: string;
+}
+
+/** Для «Другое» комментарий обязателен. */
+export interface ReportRequest {
+  questionId: string;
+  reason: ReportReason;
+  comment?: string;
+  answer?: ReportAnswer;
+  context?: ReportContext;
+}
