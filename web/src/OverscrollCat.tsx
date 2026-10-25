@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 import { HangingCat, RunningCat } from './CatPoses';
 import { haptic } from './tg';
 
+/** Сколько нужно протянуть вниз, прежде чем верхний кот начнёт выезжать: чтобы он не появлялся от лёгкого оттягивания */
+const HANG_DELAY = 60;
+
 /** Клубок 9×9: светлые и тёмные витки нитки */
 const YARN = ['..YYYYY..', '.YyYYYyY.', 'YYYyYYYyY', 'YyYYyYYYY', 'YYyYYyYyY', 'YYYyYYyYY', 'YyYYYyYYY', '.YYyYYYy.', '..YYYYY..'];
 
@@ -45,7 +48,7 @@ export function OverscrollCat() {
     const update = () => {
       frame = 0;
       show(bottom.current, window.scrollY + window.innerHeight - document.documentElement.scrollHeight);
-      show(top.current, -window.scrollY);
+      show(top.current, -window.scrollY - HANG_DELAY);
     };
     const onScroll = () => {
       frame ||= requestAnimationFrame(update);
