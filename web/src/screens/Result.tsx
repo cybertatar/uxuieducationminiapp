@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
 import { trackById, tracks, type Lesson, type TrackId } from '../../../content';
-import type { CompleteResponse } from '../../../src/api-types';
+import type { CompleteResponse, Profile, SessionRequest } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { Cat, type CatMood } from '../Cat';
 import { days } from '../format';
 import { Confetti } from '../quiz/Confetti';
 import { StudyLinks } from '../StudyLinks';
+import { notificationsOff, saveSettings } from '../notify';
+import { ShareButton } from '../share';
 import { haptic } from '../tg';
 import type { QuizResult } from './Quiz';
 
 interface Props {
   result: QuizResult;
+  session: SessionRequest;
+  /** Для предложения включить напоминание о стрике */
+  profile: Profile | null;
+  onProfile: (p: Profile) => void;
+  onSettings: () => void;
   canRepeat: boolean;
   starting: boolean;
   onHome: () => void;
@@ -51,7 +58,7 @@ function useCountUp(to: number, from: number, enabled: boolean) {
   return value;
 }
 
-export function Result({ result, canRepeat, starting, onHome, onAgain, onLesson, warmup, lesson }: Props) {
+export function Result({ result, session, profile, onProfile, onSettings, canRepeat, starting, onHome, onAgain, onLesson, warmup, lesson }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
   const ratio = result.correct / result.total;
   const { mood, text } = headline(ratio);
@@ -83,6 +90,7 @@ export function Result({ result, canRepeat, starting, onHome, onAgain, onLesson,
         <p className="result__score">
           {result.correct} из {result.total} правильно
         </p>
+        <ShareButton className="result__share" label="Поделиться результатом" request={{ kind: 'result', session, correct: result.correct, total: result.total }} />
       </div>
 
       {streak && (
@@ -99,6 +107,8 @@ export function Result({ result, canRepeat, starting, onHome, onAgain, onLesson,
           </span>
         </div>
       )}
+
+      {streak && profile && <ReminderOffer profile={profile} onProfile={onProfile} onSettings={onSettings} />}
 
       {warmup && (
         <div className="card result__next">
@@ -171,5 +181,71 @@ export function Result({ result, canRepeat, starting, onHome, onAgain, onLesson,
         <MainButton text="На главную" onClick={onHome} />
       )}
     </main>
+  );
+}
+
+const OFFER_KEY = 'reminder-offer-dismissed';
+
+function offerDismissed() {
+  try {
+    return localStorage.getItem(OFFER_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Сразу после засчитанного дня — лучший момент предложить напоминание: человек только что увидел стрик.
+ * Показываем, пока уведомления выключены и человек не отказался; включается в одно касание.
+ */
+function ReminderOffer({ profile, onProfile, onSettings }: { profile: Profile; onProfile: (p: Profile) => void; onSettings: () => void }) {
+  const s = profile.settings;
+  // Решение принимаем один раз при показе: после включения карточка остаётся и подтверждает, что всё готово
+  const [shown] = useState(() => notificationsOff(s) && !s.pausedUntil && !offerDismissed());
+  const [state, setState] = useState<'offer' | 'done' | 'denied' | 'hidden'>('offer');
+  if (!shown || state === 'hidden') return null;
+
+  const enable = async () => {
+    const ok = await saveSettings(profile, { reminderEnabled: true }, { reminderEnabled: true }, onProfile);
+    setState(ok ? 'done' : 'denied');
+  };
+  const dismiss = () => {
+    try {
+      localStorage.setItem(OFFER_KEY, '1');
+    } catch {
+      // Хранилище недоступно — предложим ещё раз в следующий раз
+    }
+    setState('hidden');
+  };
+
+  if (state === 'done') {
+    return (
+      <div className="card offer" role="status">
+        <b>🔔 Готово, напомню в {s.reminderTime}</b>
+        <span className="hint">Только если в этот день ещё не было занятия.</span>
+        <button className="link" onClick={onSettings}>
+          Время и вопрос дня — в настройках
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card offer">
+      <b>🔔 Напомнить, если забудешь?</b>
+      <span className="hint">
+        {state === 'denied'
+          ? 'Без разрешения бот не сможет писать. Нажми ещё раз и разреши — или открой бота и нажми «Старт».'
+          : `Пришлю сообщение в ${s.reminderTime}, только если стрик под угрозой.`}
+      </span>
+      <div className="offer__actions">
+        <button className="button button--primary" onClick={enable}>
+          Напоминать
+        </button>
+        <button className="button button--secondary" onClick={dismiss}>
+          Не надо
+        </button>
+      </div>
+    </div>
   );
 }

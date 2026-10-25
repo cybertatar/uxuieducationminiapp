@@ -5,6 +5,8 @@ import { addDays } from '../../../src/time';
 import { api } from '../api';
 import { BackButton } from '../buttons';
 import { days, plural, WEEKDAYS } from '../format';
+import { notificationsSummary } from '../notify';
+import { ShareButton } from '../share';
 
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -18,10 +20,11 @@ const percent = (x: number) => `${Math.round(x * 100)}%`;
 interface Props {
   profile: Profile;
   onBack: () => void;
+  onSettings: () => void;
 }
 
 /** Календарь занятий: месяц с днями стрика, итоги и карта за год */
-export function Calendar({ profile, onBack }: Props) {
+export function Calendar({ profile, onBack, onSettings }: Props) {
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [error, setError] = useState(false);
 
@@ -37,6 +40,7 @@ export function Calendar({ profile, onBack }: Props) {
       <BackButton onClick={onBack} />
       <h1 className="page-title">Календарь</h1>
       <StreakTiles profile={profile} />
+      {profile.streak.current > 0 && <ShareButton className="share-button--block" label="Поделиться стриком" request={{ kind: 'streak' }} />}
       {data ? (
         <>
           <MonthCard data={data} />
@@ -51,6 +55,11 @@ export function Calendar({ profile, onBack }: Props) {
           <div className="card skeleton" style={{ height: 150 }} />
         </>
       )}
+      {/* Стрик и напоминания о нём — рядом: сюда приходят те, кому стрик важен */}
+      <button className="cell calendar__notify" onClick={onSettings}>
+        <span>🔔 Уведомления</span>
+        <span className="cell__value">{notificationsSummary(profile.settings)} ›</span>
+      </button>
     </main>
   );
 }

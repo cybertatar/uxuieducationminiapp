@@ -68,3 +68,16 @@ export type SettingsPatch = Partial<Pick<Settings, 'dailyEnabled' | 'dailyTime' 
   /** Пользователь разрешил боту писать ему (WebApp.requestWriteAccess). */
   allowMessages?: boolean;
 };
+
+/** Чем поделиться. Счёт результата приходит с клиента: человек делится своим же итогом, подделывать его незачем. */
+export type ShareRequest =
+  | { kind: 'result'; session: SessionRequest; correct: number; total: number }
+  | { kind: 'streak' }
+  | { kind: 'lesson'; lessonId: string };
+
+/** id — подготовленное сообщение для WebApp.shareMessage; null, если Telegram его не сохранил. text и url — для запасного t.me/share. */
+export interface ShareResponse {
+  id: string | null;
+  text: string;
+  url: string;
+}
