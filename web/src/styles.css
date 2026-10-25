@@ -2303,7 +2303,8 @@ button.card:active:not(:disabled) {
   left: 0;
   right: 0;
   bottom: 0;
-  padding-bottom: calc(var(--safe-bottom-device) + 6px);
+  /* Сверху запас под прыжок: в воздухе кот не залезает на страницу */
+  padding: 30px 0 calc(var(--safe-bottom-device) + 6px);
   transform: translateY(calc(100% - var(--over)));
 }
 
@@ -2321,6 +2322,19 @@ button.card:active:not(:disabled) {
   49.99% { transform: translateX(100vw) scaleX(1); }
   50% { transform: translateX(100vw) scaleX(-1); }
   100% { transform: translateX(-120px) scaleX(-1); }
+}
+
+/* На бегу кот то и дело подпрыгивает: быстро вверх, плавно вниз, на приземлении приседает */
+.chase .run {
+  transform-origin: 50% 100%;
+  animation: cat-hop 1.4s infinite;
+}
+
+@keyframes cat-hop {
+  0%, 52% { translate: 0 0; scale: 1 1; animation-timing-function: ease-out; }
+  66% { translate: 0 -24px; scale: 1 1; animation-timing-function: ease-in; }
+  80% { translate: 0 0; scale: 1.08 0.88; animation-timing-function: ease-out; }
+  88%, 100% { translate: 0 0; scale: 1 1; }
 }
 
 .run__frame--a { animation: run-a 0.26s steps(1) infinite; }
@@ -2384,6 +2398,7 @@ button.card:active:not(:disabled) {
 
 @media (prefers-reduced-motion: reduce) {
   .chase,
+  .chase .run,
   .run__frame,
   .yarn,
   .overscroll-cat--top .cat {
