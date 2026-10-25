@@ -224,3 +224,13 @@ export async function getShareImage(db: D1Database, id: string): Promise<Uint8Ar
 export async function deleteShareImagesBefore(db: D1Database, before: number): Promise<void> {
   await db.prepare('DELETE FROM share_images WHERE created_at < ?').bind(before).run();
 }
+
+export async function getConfig(db: D1Database, key: string): Promise<string | null> {
+  const row = await db.prepare('SELECT value FROM config WHERE key = ?').bind(key).first<{ value: string }>();
+  return row?.value ?? null;
+}
+
+export async function setConfig(db: D1Database, key: string, value: string | null): Promise<void> {
+  if (value === null) await db.prepare('DELETE FROM config WHERE key = ?').bind(key).run();
+  else await db.prepare('INSERT INTO config (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2').bind(key, value).run();
+}

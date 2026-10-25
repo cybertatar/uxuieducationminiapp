@@ -20,7 +20,15 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Последние картинки
+      - name: Канал для карточек
+        run: |
+          npx wrangler d1 execute ux-quiz --remote --json --command "SELECT value FROM config WHERE key = 'share_chat'" \
+            | node -e '
+              const rows = JSON.parse(require("fs").readFileSync(0, "utf8"))[0].results;
+              console.log(rows.length ? "### Канал подключён: карточки уходят обычным фото\n" : "### Канал не подключён: карточки уходят по ссылке\n");' \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Последние картинки (по ссылке)
         run: |
           URL=$(grep -E '^WEBAPP_URL' wrangler.toml | cut -d'"' -f2)
           npx wrangler d1 execute ux-quiz --remote --json --command "
