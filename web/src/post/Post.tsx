@@ -21,7 +21,7 @@ export function Post() {
           <br />с котом Кеглем
         </h1>
         <p className="post__lead">
-          {QUESTIONS} вопросов с разбором и {lessons.length} {plural(lessons.length, 'урок', 'урока', 'уроков')} простым языком — прямо в Telegram
+          Учит основам UX/UI и Figma, а {QUESTIONS} вопросов закрепляют знания
         </p>
         <div className="post__sections">
           {sections.map((s) => (
@@ -34,8 +34,8 @@ export function Post() {
         <span className="post__link pixel">{BOT_URL}</span>
       </div>
       <div className="post__art">
-        <Phone src={lesson} className="post__phone post__phone--back" back />
-        <Phone src={hotspot} className="post__phone post__phone--front" back />
+        <Phone src={hotspot} className="post__phone post__phone--back" back />
+        <Phone src={lesson} className="post__phone post__phone--front" back />
         <div className="post__cat">
           <Cat mood="happy" size={200} />
         </div>
