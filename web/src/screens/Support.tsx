@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { DONATE_AMOUNTS, DONATE_LINKS, type CompleteResponse, type Profile } from '../../../src/api-types';
 import { SUPPORT_OFFER_AFTER } from '../../../src/support';
+import { typo } from '../../../src/typography';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { Cat } from '../Cat';
@@ -73,9 +74,11 @@ export function Support({ profile, onBack, onProfile }: Props) {
         </div>
         <h1 className="support-done__title">Спасибо!</h1>
         <p className="hint support-done__text">
-          {status === 'paid'
-            ? 'Это правда помогает делать тренажёр дальше. Кегль мурлычет.'
-            : 'Telegram ещё обрабатывает платёж. Как только он пройдёт, бот напишет в чат.'}
+          {typo(
+            status === 'paid'
+              ? 'Это правда помогает делать тренажёр дальше. Кегль мурлычет.'
+              : 'Telegram ещё обрабатывает платёж. Как только он пройдёт, бот напишет в чат.',
+          )}
         </p>
         <MainButton text="Готово" onClick={onBack} />
       </main>
@@ -86,12 +89,11 @@ export function Support({ profile, onBack, onProfile }: Props) {
     <main className="screen support">
       <BackButton onClick={onBack} />
       <section className="support__hero">
-        <Cat mood="happy" size={88} />
+        <Cat mood="happy" size={72} />
         <h1 className="page-title">Поддержать проект</h1>
-        <p className="support__text">
-          {profile?.supporter ? 'Спасибо, что уже поддерживаешь тренажёр! ' : ''}
-          Тренажёр бесплатный и без рекламы — и таким останется. Если он тебе помогает, можно отблагодарить автора звёздами Telegram: они идут на новые уроки, вопросы и темы.
-        </p>
+        {profile?.supporter && <p className="support__text">{typo('Спасибо, что уже поддерживаешь тренажёр!')}</p>}
+        <p className="support__text">{typo('Тренажёр бесплатный и без рекламы — и таким останется.')}</p>
+        <p className="support__text">{typo('Если он тебе помогает, можно отблагодарить автора звёздами Telegram или картой. Деньги идут на новые уроки, вопросы и темы.')}</p>
       </section>
 
       <div className="support__amounts" role="radiogroup" aria-label="Сколько звёзд">
@@ -107,7 +109,7 @@ export function Support({ profile, onBack, onProfile }: Props) {
             }}
           >
             <span className="support__stars">{a} ⭐</span>
-            <span className="hint">{CAPTIONS[a]}</span>
+            <span className="hint">{typo(CAPTIONS[a])}</span>
           </button>
         ))}
       </div>
@@ -117,7 +119,7 @@ export function Support({ profile, onBack, onProfile }: Props) {
           {error}
         </p>
       ) : (
-        <p className="hint section-hint">Разовый платёж внутри Telegram, без подписки. Звёзды можно купить прямо в окне оплаты.</p>
+        <p className="hint section-hint">{typo('Разовый платёж внутри Telegram, без подписки. Звёзды можно купить прямо в окне оплаты.')}</p>
       )}
 
       {DONATE_LINKS.length > 0 && (
@@ -128,7 +130,7 @@ export function Support({ profile, onBack, onProfile }: Props) {
               <button key={link.url} className="cell support__link" onClick={() => openLink(link.url)}>
                 <span className="support__link-body">
                   <span>{link.title}</span>
-                  <span className="hint">{link.hint}</span>
+                  <span className="hint">{typo(link.hint)}</span>
                 </span>
                 <span className="chevron" aria-hidden>
                   ›
@@ -168,13 +170,12 @@ export function SupportOffer({ kind, onSupport, onClose }: { kind: NonNullable<C
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="support-offer-title" onClick={(e) => e.stopPropagation()}>
-        <Cat mood="happy" size={72} />
+        <Cat mood="happy" size={56} />
         <h2 id="support-offer-title" className="sheet__title">
-          {kind === 'first' ? `Уже ${SUPPORT_OFFER_AFTER} теста позади!` : 'Спасибо, что учишься с Кеглем!'}
+          {typo(kind === 'first' ? `Уже ${SUPPORT_OFFER_AFTER} теста позади!` : 'Спасибо, что учишься с Кеглем!')}
         </h2>
-        <p className="hint sheet__text">
-          Тренажёр бесплатный и без рекламы — и таким останется. Если он тебе помогает, можно поддержать автора. Это необязательно, и напомню я не раньше чем через три недели.
-        </p>
+        <p className="sheet__text">{typo('Тренажёр бесплатный и без рекламы — и таким останется. Если он тебе помогает, можно поддержать автора.')}</p>
+        <p className="hint sheet__note">{typo('Это необязательно. Напомню не раньше чем через три недели.')}</p>
         <div className="sheet__actions">
           <button ref={primary} className="button button--primary" onClick={onSupport}>
             Поддержать ⭐
