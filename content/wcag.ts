@@ -6,6 +6,13 @@ const u = (slug: string, title: string): Link => ({
 });
 
 const L = {
+  testEval: { title: 'W3C: Evaluating Web Accessibility', url: 'https://www.w3.org/WAI/test-evaluate/' },
+  easyChecks: { title: 'W3C: Easy Checks', url: 'https://www.w3.org/WAI/test-evaluate/preliminary/' },
+  androidTesting: { title: 'Android Developers: Test your app’s accessibility', url: 'https://developer.android.com/guide/topics/ui/accessibility/testing' },
+  appleTesting: { title: 'Apple: Performing accessibility testing for your app', url: 'https://developer.apple.com/documentation/accessibility/performing-accessibility-testing-for-your-app' },
+  onFocus: u('on-focus.html', 'On Focus'),
+  readingLevel: u('reading-level.html', 'Reading Level'),
+  abbreviations: u('abbreviations.html', 'Abbreviations'),
   overview: { title: 'W3C: WCAG Overview', url: 'https://www.w3.org/WAI/standards-guidelines/wcag/' },
   new22: { title: 'W3C: What’s New in WCAG 2.2', url: 'https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/' },
   intro: u('intro', 'WCAG 2.2'),
@@ -83,6 +90,8 @@ const T = {
   keyboard: 'Клавиатура',
   media: 'Медиа',
   device: 'Ориентация экрана',
+  testing: 'Проверка доступности',
+  predictable: 'Понятность и предсказуемость',
 };
 
 export const wcagQuestions: Question[] = [
@@ -1105,5 +1114,121 @@ export const wcagQuestions: Question[] = [
     explanation:
       'Критерий 1.3.4 допускает фиксацию, когда ориентация важна по сути: клавиатуре пианино нужна ширина. Магазину, мессенджеру и банку это не нужно — пусть подстраиваются.',
     links: [L.orientation],
+  },
+  {
+    id: 'w-073',
+    track: 'wcag',
+    topic: T.testing,
+    text: 'Автоматическая проверка доступности не нашла ошибок. Значит ли это, что сайт доступен?',
+    options: [
+      'Нет: инструменты находят только часть проблем',
+      'Да, полностью',
+      'Да, если проверка прошла дважды',
+      'Нет: автоматические проверки всегда ошибаются',
+    ],
+    correct: 0,
+    summary: 'Автопроверка ловит лишь часть проблем — остальное проверяют руками.',
+    explanation:
+      'Инструмент видит, что у картинки нет alt, но не знает, осмысленный ли он. Порядок фокуса, понятность текста и удобство для скринридера проверяет человек.',
+    links: [L.testEval],
+  },
+  {
+    id: 'w-074',
+    track: 'wcag',
+    topic: T.testing,
+    text: 'Какая ручная проверка самая быстрая и находит много проблем?',
+    options: [
+      'Пройти страницу только клавиатурой',
+      'Посмотреть страницу в тёмной теме',
+      'Открыть сайт в двух браузерах',
+      'Распечатать страницу',
+    ],
+    correct: 0,
+    summary: 'Пройди интерфейс одной клавиатурой: Tab, Enter, Esc.',
+    explanation:
+      'Сразу видно, есть ли фокус, в каком он порядке и не застревает ли где-то. Это несколько минут, а находит самые неприятные барьеры.',
+    links: [L.easyChecks],
+  },
+  {
+    id: 'w-075',
+    track: 'wcag',
+    topic: T.testing,
+    text: 'Каким встроенным скринридером проверяют приложение на Android?',
+    options: ['TalkBack', 'VoiceOver', 'NVDA', 'JAWS'],
+    correct: 0,
+    summary: 'На Android — TalkBack, на iPhone и Mac — VoiceOver.',
+    explanation:
+      'Оба встроены в систему и бесплатны. На Windows популярны NVDA и JAWS — их ставят отдельно.',
+    links: [L.androidTesting, L.appleTesting],
+  },
+  {
+    id: 'w-076',
+    track: 'wcag',
+    topic: T.testing,
+    text: 'Кого лучше всего привлечь к проверке доступности?',
+    options: [
+      'Людей, которые сами пользуются вспомогательными технологиями',
+      'Только автоматические инструменты',
+      'Только дизайнеров команды',
+      'Никого: хватит чек-листа',
+    ],
+    correct: 0,
+    summary: 'Лучше всех проверяют те, кто каждый день пользуется скринридером и другими технологиями.',
+    explanation:
+      'Они замечают то, что не ловят инструменты и чек-листы: неудобный порядок, лишние объявления, непонятные подписи. Даже несколько таких сессий дают много находок.',
+    links: [L.testEval],
+  },
+  {
+    id: 'w-077',
+    track: 'wcag',
+    topic: T.predictable,
+    text: 'Поле получило фокус, и страница сама перешла на другую. Какой критерий нарушен?',
+    options: ['3.2.1 On Focus: фокус не должен менять контекст', '1.4.3 Contrast', '2.5.8 Target Size', '1.2.2 Captions'],
+    correct: 0,
+    summary: 'Получение фокуса не должно само по себе уводить человека в другое место.',
+    explanation:
+      'Человек с клавиатурой просто идёт по полям Tab-ом. Если на одном из них страница внезапно меняется, он теряется и не понимает, что произошло.',
+    links: [L.onFocus],
+  },
+  {
+    id: 'w-078',
+    track: 'wcag',
+    topic: T.predictable,
+    text: 'Меню на разных страницах сайта стоит в разном порядке. Что нарушено?',
+    options: ['3.2.3 Consistent Navigation', '1.4.1 Use of Color', '2.2.2 Pause, Stop, Hide', '3.3.7 Redundant Entry'],
+    correct: 0,
+    summary: 'Повторяющаяся навигация идёт в одном порядке на всех страницах.',
+    explanation:
+      'Люди, особенно со скринридером или с когнитивными особенностями, запоминают, где что лежит. Если порядок меняется, приходится искать заново.',
+    links: [L.consistentNav],
+  },
+  {
+    id: 'w-079',
+    track: 'wcag',
+    topic: T.predictable,
+    text: 'Что предлагает WCAG для текста сложнее школьного уровня (критерий 3.1.5, AAA)?',
+    options: ['Дать упрощённую версию или пояснения', 'Удалить текст', 'Перевести на английский', 'Сделать шрифт крупнее'],
+    correct: 0,
+    summary: 'Сложный текст сопровождают простой версией, картинками или пояснениями.',
+    explanation:
+      'Длинные запутанные тексты тяжелы для людей с дислексией, иностранцев, детей. Краткое изложение простыми словами помогает всем.',
+    links: [L.readingLevel],
+  },
+  {
+    id: 'w-080',
+    track: 'wcag',
+    topic: T.predictable,
+    text: 'В тексте впервые встречается аббревиатура «ЕГРН». Что советует WCAG (3.1.4, AAA)?',
+    options: [
+      'Расшифровать её: Единый государственный реестр недвижимости',
+      'Оставить как есть',
+      'Написать строчными буквами',
+      'Выделить жирным',
+    ],
+    correct: 0,
+    summary: 'Аббревиатуры расшифровывают — хотя бы при первом упоминании.',
+    explanation:
+      'Не все знают сокращения, а скринридер может прочитать их по буквам. Полное название рядом снимает вопрос.',
+    links: [L.abbreviations],
   },
 ];
