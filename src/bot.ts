@@ -1,6 +1,6 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
 import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion } from '../content';
-import { deleteShareImagesBefore, getAnswers, parseSource, upsertUser, updateUser, usersDue, type UserRow } from './db';
+import { deleteShareImagesBefore, getAnswers, getConfig, parseSource, setConfig, upsertUser, updateUser, usersDue, type UserRow } from './db';
 import type { Env } from './env';
 import { pickDailyQuestion } from './select';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
@@ -35,6 +35,9 @@ export const TIME_ZONES: [string, string][] = [
   ['Europe/Belgrade', 'Белград'],
   ['Europe/Berlin', 'Берлин'],
 ];
+
+/** Кто может подключить канал для карточек «Поделиться»: автор бота (тот же, что в подписи на главной) */
+const OWNER_USERNAME = 'everlastinghate';
 
 const tzName = (tz: string) => TIME_ZONES.find(([id]) => id === tz)?.[1] ?? tz;
 
@@ -333,6 +336,29 @@ export function getBot(env: Env): Bot {
   });
 
   // Всё, что не команда и не кнопка: подсказываем, где живёт тренажёр. Регистрируется последним.
+  /**
+   * Канал для карточек «Поделиться»: автор добавляет бота админом в закрытый канал, бот запоминает его сам.
+   * Чужие каналы бот покидает: иначе кто угодно мог бы перехватить карточки или сломать шеринг.
+   */
+  bot.on('my_chat_member', async (ctx) => {
+    const { chat, from, new_chat_member: member } = ctx.myChatMember;
+    if (chat.type !== 'channel') return;
+    const current = await getConfig(db, 'share_chat');
+    if (member.status === 'administrator') {
+      if (from.username?.toLowerCase() !== OWNER_USERNAME) {
+        await ctx.api.leaveChat(chat.id).catch(() => {});
+        return;
+      }
+      await setConfig(db, 'share_chat', String(chat.id));
+      await ctx.api
+        .sendMessage(chat.id, 'Готово 🐈 Сюда буду класть картинки карточек «Поделиться», чтобы отправлять их обычным фото. Не удаляйте меня из админов.')
+        .catch((err) => console.error('share chat greeting failed', err));
+    } else if (String(chat.id) === current) {
+      // Бота убрали из канала или сняли права — шеринг вернётся к ссылкам на картинку
+      await setConfig(db, 'share_chat', null);
+    }
+  });
+
   bot.on('message', async (ctx) => {
     await loadUser(ctx);
     await ctx.reply(appHintText, { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) });

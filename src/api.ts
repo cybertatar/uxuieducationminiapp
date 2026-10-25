@@ -1,10 +1,11 @@
-import { Api, InlineKeyboard } from 'grammy';
+import { Api, InlineKeyboard, InputFile } from 'grammy';
+import type { InlineQueryResult } from 'grammy/types';
 import { Hono } from 'hono';
 import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
 import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch, ShareRequest, ShareResponse } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
 import { offerDailyQuestion } from './bot';
-import { activityCount, activityDates, getAnswers, history, lessonsRead, markLessonRead, parseSource, saveShareImage, upsertUser, type UserRow } from './db';
+import { activityCount, activityDates, getAnswers, history, lessonsRead, getConfig, markLessonRead, parseSource, saveShareImage, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
@@ -162,6 +163,37 @@ async function getBotUsername(env: Env): Promise<string> {
   return botUsername;
 }
 
+type PhotoCommon = Pick<Extract<InlineQueryResult, { type: 'photo' }>, 'caption' | 'parse_mode' | 'reply_markup'>;
+
+/**
+ * Карточка обычным фото Telegram: бот кладёт её в закрытый канал автора и берёт file_id.
+ * Фото по ссылке Telegram на iPhone у отправителя сохранял обрезанным, а с file_id такого нет.
+ * null — канал не подключён или отправка не удалась; тогда фото по ссылке.
+ */
+async function cachedPhoto(env: Env, tg: Api, image: Uint8Array, common: PhotoCommon): Promise<InlineQueryResult | null> {
+  const chat = await getConfig(env.DB, 'share_chat');
+  if (!chat) return null;
+  try {
+    const msg = await tg.sendPhoto(chat, new InputFile(image, 'card.jpg'), { disable_notification: true });
+    const photo = msg.photo.at(-1)!;
+    return { type: 'photo', id: `card-${msg.message_id}`, photo_file_id: photo.file_id, ...common };
+  } catch (err) {
+    console.error('share chat upload failed', err);
+    return null;
+  }
+}
+
+/** Фото по ссылке: своя карточка из share_images или общая картинка без цифр */
+async function photoByUrl(env: Env, image: Uint8Array | null, fallback: string, common: PhotoCommon, client?: string): Promise<InlineQueryResult> {
+  let url = `${env.WEBAPP_URL}/share/${fallback}.jpg`;
+  if (image) {
+    const id = crypto.randomUUID().replaceAll('-', '');
+    await saveShareImage(env.DB, id, image, Date.now(), client ?? null);
+    url = `${env.WEBAPP_URL}/share-img/${id}.jpg`;
+  }
+  return { type: 'photo', id: `url-${Date.now()}`, photo_url: url, thumbnail_url: url, ...common };
+}
+
 /**
  * Поделиться: карточка с картинкой и кнопкой, которую Mini App отправит через WebApp.shareMessage.
  * Если Telegram не сохранил сообщение (старый клиент, локальная разработка), отдаём текст и ссылку для t.me/share.
@@ -185,28 +217,12 @@ api.post('/share', async (c) => {
   }
   const url = `https://t.me/${username}?startapp=${content.startParam}`;
   const res: ShareResponse = { id: null, text: sharePlainText(content), url };
+  const custom = decodeShareImage(body.image);
+  const common = { caption: shareCaption(content), parse_mode: 'HTML' as const, reply_markup: new InlineKeyboard().url(content.button, url) };
   try {
-    // Своя карточка с цифрами человека, а если её нет — общая картинка без цифр
-    let image = `${c.env.WEBAPP_URL}/share/${content.image}.jpg`;
-    const custom = decodeShareImage(body.image);
-    if (custom) {
-      const id = crypto.randomUUID().replaceAll('-', '');
-      await saveShareImage(c.env.DB, id, custom, Date.now(), c.req.header('User-Agent') ?? null);
-      image = `${c.env.WEBAPP_URL}/share-img/${id}.jpg`;
-    }
-    const prepared = await new Api(c.env.BOT_TOKEN).savePreparedInlineMessage(
-      user.id,
-      {
-        type: 'photo',
-        id: `${content.image}-${Date.now()}`,
-        photo_url: image,
-        thumbnail_url: image,
-        caption: shareCaption(content),
-        parse_mode: 'HTML',
-        reply_markup: new InlineKeyboard().url(content.button, url),
-      },
-      { allow_user_chats: true, allow_group_chats: true, allow_channel_chats: true },
-    );
+    const tg = new Api(c.env.BOT_TOKEN);
+    const result = (custom && (await cachedPhoto(c.env, tg, custom, common))) || (await photoByUrl(c.env, custom, content.image, common, c.req.header('User-Agent')));
+    const prepared = await tg.savePreparedInlineMessage(user.id, result, { allow_user_chats: true, allow_group_chats: true, allow_channel_chats: true });
     res.id = prepared.id;
   } catch (err) {
     console.error('savePreparedInlineMessage failed', err);

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { webhookCallback } from 'grammy';
 import { api } from './api';
 import { getBot, runScheduled } from './bot';
-import { getShareImage, logShareImageFetch, recentShareImages } from './db';
+import { getConfig, getShareImage, logShareImageFetch, recentShareImages } from './db';
 import { byteRange } from './range';
 import type { Env } from './env';
 import { botDescription, botShortDescription } from './texts';
@@ -53,7 +53,10 @@ app.get('/bot/share-debug', async (c) => {
   if (c.req.query('secret') !== c.env.WEBHOOK_SECRET) return c.text('forbidden', 403);
   const origin = new URL(c.req.url).origin;
   const rows = await recentShareImages(c.env.DB);
-  return c.json(rows.map((r) => ({ ...r, url: `${origin}/share-img/${r.id}.jpg` })));
+  return c.json({
+    shareChat: await getConfig(c.env.DB, 'share_chat'),
+    images: rows.map((r) => ({ ...r, url: `${origin}/share-img/${r.id}.jpg` })),
+  });
 });
 
 /**
@@ -66,7 +69,7 @@ app.get('/bot/setup', async (c) => {
   const origin = new URL(c.req.url).origin;
   await bot.api.setWebhook(`${origin}/bot/webhook`, {
     secret_token: c.env.WEBHOOK_SECRET,
-    allowed_updates: ['message', 'callback_query'],
+    allowed_updates: ['message', 'callback_query', 'my_chat_member'],
   });
   await bot.api.setMyCommands([
     { command: 'question', description: 'Вопрос прямо сейчас' },
