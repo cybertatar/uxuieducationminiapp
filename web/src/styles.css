@@ -2263,37 +2263,71 @@ button.card:active:not(:disabled) {
   margin-top: var(--gap);
 }
 
-/* ---------- Пасхалка: кот под страницей при «пружинке» прокрутки ---------- */
+/* ---------- Пасхалка: кот за краями страницы при «пружинке» прокрутки ---------- */
 
-/* Спрятан под нижним краем экрана и поднимается на величину перетягивания (--over) */
+/* Спрятан за краем экрана и выезжает на величину перетягивания (--over) */
 .overscroll-cat {
   --over: 0px;
   position: fixed;
   left: 50%;
-  bottom: 0;
   z-index: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  align-items: flex-end;
   pointer-events: none;
-  transform: translate(-50%, calc(100% - var(--over)));
   will-change: transform;
+  visibility: hidden;
 }
 
-.overscroll-cat__bubble {
-  padding: 6px 12px;
-  border-radius: 12px;
-  background: var(--surface);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateY(6px) scale(0.9);
-  transition: opacity 0.15s, transform 0.2s cubic-bezier(0.2, 1.4, 0.4, 1);
+.overscroll-cat.is-out {
+  visibility: visible;
 }
 
-.overscroll-cat.is-peeking .overscroll-cat__bubble {
-  opacity: 1;
-  transform: none;
+/* Снизу: кот играет с клубком */
+.overscroll-cat--bottom {
+  bottom: 0;
+  transform: translate(-50%, calc(100% - var(--over)));
+}
+
+.yarn {
+  width: 27px;
+  height: 27px;
+  margin: 0 0 8px -6px;
+  /* Пока тянешь, клубок катится; выглянул целиком — кот подбрасывает его лапой */
+  transform: rotate(var(--spin, 0deg));
+}
+
+.overscroll-cat--bottom.is-peeking .yarn {
+  animation: yarn-bat 0.6s ease-in-out infinite;
+}
+
+.yarn__wool { fill: var(--danger); }
+.yarn__thread { fill: color-mix(in srgb, var(--danger) 55%, var(--text)); }
+
+@keyframes yarn-bat {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  45% { translate: 6px -12px; rotate: 120deg; }
+  60% { translate: 8px -12px; rotate: 160deg; }
+}
+
+/* Сверху: висит под вырезом экрана, уцепившись лапами за край */
+.overscroll-cat--top {
+  top: var(--tg-safe-area-inset-top, 0px);
+  transform: translate(-50%, calc(-100% + var(--over)));
+}
+
+.overscroll-cat--top.is-peeking .cat {
+  transform-origin: 50% 0;
+  animation: cat-dangle 1.2s ease-in-out infinite;
+}
+
+@keyframes cat-dangle {
+  0%, 100% { rotate: -4deg; }
+  50% { rotate: 4deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overscroll-cat--bottom.is-peeking .yarn,
+  .overscroll-cat--top.is-peeking .cat {
+    animation: none;
+  }
 }
