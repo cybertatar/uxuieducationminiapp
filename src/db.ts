@@ -197,8 +197,22 @@ export async function markLessonRead(db: D1Database, userId: number, lessonId: s
   await db.prepare('INSERT OR IGNORE INTO lesson_reads (user_id, lesson_id, read_at) VALUES (?, ?, ?)').bind(userId, lessonId, now).run();
 }
 
-export async function saveShareImage(db: D1Database, id: string, data: Uint8Array, now: number): Promise<void> {
-  await db.prepare('INSERT INTO share_images (id, data, created_at) VALUES (?, ?, ?)').bind(id, data, now).run();
+export async function saveShareImage(db: D1Database, id: string, data: Uint8Array, now: number, client: string | null = null): Promise<void> {
+  await db.prepare('INSERT INTO share_images (id, data, created_at, client) VALUES (?, ?, ?, ?)').bind(id, data, now, client).run();
+}
+
+/** Записать, как картинку скачали: метод, Range и User-Agent. Не больше 4000 символов на картинку */
+export async function logShareImageFetch(db: D1Database, id: string, line: string): Promise<void> {
+  await db.prepare("UPDATE share_images SET fetches = substr(coalesce(fetches, '') || ?, 1, 4000) WHERE id = ?").bind(`${line}\n`, id).run();
+}
+
+/** Последние картинки для диагностики: размер, начало и конец файла, кто загрузил и как скачивали */
+export async function recentShareImages(db: D1Database, limit = 10) {
+  const { results } = await db
+    .prepare('SELECT id, length(data) AS bytes, hex(substr(data, 1, 4)) AS head, hex(substr(data, -2)) AS tail, created_at, client, fetches FROM share_images ORDER BY created_at DESC LIMIT ?')
+    .bind(limit)
+    .all();
+  return results;
 }
 
 export async function getShareImage(db: D1Database, id: string): Promise<Uint8Array | null> {
