@@ -29,6 +29,8 @@ export interface UserRow {
   sessions_done: number;
   /** Когда последний раз показывали предложение поддержать проект, unix ms */
   support_offered_at: number | null;
+  /** id закреплённого сообщения «Поддержать проект»; 0 — не получилось, null — ещё не закрепляли */
+  support_pin_id: number | null;
 }
 
 /** Поля, которые можно менять через updateUser. */
@@ -193,6 +195,26 @@ export async function usersDue(
     .bind(now, limit)
     .all<UserRow>();
   return results;
+}
+
+/** Кому ещё не закрепили «Поддержать проект»: бот может писать, а пришёл человек не позже before */
+export async function usersWithoutSupportPin(db: D1Database, before: number, limit: number): Promise<UserRow[]> {
+  const { results } = await db
+    .prepare('SELECT * FROM users WHERE can_message = 1 AND support_pin_id IS NULL AND created_at <= ? LIMIT ?')
+    .bind(before, limit)
+    .all<UserRow>();
+  return results;
+}
+
+/** Сколько закрепов уже раздано и сколько ещё ждут — для /pinsupport status */
+export async function supportPinCounts(db: D1Database): Promise<{ pinned: number; failed: number; waiting: number }> {
+  const row = await db
+    .prepare(
+      `SELECT SUM(support_pin_id > 0) AS pinned, SUM(support_pin_id = 0) AS failed,
+              SUM(support_pin_id IS NULL AND can_message = 1) AS waiting FROM users`,
+    )
+    .first<{ pinned: number | null; failed: number | null; waiting: number | null }>();
+  return { pinned: row?.pinned ?? 0, failed: row?.failed ?? 0, waiting: row?.waiting ?? 0 };
 }
 
 export async function lessonsRead(db: D1Database, userId: number): Promise<string[]> {
