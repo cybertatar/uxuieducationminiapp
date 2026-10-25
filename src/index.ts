@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { webhookCallback } from 'grammy';
 import { api } from './api';
 import { getBot, runScheduled } from './bot';
-import { getConfig, getShareImage, logShareImageFetch, recentShareImages } from './db';
+import { getShareImage } from './db';
 import { byteRange } from './range';
 import type { Env } from './env';
 import { botDescription, botShortDescription } from './texts';
@@ -13,16 +13,12 @@ app.route('/', api);
 
 /**
  * Карточка «Поделиться», нарисованная в Mini App: отсюда её скачивает Telegram.
- * Telegram качает фото по частям (Range), поэтому отдаём и куски: на целый файл в ответ на каждый кусок
- * он собирал картинку из повторяющегося начала — она обрывалась серой полосой.
+ * Отдаём и куски по Range, как статика Cloudflare: так файл корректно скачает любой клиент.
  */
 app.get('/share-img/:file', async (c) => {
   const id = c.req.param('file').replace(/\.jpg$/, '');
   if (!/^[0-9a-f]{32}$/.test(id)) return c.notFound();
   const data = await getShareImage(c.env.DB, id);
-  // Для диагностики обрезанных карточек: как именно Telegram качает картинку
-  const line = `${new Date().toISOString()} ${c.req.method} ${c.req.header('Range') ?? '-'} ${c.req.header('User-Agent') ?? '-'}`;
-  c.executionCtx.waitUntil(logShareImageFetch(c.env.DB, id, line).catch(() => {}));
   if (!data) return c.notFound();
   const headers: Record<string, string> = {
     'Content-Type': 'image/jpeg',
@@ -43,21 +39,6 @@ app.get('/share-img/:file', async (c) => {
 app.post('/bot/webhook', (c) =>
   webhookCallback(getBot(c.env), 'cloudflare-mod', { secretToken: c.env.WEBHOOK_SECRET })(c.req.raw),
 );
-
-/**
- * Диагностика карточек «Поделиться»: последние картинки, их размер, начало и конец файла
- * (у целого JPEG — FFD8… и FFD9), кто загрузил и как Telegram скачивал.
- * Открыть в браузере: https://<домен>/bot/share-debug?secret=<WEBHOOK_SECRET>
- */
-app.get('/bot/share-debug', async (c) => {
-  if (c.req.query('secret') !== c.env.WEBHOOK_SECRET) return c.text('forbidden', 403);
-  const origin = new URL(c.req.url).origin;
-  const rows = await recentShareImages(c.env.DB);
-  return c.json({
-    shareChat: await getConfig(c.env.DB, 'share_chat'),
-    images: rows.map((r) => ({ ...r, url: `${origin}/share-img/${r.id}.jpg` })),
-  });
-});
 
 /**
  * Настройка бота после деплоя: вебхук, команды, описание и кнопка меню.
