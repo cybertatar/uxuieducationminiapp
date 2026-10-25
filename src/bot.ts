@@ -286,14 +286,16 @@ const PINS_PER_RUN = 20;
  * Присылает без звука сообщение «Поддержать проект» с кнопками и закрепляет его в чате.
  * id запоминаем, чтобы не закрепить дважды; при ошибке ставим 0 и больше не пробуем.
  */
-async function pinSupport(db: D1Database, api: Api, user: UserRow, webApp: { url: string }) {
+async function pinSupport(db: D1Database, api: Api, user: UserRow, webApp: { url: string }): Promise<boolean> {
   try {
     const msg = await api.sendMessage(user.id, supportPinText, { reply_markup: donateKeyboard(webApp), disable_notification: true });
     await api.pinChatMessage(user.id, msg.message_id, { disable_notification: true });
     await updateUser(db, user.id, { support_pin_id: msg.message_id });
+    return true;
   } catch (err) {
     await updateUser(db, user.id, { support_pin_id: 0 });
     await handleSendError(db, user, err);
+    return false;
   }
 }
 
@@ -386,21 +388,56 @@ export function getBot(env: Env): Bot {
   });
 
   /**
-   * Закреп «Поддержать проект» для всех — только по команде автора:
-   * test — прислать себе, on — раздавать понемногу каждую минуту, off — остановить, status — сколько раздано.
+   * Закреп «Поддержать проект» для всех — только по команде автора. /pinsupport показывает состояние и кнопки:
+   * прислать пример себе, включить или выключить раздачу. Текстом тоже можно: /pinsupport test | on | off.
+   * Ловим регуляркой, а не bot.command: скопированная команда приходит без отметки «команда» и иначе не сработала бы.
    */
-  bot.command('pinsupport', async (ctx) => {
-    if (ctx.from?.username?.toLowerCase() !== OWNER_USERNAME) return;
-    const user = await loadUser(ctx);
-    const arg = ctx.match.trim();
-    if (arg === 'test') return pinSupport(db, ctx.api, user, webApp);
-    if (arg === 'on' || arg === 'off') {
-      await setConfig(db, 'support_pin', arg === 'on' ? 'on' : null);
-      return ctx.reply(arg === 'on' ? `Раздача включена: по ${PINS_PER_RUN} человек в минуту, новым — через сутки после прихода.` : 'Раздача остановлена.');
-    }
+  async function pinSupportStatus(prefix = '') {
     const c = await supportPinCounts(db);
     const on = (await getConfig(db, 'support_pin')) === 'on';
-    await ctx.reply(`Раздача ${on ? 'включена' : 'выключена'}. Закреплено: ${c.pinned}, не получилось: ${c.failed}, ждут: ${c.waiting}.\n\n/pinsupport test | on | off`);
+    const minutes = Math.ceil(c.waiting / PINS_PER_RUN);
+    const text =
+      prefix +
+      `Раздача закрепа ${on ? 'включена' : 'выключена'}.\n` +
+      `Закреплено: ${c.pinned} · не получилось: ${c.failed} · ждут: ${c.waiting}` +
+      (on && c.waiting > 0 ? ` (≈ ${minutes} мин)` : '') +
+      `\n\nНовым пользователям закреп приходит через сутки после прихода, по ${PINS_PER_RUN} человек в минуту.`;
+    const kb = new InlineKeyboard()
+      .text('Прислать себе', 'ps:test')
+      .text(on ? '⏸ Выключить' : '▶️ Включить', on ? 'ps:off' : 'ps:on')
+      .row()
+      .text('Обновить', 'ps:status');
+    return { text, kb };
+  }
+
+  async function pinSupportAction(ctx: Context, action: string): Promise<string> {
+    if (action === 'test') {
+      const user = await loadUser(ctx);
+      return (await pinSupport(db, ctx.api, user, webApp))
+        ? 'Прислал и закрепил тебе пример — он вверху чата.\n\n'
+        : 'Не получилось закрепить пример, подробности в логах воркера.\n\n';
+    }
+    if (action === 'on' || action === 'off') {
+      await setConfig(db, 'support_pin', action === 'on' ? 'on' : null);
+      return action === 'on' ? 'Включил раздачу ✅\n\n' : 'Остановил раздачу ⏸\n\n';
+    }
+    return '';
+  }
+
+  bot.hears(/^\/pinsupport(?:@\w+)?(?:\s+(\w+))?\s*$/i, async (ctx) => {
+    if (ctx.from?.username?.toLowerCase() !== OWNER_USERNAME) return;
+    const { text, kb } = await pinSupportStatus(await pinSupportAction(ctx, (ctx.match[1] ?? '').toLowerCase()));
+    await ctx.reply(text, { reply_markup: kb });
+  });
+
+  bot.callbackQuery(/^ps:(test|on|off|status)$/, async (ctx) => {
+    if (ctx.from.username?.toLowerCase() !== OWNER_USERNAME) return ctx.answerCallbackQuery();
+    const prefix = await pinSupportAction(ctx, ctx.match[1]);
+    await ctx.answerCallbackQuery(prefix.split('\n')[0] || 'Обновил');
+    const { text, kb } = await pinSupportStatus(prefix);
+    await ctx.editMessageText(text, { reply_markup: kb }).catch(() => {
+      // Текст не изменился — Telegram отвечает ошибкой, это не страшно
+    });
   });
 
   // Правила Telegram для оплаты звёздами: у бота должна быть команда поддержки по платежам
@@ -644,6 +681,8 @@ export function getBot(env: Env): Bot {
   });
 
   bot.on('message', async (ctx) => {
+    // Служебные сообщения — например, «бот закрепил сообщение» после раздачи закрепа — не повод отвечать подсказкой
+    if (ctx.from?.is_bot || ctx.message.pinned_message) return;
     await loadUser(ctx);
     await ctx.reply(appHintText, { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) });
   });
