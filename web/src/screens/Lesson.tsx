@@ -107,9 +107,6 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
   );
 }
 
-/** Какую долю карточки человек уже прочитал: всё, что выше этой линии экрана */
-const READ_LINE = 0.8;
-
 /**
  * Прогресс чтения сегментами, как в тесте: сегмент на каждую карточку урока и на «Запомни главное».
  * Прочитанные карточки закрашены, текущая заполняется по мере прокрутки.
@@ -123,13 +120,17 @@ function ReadingProgress({ root, parts }: { root: RefObject<HTMLElement | null>;
       frame = 0;
       const cards = root.current?.querySelectorAll<HTMLElement>('.lesson__section, .lesson__takeaways');
       if (!cards) return;
-      const line = window.innerHeight * READ_LINE;
-      // Долистали до конца страницы — значит, прочитано всё, даже если последняя карточка не дошла до линии
-      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      // Линия чтения едет вместе с прокруткой: в начале урока она у нижнего края шапки — прочитано ноль,
+      // в конце — у кнопки «Закрепить», и прочитано всё. Что выше линии, то прочитано
+      const top = root.current!.querySelector('.lesson__sticky')?.getBoundingClientRect().bottom ?? 0;
+      const bottom = document.querySelector('.main-button-dock')?.getBoundingClientRect().top ?? window.innerHeight;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = scrollable > 0 ? Math.min(1, window.scrollY / scrollable) : 1;
+      const line = top + (bottom - top) * scrolled;
       setFills(
         [...cards].map((el) => {
           const r = el.getBoundingClientRect();
-          return atEnd ? 1 : Math.min(1, Math.max(0, (line - r.top) / r.height));
+          return Math.min(1, Math.max(0, (line - r.top) / r.height));
         }),
       );
     };
