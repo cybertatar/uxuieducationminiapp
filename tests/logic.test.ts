@@ -9,7 +9,7 @@ import { plural } from '../src/bot';
 import { questionById, questions, questionsByTrack, sections, warmupPool, type ChoiceQuestion, type OrderQuestion, type Question, type TrackId } from '../content';
 import { REPORT_COMMENT_MAX, REPORT_REASONS } from '../src/api-types';
 import { parseReport, reportText, type ReportRow } from '../src/reports';
-import { authorName, nextQuestionId, parseSuggestion, questionSnippet, suggestionText, type SuggestionRow } from '../src/suggestions';
+import { authorName, nextQuestionId, normalizeSource, parseSuggestion, questionSnippet, suggestionText, type SuggestionRow } from '../src/suggestions';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
 import { parseSource, type UserRow } from '../src/db';
 
@@ -440,9 +440,13 @@ describe('suggestions', () => {
     expect(parseSuggestion({ ...ok, wrong: ['прогресс И оставшееся время'] })).toBeNull();
   });
 
-  it('берёт только ссылки http и https', () => {
+  it('берёт только ссылки http и https, протокол можно не писать', () => {
     expect(parseSuggestion({ ...ok, source: 'javascript:alert(1)' })?.source).toBeNull();
     expect(parseSuggestion({ ...ok, source: 'не ссылка' })?.source).toBeNull();
+    expect(normalizeSource('nngroup.com/articles/progress-indicators/')).toBe('https://nngroup.com/articles/progress-indicators/');
+    expect(normalizeSource('http://help.figma.com')).toBe('http://help.figma.com/');
+    expect(normalizeSource('figma')).toBeNull();
+    expect(normalizeSource('localhost:3000')).toBeNull();
   });
 
   it('следующий id продолжает нумерацию трека', () => {
