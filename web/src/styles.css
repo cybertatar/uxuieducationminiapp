@@ -2262,3 +2262,38 @@ button.card:active:not(:disabled) {
 .calendar__notify {
   margin-top: var(--gap);
 }
+
+/* ---------- Пасхалка: кот под страницей при «пружинке» прокрутки ---------- */
+
+/* Спрятан под нижним краем экрана и поднимается на величину перетягивания (--over) */
+.overscroll-cat {
+  --over: 0px;
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  transform: translate(-50%, calc(100% - var(--over)));
+  will-change: transform;
+}
+
+.overscroll-cat__bubble {
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transition: opacity 0.15s, transform 0.2s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.overscroll-cat.is-peeking .overscroll-cat__bubble {
+  opacity: 1;
+  transform: none;
+}
