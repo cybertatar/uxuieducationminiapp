@@ -1,11 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { Cat } from './Cat';
+import { HangingCat, RunningCat } from './CatPoses';
 import { haptic } from './tg';
 
-/** С какой высоты «пружинки» кот выглянул целиком */
-const PEEK = 96;
-
-/** Клубок 9×9: светлые и тёмные витки нитки, снизу хвостик нитки тянется к лапе кота */
+/** Клубок 9×9: светлые и тёмные витки нитки */
 const YARN = ['..YYYYY..', '.YyYYYyY.', 'YYYyYYYyY', 'YyYYyYYYY', 'YYyYYyYyY', 'YYYyYYyYY', 'YyYYYyYYY', '.YYyYYYy.', '..YYYYY..'];
 
 function Yarn() {
@@ -17,10 +14,11 @@ function Yarn() {
 }
 
 /**
- * Пасхалка на iPhone. Если протянуть страницу дальше конца, снизу выглядывает Кегль и играет с клубком,
- * а если дальше начала — сверху свисает, уцепившись лапами за край экрана, чтобы не упасть.
- * Во время «пружинки» scrollY уходит за границы страницы — на столько кот и показывается.
- * На Android пружинки нет, поэтому там он не появляется. Стили обновляем напрямую, без ререндеров.
+ * Пасхалка на iPhone. Протянешь страницу дальше конца — внизу Кегль гоняется за клубком,
+ * дальше начала — сверху висит, вытянувшись, уцепившись лапами за край.
+ * Во время «пружинки» scrollY уходит за границы страницы: кот выезжает на столько же, но не дальше своей высоты,
+ * так что нижний бегает по полу экрана, а верхний висит у верхнего края. На Android пружинки нет — там котов не видно.
+ * Стили обновляем напрямую, без ререндеров.
  */
 export function OverscrollCat() {
   const bottom = useRef<HTMLDivElement>(null);
@@ -28,27 +26,26 @@ export function OverscrollCat() {
 
   useEffect(() => {
     let frame = 0;
-    const peeking = { top: false, bottom: false };
+    const full = new Set<HTMLElement>();
 
-    const show = (el: HTMLElement | null, side: keyof typeof peeking, over: number) => {
+    const show = (el: HTMLElement | null, over: number) => {
       if (!el) return;
-      const shown = Math.max(0, Math.min(over, PEEK * 1.5));
+      const height = el.offsetHeight;
+      const shown = Math.max(0, Math.min(over, height));
       el.style.setProperty('--over', `${shown}px`);
-      // Клубок катится на 4° за каждый пиксель перетягивания
-      el.style.setProperty('--spin', `${shown * 4}deg`);
-      const full = shown >= PEEK;
-      // Пока страницу не тянут, кот спрятан целиком: верхний иначе торчал бы под статус-баром
+      // Пока страницу не тянут, кот спрятан целиком; анимации идут, только когда его видно
       el.classList.toggle('is-out', shown > 0);
-      el.classList.toggle('is-peeking', full);
-      // Один тап отдачи на каждое появление, а не на каждый кадр
-      if (full && !peeking[side]) haptic.tap();
-      peeking[side] = full;
+      const isFull = shown >= height;
+      // Один тап отдачи на каждое полное появление, а не на каждый кадр
+      if (isFull && !full.has(el)) haptic.tap();
+      if (isFull) full.add(el);
+      else full.delete(el);
     };
 
     const update = () => {
       frame = 0;
-      show(bottom.current, 'bottom', window.scrollY + window.innerHeight - document.documentElement.scrollHeight);
-      show(top.current, 'top', -window.scrollY);
+      show(bottom.current, window.scrollY + window.innerHeight - document.documentElement.scrollHeight);
+      show(top.current, -window.scrollY);
     };
     const onScroll = () => {
       frame ||= requestAnimationFrame(update);
@@ -63,11 +60,13 @@ export function OverscrollCat() {
   return (
     <>
       <div ref={bottom} className="overscroll-cat overscroll-cat--bottom" aria-hidden>
-        <Cat mood="happy" size={72} />
-        <Yarn />
+        <div className="chase">
+          <RunningCat size={78} />
+          <Yarn />
+        </div>
       </div>
       <div ref={top} className="overscroll-cat overscroll-cat--top" aria-hidden>
-        <Cat mood="scared" size={64} hanging />
+        <HangingCat size={66} />
       </div>
     </>
   );

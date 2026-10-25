@@ -5,7 +5,7 @@
  *   K — контур   W — шерсть   O — акцент (уши, ошейник, нос)
  *   E — глаза    B — слеза    M — рот     S — усы    T — хвост
  */
-export type CatMood = 'idle' | 'happy' | 'sad' | 'sleep' | 'celebrate' | 'scared';
+export type CatMood = 'idle' | 'happy' | 'sad' | 'sleep' | 'celebrate';
 
 export const CAT_NAME = 'Кегль';
 
@@ -45,8 +45,6 @@ const FACES: Record<CatMood, Patch> = {
   celebrate: [[6, 8, 'E'], [7, 7, 'E.E'], [6, 15, 'E'], [7, 14, 'E.E'], ...NOSE, [9, 9, 'MOOOOM'], [10, 10, 'MOOM'], [11, 11, 'MM']],
   sad: [[7, 7, 'EE'], [8, 7, 'EE'], [7, 15, 'EE'], [8, 15, 'EE'], [9, 7, 'B'], [10, 7, 'B'], ...NOSE, [9, 11, 'MM'], [10, 10, 'M..M']],
   sleep: [[7, 7, 'EEE'], [7, 14, 'EEE'], ...NOSE, [9, 11, 'MM']],
-  // Глаза круглые, рот открыт буквой «о» — висит и боится упасть
-  scared: [[6, 7, 'EE'], [7, 7, 'EE'], [6, 15, 'EE'], [7, 15, 'EE'], ...NOSE, [9, 11, 'MM'], [10, 10, 'M..M'], [11, 11, 'MM']],
 };
 
 /** Спрайт с мордочкой настроения; его же рисует карточка «Поделиться» на canvas */
@@ -79,7 +77,7 @@ interface Run {
 }
 
 /** Склеиваем соседние одинаковые пиксели в строке в один rect */
-function toRuns(rows: string[]): Run[] {
+export function toRuns(rows: string[]): Run[] {
   const runs: Run[] = [];
   rows.forEach((row, y) => {
     let x = 0;
@@ -100,7 +98,7 @@ const runsFor = (mood: CatMood) => {
   return cache.get(mood)!;
 };
 
-const Pixels = ({ runs }: { runs: Run[] }) => (
+export const Pixels = ({ runs }: { runs: Run[] }) => (
   <>
     {runs.map((r, i) => (
       <rect key={i} x={r.x} y={r.y} width={r.w} height={1} className={r.cls} />
@@ -126,44 +124,21 @@ interface Props {
   mood?: CatMood;
   size?: number;
   className?: string;
-  /** Лапы подняты вверх: кот висит, уцепившись за край */
-  hanging?: boolean;
 }
 
-/**
- * Висит на выступе: серая полоска-край, лапы по бокам от ушей тянутся к ней,
- * подушечки загнуты через край — видно, что кот держится, а не что у него длинные уши.
- */
-const HANG: Run[] = [
-  { x: -3, y: -7, w: 30, cls: 'px-hint' },
-  ...[1, 20].flatMap((x) => [
-    // Подушечки поверх края, загнуты к середине
-    { x: x === 1 ? x : x - 1, y: -9, w: 4, cls: 'px-ink' },
-    { x: x === 1 ? x + 1 : x, y: -8, w: 2, cls: 'px-fill' },
-    { x: x === 1 ? x : x - 1, y: -8, w: 1, cls: 'px-ink' },
-    { x: x === 1 ? x + 3 : x + 2, y: -8, w: 1, cls: 'px-ink' },
-    ...Array.from({ length: 13 }, (_, i) => [
-      { x, y: -6 + i, w: 1, cls: 'px-ink' },
-      { x: x + 1, y: -6 + i, w: 1, cls: 'px-fill' },
-      { x: x + 2, y: -6 + i, w: 1, cls: 'px-ink' },
-    ]).flat(),
-  ]),
-];
-
-export function Cat({ mood = 'idle', size = 64, className = '', hanging = false }: Props) {
+export function Cat({ mood = 'idle', size = 64, className = '' }: Props) {
   const runs = runsFor(mood);
   return (
     <svg
-      className={`cat cat--${mood} ${hanging ? 'cat--hanging' : ''} ${className}`}
+      className={`cat cat--${mood} ${className}`}
       width={size}
-      height={hanging ? size * 1.25 : size}
-      viewBox={hanging ? '-4 -9 32 35' : '-4 -4 32 28'}
+      height={size}
+      viewBox="-4 -4 32 28"
       shapeRendering="crispEdges"
       role="img"
       aria-label={`${CAT_NAME}, кот-маскот`}
     >
       <g className="cat__body">
-        {hanging && <Pixels runs={HANG} />}
         <g className="cat__tail">
           <Pixels runs={runs.filter((r) => r.cls.includes('px-tail'))} />
         </g>
