@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { DONATE_AMOUNTS, type Profile } from '../../../src/api-types';
+import { useEffect, useRef, useState } from 'react';
+import { DONATE_AMOUNTS, DONATE_LINKS, SUPPORT_OFFER_AFTER, type Profile } from '../../../src/api-types';
 import { api } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { Cat } from '../Cat';
@@ -119,7 +119,70 @@ export function Support({ profile, onBack, onProfile }: Props) {
         <p className="hint section-hint">Разовый платёж внутри Telegram, без подписки. Звёзды можно купить прямо в окне оплаты.</p>
       )}
 
+      {DONATE_LINKS.length > 0 && (
+        <>
+          <h2 className="section-title">Картой или переводом</h2>
+          <div className="group">
+            {DONATE_LINKS.map((link) => (
+              <button key={link.url} className="cell support__link" onClick={() => openLink(link.url)}>
+                <span className="support__link-body">
+                  <span>{link.title}</span>
+                  <span className="hint">{link.hint}</span>
+                </span>
+                <span className="chevron" aria-hidden>
+                  ›
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       <MainButton text={`Отправить ${amount} ⭐`} onClick={pay} loading={paying} />
     </main>
+  );
+}
+
+/**
+ * Разовое предложение поддержать — после третьего пройденного теста, на главной.
+ * Отметку «показано» ставим сразу при показе: второй раз не спросим, что бы человек ни выбрал.
+ */
+export function SupportOffer({ onSupport, onClose }: { onSupport: () => void; onClose: () => void }) {
+  const primary = useRef<HTMLButtonElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+
+  useEffect(() => {
+    api.supportOffered().catch(() => {
+      // Не критично: в худшем случае предложим ещё раз после следующего теста
+    });
+    primary.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close.current();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="support-offer-title" onClick={(e) => e.stopPropagation()}>
+        <Cat mood="happy" size={72} />
+        <h2 id="support-offer-title" className="sheet__title">
+          Уже {SUPPORT_OFFER_AFTER} теста позади!
+        </h2>
+        <p className="hint sheet__text">
+          Тренажёр бесплатный и без рекламы — и таким останется. Если он тебе помогает, можно поддержать автора. Это необязательно, и больше я об этом не спрошу.
+        </p>
+        <div className="sheet__actions">
+          <button ref={primary} className="button button--primary" onClick={onSupport}>
+            Поддержать ⭐
+          </button>
+          <button className="button button--secondary" onClick={onClose}>
+            Не сейчас
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

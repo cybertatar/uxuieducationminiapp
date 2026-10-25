@@ -13,7 +13,7 @@ import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
 import { Suggest } from './screens/Suggest';
-import { Support } from './screens/Support';
+import { Support, SupportOffer } from './screens/Support';
 import { tg } from './tg';
 
 export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
@@ -73,6 +73,8 @@ export function App() {
   const [error, setError] = useState(false);
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [starting, setStarting] = useState(false);
+  // Предложение поддержать ждёт возвращения на главную: экран итогов им не перебиваем
+  const [offerSupport, setOfferSupport] = useState(false);
   const [tab, setTab] = useState<HomeTab>('progress');
   const [section, setSection] = useState<SectionFilter>(() => loadPref<SectionFilter>(SECTION_KEY, 'all'));
   // Неизвестный раздел пейджер сам заменит первым
@@ -108,6 +110,11 @@ export function App() {
     // Экран результатов длинный — без этого главная открылась бы с его прокруткой
     window.scrollTo({ top: 0 });
     refresh();
+  };
+
+  const openSupport = () => {
+    setScreen({ name: 'support' });
+    window.scrollTo({ top: 0 });
   };
 
   const openLesson = (id: string) => setScreen({ name: 'lesson', id });
@@ -146,6 +153,15 @@ export function App() {
   return (
     <ErrorBoundary onReset={goHome}>
       {renderScreen()}
+      {offerSupport && screen.name === 'home' && profile && (
+        <SupportOffer
+          onSupport={() => {
+            setOfferSupport(false);
+            openSupport();
+          }}
+          onClose={() => setOfferSupport(false)}
+        />
+      )}
       <OverscrollCat />
     </ErrorBoundary>
   );
@@ -186,6 +202,7 @@ export function App() {
             session={session}
             profile={profile}
             onProfile={setProfile}
+            onOfferSupport={() => setOfferSupport(true)}
             onSettings={() => setScreen({ name: 'settings' })}
             onHome={goHome}
             onAgain={() => start(screen.session)}
@@ -257,10 +274,7 @@ export function App() {
             onLesson={openLesson}
             onSettings={() => setScreen({ name: 'settings' })}
             onSuggest={() => openSuggest({ name: 'home' })}
-            onSupport={() => {
-              setScreen({ name: 'support' });
-              window.scrollTo({ top: 0 });
-            }}
+            onSupport={openSupport}
             onCalendar={() => {
               setScreen({ name: 'calendar' });
               window.scrollTo({ top: 0 });

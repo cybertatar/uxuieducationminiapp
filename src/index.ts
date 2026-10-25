@@ -56,6 +56,7 @@ app.get('/bot/setup', async (c) => {
     { command: 'question', description: 'Вопрос прямо сейчас' },
     { command: 'settings', description: 'Вопрос дня, напоминания, пауза' },
     { command: 'help', description: 'Что умеет бот' },
+    { command: 'donate', description: 'Поддержать проект ⭐' },
   ]);
   await bot.api.setMyDescription(botDescription());
   await bot.api.setMyShortDescription(botShortDescription());

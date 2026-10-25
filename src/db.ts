@@ -25,6 +25,10 @@ export interface UserRow {
   source: string | null;
   /** Тема последнего теста — для «Продолжить» на главной */
   last_track: string | null;
+  /** Сколько сессий человек довёл до экрана итогов */
+  sessions_done: number;
+  /** Предложение поддержать проект уже показано */
+  support_offered: number;
 }
 
 /** Поля, которые можно менять через updateUser. */

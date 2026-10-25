@@ -872,9 +872,8 @@ button.card:active:not(:disabled) {
 }
 
 .continue__go svg {
-  width: 18px;
-  height: 18px;
-  margin-left: 2px;
+  width: 22px;
+  height: 22px;
   fill: var(--accent-text);
 }
 
@@ -1479,6 +1478,74 @@ button.card:active:not(:disabled) {
 .support-done__text {
   max-width: 300px;
   font-size: 15px;
+}
+
+.support__link {
+  text-align: left;
+}
+
+.support__link-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Нижняя шторка поверх главной: затемнение и карточка у нижнего края */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  animation: sheet-fade 0.2s ease;
+}
+
+.sheet {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px var(--side) calc(var(--safe-bottom-device) + 16px);
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  text-align: center;
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sheet__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sheet__text {
+  max-width: 340px;
+  font-size: 15px;
+}
+
+.sheet__actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@keyframes sheet-fade {
+  from { opacity: 0; }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-backdrop,
+  .sheet {
+    animation: none;
+  }
 }
 
 /* ---------- Ячейки и настройки ---------- */

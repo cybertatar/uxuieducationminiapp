@@ -65,6 +65,8 @@ export interface CompleteResponse {
   current: number;
   best: number;
   extended: boolean;
+  /** Пора один раз предложить поддержать проект: это третий пройденный тест, а человек ещё не поддерживал */
+  offerSupport: boolean;
 }
 
 export type SettingsPatch = Partial<Pick<Settings, 'dailyEnabled' | 'dailyTime' | 'reminderEnabled' | 'reminderTime'>> & {
@@ -139,6 +141,15 @@ export interface ReportRequest {
 
 /** Сколько звёзд Telegram можно отправить автору: выбор на экране «Поддержать проект» */
 export const DONATE_AMOUNTS = [50, 100, 250, 500] as const;
+
+/** После скольких пройденных тестов один раз предлагаем поддержать проект */
+export const SUPPORT_OFFER_AFTER = 3;
+
+/**
+ * Другие способы поддержать — картой или переводом: ссылки на страницы сервисов донатов.
+ * Видны на экране «Поддержать проект» и в /donate у бота. Пустой список — только звёзды.
+ */
+export const DONATE_LINKS: { title: string; hint: string; url: string }[] = [];
 
 export interface DonateResponse {
   /** Ссылка на счёт для WebApp.openInvoice */

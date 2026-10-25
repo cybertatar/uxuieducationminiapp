@@ -51,6 +51,7 @@ export const api = {
   report: (body: ReportRequest) => request<{ ok: true }>('POST', '/report', body),
   suggest: (body: SuggestRequest) => request<{ ok: true }>('POST', '/suggest', body),
   share: (body: ShareRequest) => request<ShareResponse>('POST', '/share', body),
+  supportOffered: () => request<{ ok: true }>('POST', '/support/offered'),
   donate: (amount: number) => request<DonateResponse>('POST', '/donate', { amount }),
   settings: (patch: SettingsPatch) => request<{ ok: true }>('PATCH', '/settings', patch),
 };

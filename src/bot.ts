@@ -1,6 +1,6 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
 import { isTextOnly, questionById, questions, questionsByTrack, sections, trackById, type ChoiceQuestion, type Question } from '../content';
-import { DONATE_AMOUNTS } from './api-types';
+import { DONATE_AMOUNTS, DONATE_LINKS } from './api-types';
 import {
   addDonation,
   deleteShareImagesBefore,
@@ -30,7 +30,7 @@ import { authorName, nextQuestionId, questionSnippet, suggestionText, type Sugge
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
 import { ONBOARDING_VERSION } from './onboarding-version';
-import { appHintText, welcomeText } from './texts';
+import { appHintText, donateText, welcomeText } from './texts';
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -246,16 +246,21 @@ const DONATE_PAYLOAD = /^donate:\d+:\d+$/;
 
 const stars = (n: number) => `${n} ${plural(n, 'звезда', 'звезды', 'звёзд')}`;
 
-/** Счёт на поддержку проекта в звёздах Telegram (XTR): provider_token для звёзд пустой */
+const INVOICE_TITLE = 'Поддержать UX-тренажёр';
+const INVOICE_DESCRIPTION = 'Тренажёр бесплатный и без рекламы. Звёзды помогают автору делать новые уроки, вопросы и темы.';
+const invoicePrices = (amount: number) => [{ label: 'Поддержка проекта', amount }];
+
+/** Счёт на поддержку проекта в звёздах Telegram (XTR) для Mini App: provider_token для звёзд пустой */
 export function donationInvoice(api: Api, userId: number, amount: number): Promise<string> {
-  return api.createInvoiceLink(
-    'Поддержать UX-тренажёр',
-    'Тренажёр бесплатный и без рекламы. Звёзды помогают автору делать новые уроки, вопросы и темы.',
-    `donate:${userId}:${amount}`,
-    '',
-    'XTR',
-    [{ label: 'Поддержка проекта', amount }],
-  );
+  return api.createInvoiceLink(INVOICE_TITLE, INVOICE_DESCRIPTION, `donate:${userId}:${amount}`, '', 'XTR', invoicePrices(amount));
+}
+
+/** /donate: суммы в звёздах, ниже — другие способы ссылками и вход в приложение */
+function donateKeyboard(webApp: { url: string }) {
+  const kb = new InlineKeyboard();
+  for (const a of DONATE_AMOUNTS) kb.text(`${a} ⭐`, `d:${a}`);
+  for (const link of DONATE_LINKS) kb.row().url(link.title, link.url);
+  return kb.row().webApp('Открыть тренажёр', webApp);
 }
 
 /** Автору — о каждой поддержке: кто и сколько */
@@ -345,6 +350,19 @@ export function getBot(env: Env): Bot {
     await sendQuestion(ctx.api, ctx.chat.id, await nextQuestionFor(db, user, Date.now()), 'Вопрос');
   });
 
+  bot.command('donate', async (ctx) => {
+    await loadUser(ctx);
+    await ctx.reply(donateText, { reply_markup: donateKeyboard(webApp) });
+  });
+
+  // Сумма из /donate: присылаем счёт прямо в чат
+  bot.callbackQuery(/^d:(\d+)$/, async (ctx) => {
+    const amount = Number(ctx.match[1]);
+    await ctx.answerCallbackQuery();
+    if (!(DONATE_AMOUNTS as readonly number[]).includes(amount)) return;
+    await ctx.replyWithInvoice(INVOICE_TITLE, INVOICE_DESCRIPTION, `donate:${ctx.from.id}:${amount}`, 'XTR', invoicePrices(amount));
+  });
+
   // Правила Telegram для оплаты звёздами: у бота должна быть команда поддержки по платежам
   bot.command('paysupport', (ctx) =>
     ctx.reply(
@@ -373,7 +391,8 @@ export function getBot(env: Env): Bot {
   bot.command('help', (ctx) =>
     ctx.reply(
       '/question — получить вопрос прямо сейчас\n' +
-        '/settings — вопрос дня, напоминания, часовой пояс, пауза\n\n' +
+        '/settings — вопрос дня, напоминания, часовой пояс, пауза\n' +
+        '/donate — поддержать проект ⭐\n\n' +
         `Все темы (разделы ${sections.map((s) => s.title).join(', ')}), прогресс и повторение ошибок — в приложении.`,
       { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
     ),
