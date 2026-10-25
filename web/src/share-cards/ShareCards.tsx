@@ -2,7 +2,7 @@
 // JPG снимает scripts/render-share.mjs в web/public/share/: воркер отдаёт их Telegram по адресу /share/<имя>.jpg.
 // Это запасные картинки без цифр: обычно Mini App рисует свою карточку с данными человека (web/src/share-card.ts),
 // а эти уходят, если она не нарисовалась. Примеры своих карточек — внизу страницы.
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { lessons, questions, tracks } from '../../../content';
 import { Cat, type CatMood } from '../Cat';
 import { plural } from '../format';
@@ -43,6 +43,15 @@ function Card({ name, mood, tag, title, lead, art, children }: { name: string; m
   );
 }
 
+/** Карточка ровно в том виде, в каком её отправит Mini App */
+function Sample({ data }: { data: ShareCardData }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    renderShareCard(data).then((b64) => setSrc(`data:image/jpeg;base64,${b64}`));
+  }, [data]);
+  return src ? <img className="share-sample" src={src} width={1280} height={720} alt="" /> : <div className="share-sample" style={{ width: 1280, height: 720 }} />;
+}
+
 export function ShareCards() {
   return (
     <div className="share-deck">
@@ -69,7 +78,7 @@ export function ShareCards() {
 
       <h2 className="share-deck__title">Свои карточки — их рисует Mini App</h2>
       {SAMPLES.map((d, i) => (
-        <img key={i} className="share-sample" src={`data:image/jpeg;base64,${renderShareCard(d)}`} width={1280} height={720} alt="" />
+        <Sample key={i} data={d} />
       ))}
     </div>
   );

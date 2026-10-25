@@ -95,5 +95,22 @@ export function decodeShareImage(base64: unknown): Uint8Array | null {
   } catch {
     return null;
   }
-  return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff ? bytes : null;
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return null;
+  return hasRestartMarkers(bytes) ? null : bytes;
+}
+
+/**
+ * Есть ли в JPEG интервал перезапуска (DRI). Такие пишет canvas на iPhone, и Telegram обрывает их серой полосой.
+ * Mini App кодирует сам и их не шлёт, но старая версия из кеша может — тогда лучше общая картинка, чем обрезанная.
+ * Смотрим только заголовки до начала данных (SOS).
+ */
+export function hasRestartMarkers(bytes: Uint8Array): boolean {
+  let i = 2;
+  while (i + 3 < bytes.length && bytes[i] === 0xff) {
+    const marker = bytes[i + 1];
+    if (marker === 0xdd) return true;
+    if (marker === 0xda) return false;
+    i += 2 + ((bytes[i + 2] << 8) | bytes[i + 3]);
+  }
+  return false;
 }

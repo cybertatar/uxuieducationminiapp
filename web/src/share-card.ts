@@ -1,6 +1,8 @@
 /**
  * Картинка для «Поделиться», нарисованная по данным человека: счёт и ответы, стрик за неделю, урок.
  * Рисуем на canvas прямо в Mini App и отправляем воркеру JPEG — Telegram принимает для фото только его.
+ * Кодируем сами (jpeg-js), а не canvas.toDataURL: iPhone пишет JPEG с маркерами перезапуска (DRI/RST),
+ * и Telegram при обработке такого фото обрывает его серой полосой, хотя файл по стандарту целый.
  * Палитра — светлая, как у карусели и поста, чтобы карточка узнавалась в любой теме чата.
  */
 import { sprite, SPARKS, type CatMood } from './Cat';
@@ -39,7 +41,7 @@ const plural = (n: number, one: string, few: string, many: string) => {
 const daysWord = (n: number) => plural(n, 'день', 'дня', 'дней');
 
 /** Рисует карточку и возвращает JPEG в base64 (без префикса data:) */
-export function renderShareCard(data: ShareCardData): string {
+export async function renderShareCard(data: ShareCardData): Promise<string> {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -63,7 +65,29 @@ export function renderShareCard(data: ShareCardData): string {
   ctx.fillStyle = C.accent;
   ctx.fillText('t.me/uxuitrainer_bot', PAD, H - 72);
 
-  return canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
+  return encodeJpeg(ctx.getImageData(0, 0, W, H), 88);
+}
+
+/**
+ * Обычный baseline JPEG без маркеров перезапуска — одинаковый на любом устройстве.
+ * Кодировщик грузим, только когда делятся: основному экрану он не нужен.
+ */
+async function encodeJpeg(image: ImageData, quality: number): Promise<string> {
+  const { default: encode } = await import('jpeg-js/lib/encoder.js');
+  // jpeg-js писался для Node и в конце зовёт Buffer.from — в браузере подставляем Uint8Array на время вызова
+  const g = globalThis as { Buffer?: unknown };
+  const shim = g.Buffer === undefined;
+  if (shim) g.Buffer = { from: (bytes: number[]) => Uint8Array.from(bytes) };
+  let bytes: Uint8Array;
+  try {
+    bytes = encode({ data: image.data, width: image.width, height: image.height }, quality).data;
+  } finally {
+    if (shim) delete g.Buffer;
+  }
+  // btoa принимает строку; собираем её кусками, чтобы не упереться в лимит аргументов
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
 }
 
 function drawResult(ctx: CanvasRenderingContext2D, d: Extract<ShareCardData, { kind: 'result' }>) {

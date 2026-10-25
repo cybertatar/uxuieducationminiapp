@@ -11,7 +11,7 @@ import { haptic, inTelegram, openTelegramLink, tg } from './tg';
 export async function share(req: ShareRequest, card?: ShareCardData): Promise<void> {
   let image: string | undefined;
   try {
-    image = card && renderShareCard(card);
+    image = card && (await renderShareCard(card));
   } catch {
     // Не нарисовалось — уйдёт общая картинка
   }
