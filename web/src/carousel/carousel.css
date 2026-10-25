@@ -278,6 +278,44 @@ body {
   color: var(--hint);
 }
 
+/* 4. Темы по разделам */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-card {
+  background: var(--surface);
+  border-radius: 32px;
+  padding: 26px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-card > b {
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.section-card__tracks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-card__track {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 28px;
+  font-weight: 700;
+}
+
 /* 5. Форматы */
 .phones {
   margin-top: 12px;
