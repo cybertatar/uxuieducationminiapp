@@ -6,7 +6,7 @@ import { pickDailyQuestion, pickTrackSession, pickWarmupSession } from '../src/s
 import { applyActivity, streakAtRisk, visibleStreak } from '../src/streak';
 import { addDays, localDate, nextOccurrence, zonedToUtc } from '../src/time';
 import { plural } from '../src/bot';
-import { questionById, questions, questionsByTrack, sections, warmupPool, type ChoiceQuestion, type Question, type TrackId } from '../content';
+import { questionById, questions, questionsByTrack, sections, warmupPool, type ChoiceQuestion, type OrderQuestion, type Question, type TrackId } from '../content';
 import { REPORT_COMMENT_MAX, REPORT_REASONS } from '../src/api-types';
 import { parseReport, reportText, type ReportRow } from '../src/reports';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
@@ -295,6 +295,7 @@ describe('календарь занятий', async () => {
 
 describe('reports', () => {
   const choice = questions.find((q) => (q.kind ?? 'choice') === 'choice' && !('image' in q && q.image))! as ChoiceQuestion;
+  const order = questions.find((q) => q.kind === 'order')! as OrderQuestion;
   const hotspot = questions.find((q) => q.kind === 'hotspot')!;
   const row = (over: Partial<ReportRow> = {}): ReportRow => ({
     id: 1,
@@ -302,16 +303,24 @@ describe('reports', () => {
     question_id: choice.id,
     reason: 'answer',
     comment: null,
-    option: null,
+    answer: null,
+    context: null,
     status: 'new',
     created_at: 0,
     resolved_at: null,
     ...over,
   });
-  const from = { first_name: 'Аня', username: 'anya' };
+  const details = {
+    from: { first_name: 'Аня', username: 'anya' },
+    history: { attempts: 3, correctTotal: 1, lastCorrect: false, box: 0, dueDate: null },
+    stats: { answers: 40, correct: 10, topWrong: { option: (choice.correct + 1) % choice.options.length, n: 20 } },
+    reports: 3,
+  };
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const short = (s: string, max = 70) => esc(s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s);
 
   it('принимает только существующий вопрос и причину из списка', () => {
-    expect(parseReport({ questionId: choice.id, reason: 'typo' }, questionById)).toEqual({ questionId: choice.id, reason: 'typo', comment: null, option: null });
+    expect(parseReport({ questionId: choice.id, reason: 'typo' }, questionById)).toEqual({ questionId: choice.id, reason: 'typo', comment: null, answer: null, context: null });
     expect(parseReport({ questionId: 'нет-такого', reason: 'typo' }, questionById)).toBeNull();
     expect(parseReport({ questionId: choice.id, reason: 'toString' as never }, questionById)).toBeNull();
   });
@@ -322,26 +331,64 @@ describe('reports', () => {
     expect(long?.comment).toHaveLength(REPORT_COMMENT_MAX);
   });
 
-  it('некорректный ответ не сохраняется', () => {
-    expect(parseReport({ questionId: choice.id, reason: 'typo', option: -1 }, questionById)?.option).toBeNull();
-    expect(parseReport({ questionId: choice.id, reason: 'typo', option: 1.5 }, questionById)?.option).toBeNull();
+  it('ответ и контекст чистятся: мусор отбрасывается, остальное сохраняется', () => {
+    const r = parseReport(
+      {
+        questionId: choice.id,
+        reason: 'typo',
+        answer: { option: 1, checked: true, picks: [2, 'x' as never], points: [[10.4, 20.6]] },
+        context: { session: { mode: 'track', track: 'нет' as never }, position: 2, total: 10, app: '1.8.1', platform: 'x'.repeat(100), extra: 1 } as never,
+      },
+      questionById,
+    );
+    expect(r?.answer).toEqual({ option: 1, checked: true, points: [[10, 21]] });
+    expect(r?.context).toEqual({ position: 2, total: 10, app: '1.8.1', platform: 'x'.repeat(40) });
+    expect(parseReport({ questionId: choice.id, reason: 'typo', answer: { option: -1, checked: true } }, questionById)?.answer).toBeNull();
   });
 
-  it('сообщение автору: причина, вопрос, ответ человека и кто прислал', () => {
-    const text = reportText(row({ option: choice.correct, comment: 'Спорно <b>' }), choice, from, 3);
+  it('сообщение автору: слова человека и данные бота', () => {
+    const wrong = (choice.correct + 1) % choice.options.length;
+    const text = reportText(
+      row({
+        comment: 'Спорно <b>',
+        answer: JSON.stringify({ option: wrong, checked: true }),
+        context: JSON.stringify({ session: { mode: 'review' }, position: 2, total: 10, app: '1.8.1', platform: 'ios', tgVersion: '8.0', scheme: 'dark', viewport: '390×844' }),
+      }),
+      choice,
+      details,
+    );
     expect(text).toContain(REPORT_REASONS.answer);
     expect(text).toContain(choice.id);
-    expect(text).toContain(`«${choice.options[choice.correct].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}» — верно`);
     expect(text).toContain('Спорно &lt;b&gt;');
-    expect(text).toContain('Аня @anya');
-    expect(text).toContain('всего сообщений о вопросе: 3');
+    expect(text).toContain(`Ответ: «${short(choice.options[wrong])}» ❌`);
+    expect(text).toContain(`Верный: «${short(choice.options[choice.correct])}»`);
+    expect(text).toContain('Этот человек: попыток 3, верных 1');
+    expect(text).toContain('Все пользователи: ответов 40, верно 25%; чаще всего ошибаются на');
+    expect(text).toContain('Сессия: повторение ошибок, вопрос 3 из 10');
+    expect(text).toContain('приложение 1.8.1 · ios, Telegram 8.0 · тёмная тема · 390×844');
+    expect(text).toContain('Аня @anya (id 42) · сообщений о вопросе: 3');
   });
 
-  it('в особых механиках вместо варианта — только верно или нет, а разобранное помечено', () => {
-    const text = reportText(row({ question_id: hotspot.id, option: 1, status: 'fixed' }), hotspot, { first_name: null, username: null }, 1);
-    expect(text).toContain('Ответ: неверно');
+  it('порядок шагов показывается текстом, а без ответа так и сказано', () => {
+    const picks = order.items.map((_, i) => i).reverse();
+    const text = reportText(row({ question_id: order.id, answer: JSON.stringify({ option: 1, checked: true, picks }) }), order, details);
+    expect(text).toContain(`Ответ: «${esc(order.items.at(-1)!.slice(0, 39))}`);
+    expect(text).toContain('Верно: «');
+    expect(reportText(row({ question_id: hotspot.id }), hotspot, details)).toContain('Ответ: ещё не выбран');
+  });
+
+  it('в «тапни» видна точка и нужная зона, разобранное помечено', () => {
+    const text = reportText(
+      row({ question_id: hotspot.id, answer: JSON.stringify({ option: 1, checked: true, points: [[12, 34]] }), status: 'fixed' }),
+      hotspot,
+      { ...details, from: { first_name: null, username: null }, history: null, stats: { answers: 0, correct: 0, topWrong: null }, reports: 1 },
+    );
+    expect(text).toContain('Тап: (12, 34) ❌');
+    expect(text).toContain('Нужная зона');
+    expect(text).toContain('Этот человек: раньше не отвечал');
+    expect(text).toContain('ответов ещё нет');
     expect(text).toContain('Исправлено');
-    expect(text).toContain('id 42');
-    expect(text).not.toContain('всего сообщений');
+    expect(text).toContain('От: (id 42)');
+    expect(text).not.toContain('сообщений о вопросе');
   });
 });

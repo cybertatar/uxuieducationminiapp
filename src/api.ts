@@ -161,7 +161,7 @@ api.post('/lessons/read', async (c) => {
   return c.json({ ok: true });
 });
 
-/** «Что-то не так с вопросом?» из разбора ответа: сохраняем и в фоне пересылаем автору */
+/** «Сообщить о проблеме» с экрана вопроса: сохраняем и в фоне пересылаем автору вместе с данными об ответе */
 api.post('/report', async (c) => {
   const user = c.get('user');
   const report = parseReport(await c.req.json<Partial<ReportRequest>>(), questionById);

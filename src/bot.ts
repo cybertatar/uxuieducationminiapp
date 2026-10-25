@@ -1,13 +1,15 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
-import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion } from '../content';
+import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion, type Question } from '../content';
 import {
   deleteShareImagesBefore,
   findMessageableUser,
+  getAnswer,
   getAnswers,
   getConfig,
   getReport,
   getUser,
   parseSource,
+  questionStats,
   reportsForQuestion,
   resolveReport,
   setConfig,
@@ -54,7 +56,7 @@ export const TIME_ZONES: [string, string][] = [
 
 /**
  * Автор бота (тот же, что в подписи на главной): только он может подключить канал для карточек «Поделиться»,
- * и ему бот присылает сообщения о неточностях в вопросах.
+ * и ему бот присылает сообщения о проблемах в вопросах.
  */
 export const OWNER_USERNAME = 'everlastinghate';
 
@@ -156,20 +158,29 @@ function tzKeyboard(current: string) {
   return kb.row().text('← Назад', 's:back');
 }
 
-// ---------- Неточности в вопросах ----------
+// ---------- Сообщения о проблемах в вопросах ----------
 
 const reportKeyboard = (id: number) => new InlineKeyboard().text('✅ Исправлено', `r:fix:${id}`).text('🙅 Не ошибка', `r:no:${id}`);
 
 const shorten = (s: string, max = 80) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s);
 
-/** Пересылает сообщение о неточности автору. Если автор ещё не писал боту, сообщение остаётся только в таблице reports. */
+/** Текст сообщения автору: к словам человека бот добавляет его историю с вопросом и статистику ответов всех */
+async function reportMessage(db: D1Database, report: ReportRow, q: Question, from: Pick<UserRow, 'first_name' | 'username'>) {
+  const [history, stats, reports] = await Promise.all([getAnswer(db, report.user_id, q.id), questionStats(db, q.id), reportsForQuestion(db, q.id)]);
+  return reportText(report, q, { from, history, stats, reports });
+}
+
+/** Пересылает сообщение о проблеме автору. Если автор ещё не писал боту, сообщение остаётся только в таблице reports. */
 export async function notifyOwnerAboutReport(db: D1Database, api: Api, report: ReportRow, from: UserRow) {
   const q = questionById.get(report.question_id);
   const owner = await findMessageableUser(db, OWNER_USERNAME);
   if (!q || !owner) return;
-  const total = await reportsForQuestion(db, q.id);
   try {
-    await api.sendMessage(owner.id, reportText(report, q, from, total), { parse_mode: 'HTML', reply_markup: reportKeyboard(report.id) });
+    await api.sendMessage(owner.id, await reportMessage(db, report, q, from), {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      reply_markup: reportKeyboard(report.id),
+    });
   } catch (err) {
     await handleSendError(db, owner, err);
   }
@@ -373,7 +384,7 @@ export function getBot(env: Env): Bot {
     await ctx.answerCallbackQuery();
   });
 
-  // Автор разобрал сообщение о неточности. Если исправил — говорим спасибо тому, кто сообщил.
+  // Автор разобрал сообщение о проблеме. Если исправил — говорим спасибо тому, кто сообщил.
   bot.callbackQuery(/^r:(fix|no):(\d+)$/, async (ctx) => {
     if (ctx.from.username?.toLowerCase() !== OWNER_USERNAME) return ctx.answerCallbackQuery();
     const id = Number(ctx.match[2]);
@@ -384,13 +395,15 @@ export function getBot(env: Env): Bot {
     if (!changed || !report || !q) return ctx.answerCallbackQuery({ text: changed ? 'Готово' : 'Уже разобрано' });
 
     const reporter = await getUser(db, report.user_id);
-    const total = await reportsForQuestion(db, q.id);
-    await ctx.editMessageText(reportText(report, q, reporter ?? { first_name: null, username: null }, total), { parse_mode: 'HTML' });
+    await ctx.editMessageText(await reportMessage(db, report, q, reporter ?? { first_name: null, username: null }), {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+    });
     if (status === 'fixed' && reporter?.can_message) {
       try {
         await ctx.api.sendMessage(
           reporter.id,
-          `Спасибо за сообщение о неточности 🐈 Вопрос «${escape(shorten(q.text))}» поправили.`,
+          `Спасибо за сообщение о проблеме 🐈 Вопрос «${escape(shorten(q.text))}» поправили.`,
           { parse_mode: 'HTML', reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
         );
       } catch (err) {

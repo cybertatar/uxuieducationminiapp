@@ -3,14 +3,12 @@ import { Cat } from '../Cat';
 import { ExternalLink } from '../ExternalLink';
 import { Wireframe } from '../Wireframe';
 import { Confetti } from './Confetti';
-import { ReportQuestion } from './ReportQuestion';
 
 /**
  * Разбор ответа: кот, суть, полное объяснение, картинка «как правильно» и ссылки.
  * Показывается раскрытым и при ошибке, и при верном ответе — даже угаданный ответ стоит закрепить.
- * Внизу — «Что-то не так с вопросом?»: так автор узнаёт о неточностях.
  */
-export function Feedback({ q, correct, option }: { q: Question; correct: boolean; option: number }) {
+export function Feedback({ q, correct }: { q: Question; correct: boolean }) {
   return (
     <section className={`feedback ${correct ? 'is-correct' : 'is-wrong'}`} aria-live="polite">
       {correct && <Confetti />}
@@ -36,8 +34,6 @@ export function Feedback({ q, correct, option }: { q: Question; correct: boolean
           <ExternalLink key={l.url} link={l} />
         ))}
       </div>
-
-      <ReportQuestion q={q} option={option} />
     </section>
   );
 }

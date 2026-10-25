@@ -1,5 +1,5 @@
 import type { AnswerState } from './review';
-import type { ReportRow } from './reports';
+import type { QuestionStats, ReportRow } from './reports';
 
 export interface UserRow {
   id: number;
@@ -225,14 +225,28 @@ export async function setConfig(db: D1Database, key: string, value: string | nul
 export async function addReport(
   db: D1Database,
   userId: number,
-  r: { questionId: string; reason: string; comment: string | null; option: number | null },
+  r: { questionId: string; reason: string; comment: string | null; answer: object | null; context: object | null },
   now: number,
 ): Promise<ReportRow> {
   const row = await db
-    .prepare('INSERT INTO reports (user_id, question_id, reason, comment, option, created_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING *')
-    .bind(userId, r.questionId, r.reason, r.comment, r.option, now)
+    .prepare('INSERT INTO reports (user_id, question_id, reason, comment, answer, context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *')
+    .bind(userId, r.questionId, r.reason, r.comment, r.answer && JSON.stringify(r.answer), r.context && JSON.stringify(r.context), now)
     .first<ReportRow>();
   return row!;
+}
+
+/** Как на вопрос отвечают все по журналу ответов: для сообщения автору о проблеме с вопросом */
+export async function questionStats(db: D1Database, questionId: string): Promise<QuestionStats> {
+  const { results } = await db
+    .prepare('SELECT option, correct, COUNT(*) AS n FROM answer_log WHERE question_id = ? GROUP BY option, correct')
+    .bind(questionId)
+    .all<{ option: number; correct: number; n: number }>();
+  const wrong = results.filter((r) => !r.correct).sort((a, b) => b.n - a.n)[0];
+  return {
+    answers: results.reduce((n, r) => n + r.n, 0),
+    correct: results.filter((r) => r.correct).reduce((n, r) => n + r.n, 0),
+    topWrong: wrong ? { option: wrong.option, n: wrong.n } : null,
+  };
 }
 
 export async function getReport(db: D1Database, id: number): Promise<ReportRow | null> {
@@ -255,7 +269,7 @@ export async function resolveReport(db: D1Database, id: number, status: 'fixed' 
   return res.meta.changes > 0;
 }
 
-/** Автор бота по нику: ему уходят сообщения о неточностях. null — автор ещё не писал боту или заблокировал его. */
+/** Автор бота по нику: ему уходят сообщения о проблемах в вопросах. null — автор ещё не писал боту или заблокировал его. */
 export async function findMessageableUser(db: D1Database, username: string): Promise<UserRow | null> {
   return db.prepare('SELECT * FROM users WHERE lower(username) = ? AND can_message = 1').bind(username.toLowerCase()).first<UserRow>();
 }
