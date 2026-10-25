@@ -21,7 +21,7 @@ export function Post() {
           <br />с котом Кеглем
         </h1>
         <p className="post__lead">
-          {lessons.length} {plural(lessons.length, 'урок', 'урока', 'уроков')} простым языком и {QUESTIONS} вопросов с разбором — прямо в Telegram
+          {QUESTIONS} вопросов с разбором и {lessons.length} {plural(lessons.length, 'урок', 'урока', 'уроков')} простым языком — прямо в Telegram
         </p>
         <div className="post__sections">
           {sections.map((s) => (
