@@ -50,12 +50,13 @@ app.get('/bot/setup', async (c) => {
   const origin = new URL(c.req.url).origin;
   await bot.api.setWebhook(`${origin}/bot/webhook`, {
     secret_token: c.env.WEBHOOK_SECRET,
-    allowed_updates: ['message', 'callback_query', 'my_chat_member'],
+    allowed_updates: ['message', 'callback_query', 'my_chat_member', 'pre_checkout_query'],
   });
   await bot.api.setMyCommands([
     { command: 'question', description: 'Вопрос прямо сейчас' },
     { command: 'settings', description: 'Вопрос дня, напоминания, пауза' },
     { command: 'help', description: 'Что умеет бот' },
+    { command: 'donate', description: 'Поддержать проект ⭐' },
   ]);
   await bot.api.setMyDescription(botDescription());
   await bot.api.setMyShortDescription(botShortDescription());

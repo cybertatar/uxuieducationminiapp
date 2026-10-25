@@ -19,6 +19,8 @@ interface Props {
   /** Для предложения включить напоминание о стрике */
   profile: Profile | null;
   onProfile: (p: Profile) => void;
+  /** Сервер решил, что пора предложить поддержать проект: покажем на главной */
+  onOfferSupport: (kind: NonNullable<CompleteResponse['offerSupport']>) => void;
   onSettings: () => void;
   canRepeat: boolean;
   starting: boolean;
@@ -68,7 +70,7 @@ function useCountUp(to: number, from: number, enabled: boolean) {
   return value;
 }
 
-export function Result({ result, session, profile, onProfile, onSettings, canRepeat, starting, onHome, onAgain, onLesson, onSuggest, warmup, lesson }: Props) {
+export function Result({ result, session, profile, onProfile, onOfferSupport, onSettings, canRepeat, starting, onHome, onAgain, onLesson, onSuggest, warmup, lesson }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
   const ratio = result.correct / result.total;
   const { mood, text } = headline(ratio);
@@ -80,6 +82,7 @@ export function Result({ result, session, profile, onProfile, onSettings, canRep
       .then((s) => {
         setStreak(s);
         if (s.extended) haptic.success();
+        if (s.offerSupport) onOfferSupport(s.offerSupport);
       })
       .catch(() => {});
   }, []);

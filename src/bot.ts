@@ -1,6 +1,8 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
 import { isTextOnly, questionById, questions, questionsByTrack, sections, trackById, type ChoiceQuestion, type Question } from '../content';
+import { DONATE_AMOUNTS, DONATE_LINKS } from './api-types';
 import {
+  addDonation,
   deleteShareImagesBefore,
   findMessageableUser,
   getAnswer,
@@ -28,7 +30,7 @@ import { authorName, nextQuestionId, questionSnippet, suggestionText, type Sugge
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
 import { ONBOARDING_VERSION } from './onboarding-version';
-import { appHintText, welcomeText } from './texts';
+import { appHintText, donateText, welcomeText } from './texts';
 
 const LETTERS = ['А', 'Б', 'В', 'Г', 'Д', 'Е'];
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -237,6 +239,42 @@ function suggestionNews(status: SuggestionStatus, trackTitle: string, author: st
   return `Спасибо за вопрос по теме «${escape(trackTitle)}»! В этот раз он не вошёл в тренажёр, но присылай ещё: автор читает каждый.`;
 }
 
+// ---------- Поддержка звёздами ----------
+
+/** В payload счёта — кто и сколько: по нему pre_checkout_query отличает наши счета от чужих */
+const DONATE_PAYLOAD = /^donate:\d+:\d+$/;
+
+const stars = (n: number) => `${n} ${plural(n, 'звезда', 'звезды', 'звёзд')}`;
+
+const INVOICE_TITLE = 'Поддержать UX-тренажёр';
+const INVOICE_DESCRIPTION = 'Тренажёр бесплатный и без рекламы. Звёзды помогают автору делать новые уроки, вопросы и темы.';
+const invoicePrices = (amount: number) => [{ label: 'Поддержка проекта', amount }];
+
+/** Счёт на поддержку проекта в звёздах Telegram (XTR) для Mini App: provider_token для звёзд пустой */
+export function donationInvoice(api: Api, userId: number, amount: number): Promise<string> {
+  return api.createInvoiceLink(INVOICE_TITLE, INVOICE_DESCRIPTION, `donate:${userId}:${amount}`, '', 'XTR', invoicePrices(amount));
+}
+
+/** /donate: суммы в звёздах, ниже — другие способы ссылками и вход в приложение */
+function donateKeyboard(webApp: { url: string }) {
+  const kb = new InlineKeyboard();
+  for (const a of DONATE_AMOUNTS) kb.text(`${a} ⭐`, `d:${a}`);
+  for (const link of DONATE_LINKS) kb.row().url(`💳 ${link.title}`, link.url);
+  return kb.row().webApp('Открыть тренажёр', webApp);
+}
+
+/** Автору — о каждой поддержке: кто и сколько */
+async function notifyOwnerAboutDonation(db: D1Database, api: Api, from: UserRow, amount: number) {
+  const owner = await findMessageableUser(db, OWNER_USERNAME);
+  if (!owner) return;
+  const who = escape(from.first_name ?? 'Без имени') + (from.username ? ` (@${escape(from.username)})` : '');
+  try {
+    await api.sendMessage(owner.id, `⭐ ${who} поддерживает проект: ${stars(amount)}`, { parse_mode: 'HTML' });
+  } catch (err) {
+    await handleSendError(db, owner, err);
+  }
+}
+
 // ---------- Бот ----------
 
 /** file_id анимации-гайда: после первой отправки Telegram не скачивает файл заново */
@@ -312,10 +350,49 @@ export function getBot(env: Env): Bot {
     await sendQuestion(ctx.api, ctx.chat.id, await nextQuestionFor(db, user, Date.now()), 'Вопрос');
   });
 
+  bot.command('donate', async (ctx) => {
+    await loadUser(ctx);
+    await ctx.reply(donateText, { reply_markup: donateKeyboard(webApp) });
+  });
+
+  // Сумма из /donate: присылаем счёт прямо в чат
+  bot.callbackQuery(/^d:(\d+)$/, async (ctx) => {
+    const amount = Number(ctx.match[1]);
+    await ctx.answerCallbackQuery();
+    if (!(DONATE_AMOUNTS as readonly number[]).includes(amount)) return;
+    await ctx.replyWithInvoice(INVOICE_TITLE, INVOICE_DESCRIPTION, `donate:${ctx.from.id}:${amount}`, 'XTR', invoicePrices(amount));
+  });
+
+  // Правила Telegram для оплаты звёздами: у бота должна быть команда поддержки по платежам
+  bot.command('paysupport', (ctx) =>
+    ctx.reply(
+      'Если с оплатой звёздами что-то пошло не так или ты хочешь вернуть звёзды, напиши автору: @' +
+        OWNER_USERNAME +
+        '. Звёзды вернутся на твой счёт в Telegram.',
+    ),
+  );
+
+  // Перед оплатой Telegram спрашивает, принимаем ли счёт: на ответ есть 10 секунд
+  bot.on('pre_checkout_query', async (ctx) => {
+    const q = ctx.preCheckoutQuery;
+    // Ссылкой на счёт могли поделиться: платит тот, кто платит, и записываем поддержку на него
+    const ok = DONATE_PAYLOAD.test(q.invoice_payload) && q.currency === 'XTR' && (DONATE_AMOUNTS as readonly number[]).includes(q.total_amount);
+    await ctx.answerPreCheckoutQuery(ok, ok ? undefined : { error_message: 'Этот счёт устарел. Открой «Поддержать проект» в тренажёре ещё раз.' });
+  });
+
+  bot.on('message:successful_payment', async (ctx) => {
+    const user = await loadUser(ctx);
+    const p = ctx.message.successful_payment;
+    if (!(await addDonation(db, user.id, p.total_amount, p.telegram_payment_charge_id, Date.now()))) return;
+    await ctx.reply(`Спасибо за ${stars(p.total_amount)} ⭐ Это правда помогает делать тренажёр дальше. Кегль мурлычет 🐈`);
+    await notifyOwnerAboutDonation(db, ctx.api, user, p.total_amount);
+  });
+
   bot.command('help', (ctx) =>
     ctx.reply(
       '/question — получить вопрос прямо сейчас\n' +
-        '/settings — вопрос дня, напоминания, часовой пояс, пауза\n\n' +
+        '/settings — вопрос дня, напоминания, часовой пояс, пауза\n' +
+        '/donate — поддержать проект ⭐\n\n' +
         `Все темы (разделы ${sections.map((s) => s.title).join(', ')}), прогресс и повторение ошибок — в приложении.`,
       { reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp) },
     ),

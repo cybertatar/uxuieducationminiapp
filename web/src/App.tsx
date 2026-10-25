@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { lessonById, nextLesson, tracks, type SectionId, type TrackId } from '../../content';
-import type { Profile } from '../../src/api-types';
+import type { CompleteResponse, Profile } from '../../src/api-types';
 import { api } from './api';
 import { Cat } from './Cat';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -13,6 +13,7 @@ import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
 import { Suggest } from './screens/Suggest';
+import { Support, SupportOffer } from './screens/Support';
 import { tg } from './tg';
 
 export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
@@ -34,6 +35,7 @@ type Screen =
   | { name: 'lesson'; id: string }
   | { name: 'settings' }
   | { name: 'calendar' }
+  | { name: 'support' }
   /** back — куда вернуться: на главную или к итогам сессии, не потеряв их */
   | { name: 'suggest'; track?: TrackId; back: Screen };
 
@@ -71,6 +73,8 @@ export function App() {
   const [error, setError] = useState(false);
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [starting, setStarting] = useState(false);
+  // Предложение поддержать ждёт возвращения на главную: экран итогов им не перебиваем
+  const [offerSupport, setOfferSupport] = useState<CompleteResponse['offerSupport']>(null);
   const [tab, setTab] = useState<HomeTab>('progress');
   const [section, setSection] = useState<SectionFilter>(() => loadPref<SectionFilter>(SECTION_KEY, 'all'));
   // Неизвестный раздел пейджер сам заменит первым
@@ -106,6 +110,11 @@ export function App() {
     // Экран результатов длинный — без этого главная открылась бы с его прокруткой
     window.scrollTo({ top: 0 });
     refresh();
+  };
+
+  const openSupport = () => {
+    setScreen({ name: 'support' });
+    window.scrollTo({ top: 0 });
   };
 
   const openLesson = (id: string) => setScreen({ name: 'lesson', id });
@@ -144,6 +153,16 @@ export function App() {
   return (
     <ErrorBoundary onReset={goHome}>
       {renderScreen()}
+      {offerSupport && screen.name === 'home' && profile && (
+        <SupportOffer
+          kind={offerSupport}
+          onSupport={() => {
+            setOfferSupport(null);
+            openSupport();
+          }}
+          onClose={() => setOfferSupport(null)}
+        />
+      )}
       <OverscrollCat />
     </ErrorBoundary>
   );
@@ -184,6 +203,7 @@ export function App() {
             session={session}
             profile={profile}
             onProfile={setProfile}
+            onOfferSupport={setOfferSupport}
             onSettings={() => setScreen({ name: 'settings' })}
             onHome={goHome}
             onAgain={() => start(screen.session)}
@@ -229,6 +249,8 @@ export function App() {
         return profile && <Calendar profile={profile} onBack={goHome} onSettings={() => setScreen({ name: 'settings' })} />;
       case 'suggest':
         return <Suggest track={screen.track} onBack={() => setScreen(screen.back)} />;
+      case 'support':
+        return <Support profile={profile} onBack={goHome} onProfile={setProfile} />;
       case 'settings':
         return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
       default:
@@ -253,6 +275,7 @@ export function App() {
             onLesson={openLesson}
             onSettings={() => setScreen({ name: 'settings' })}
             onSuggest={() => openSuggest({ name: 'home' })}
+            onSupport={openSupport}
             onCalendar={() => {
               setScreen({ name: 'calendar' });
               window.scrollTo({ top: 0 });

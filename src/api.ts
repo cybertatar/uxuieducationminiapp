@@ -2,20 +2,23 @@ import { Api, InlineKeyboard, InputFile } from 'grammy';
 import type { InlineQueryResult } from 'grammy/types';
 import { Hono } from 'hono';
 import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
-import type { CompleteResponse, HistoryResponse, Profile, ReportRequest, SessionRequest, SettingsPatch, ShareRequest, ShareResponse, SuggestRequest } from './api-types';
+import { DONATE_AMOUNTS, type CompleteResponse, type DonateResponse, type HistoryResponse, type Profile, type ReportRequest, type SessionRequest, type SettingsPatch, type ShareRequest, type ShareResponse, type SuggestRequest } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
-import { notifyOwnerAboutReport, notifyOwnerAboutSuggestion, offerDailyQuestion } from './bot';
+import { donationInvoice, notifyOwnerAboutReport, notifyOwnerAboutSuggestion, offerDailyQuestion } from './bot';
 import {
   activityCount,
   activityDates,
   addReport,
   addSuggestion,
+  donatedTotal,
   getAnswers,
   history,
+  lastDonationAt,
   lessonsRead,
   getConfig,
   markLessonRead,
   parseSource,
+  updateUser,
   reportsSince,
   saveShareImage,
   suggestionsSince,
@@ -26,6 +29,7 @@ import type { Env } from './env';
 import { parseReport, REPORTS_PER_DAY } from './reports';
 import { isDue } from './review';
 import { parseSuggestion, SUGGESTIONS_PER_DAY } from './suggestions';
+import { shouldOfferSupport } from './support';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
 import { decodeShareImage, shareCaption, shareContent, sharePlainText } from './share';
 import { weakTopics } from './stats';
@@ -72,10 +76,11 @@ api.get('/me', async (c) => {
   // Неделя с понедельника, как в календаре
   const weekday = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
   const monday = addDays(date, -weekday);
-  const [active, activeDays, read] = await Promise.all([
+  const [active, activeDays, read, donated] = await Promise.all([
     activityDates(c.env.DB, user.id, monday),
     activityCount(c.env.DB, user.id),
     lessonsRead(c.env.DB, user.id),
+    donatedTotal(c.env.DB, user.id),
   ]);
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(monday, i);
@@ -108,6 +113,9 @@ api.get('/me', async (c) => {
     weakTopics: weakTopics(questions, answers),
     // Урок могли убрать из учебника — такие отметки не показываем
     lessonsRead: read.filter((id) => lessonById.has(id)),
+    // Тему могли убрать из тренажёра — тогда и продолжать нечего
+    lastTrack: user.last_track && trackById.has(user.last_track as TrackId) ? (user.last_track as TrackId) : null,
+    supporter: donated > 0,
     settings: {
       dailyEnabled: user.daily_enabled === 1,
       dailyTime: user.daily_time,
@@ -138,6 +146,7 @@ api.post('/session', async (c) => {
     return c.json({ questionIds: lesson.practice });
   }
   if (!trackById.has(body.track)) return c.json({ error: 'unknown track' }, 400);
+  if (user.last_track !== body.track) await updateUser(c.env.DB, user.id, { last_track: body.track });
   return c.json({ questionIds: pickTrackSession(questionsByTrack(body.track as TrackId), answers, date) });
 });
 
@@ -188,12 +197,30 @@ api.post('/suggest', async (c) => {
   return c.json({ ok: true });
 });
 
+/** «Поддержать проект»: счёт в звёздах Telegram, Mini App открывает его через WebApp.openInvoice */
+api.post('/donate', async (c) => {
+  const { amount } = await c.req.json<{ amount: number }>();
+  if (!(DONATE_AMOUNTS as readonly number[]).includes(amount)) return c.json({ error: 'bad amount' }, 400);
+  const res: DonateResponse = { url: await donationInvoice(new Api(c.env.BOT_TOKEN), c.get('user').id, amount) };
+  return c.json(res);
+});
+
+/** Предложение поддержать показано: больше не показываем */
+api.post('/support/offered', async (c) => {
+  await updateUser(c.env.DB, c.get('user').id, { support_offered_at: Date.now() });
+  return c.json({ ok: true });
+});
+
 api.post('/session/complete', async (c) => {
   const user = c.get('user');
-  const s = await recordActivity(c.env.DB, user, Date.now());
+  const now = Date.now();
+  const s = await recordActivity(c.env.DB, user, now);
+  const sessionsDone = user.sessions_done + 1;
+  const [donatedAt] = await Promise.all([lastDonationAt(c.env.DB, user.id), updateUser(c.env.DB, user.id, { sessions_done: sessionsDone })]);
+  const offerSupport = shouldOfferSupport({ sessionsDone, offeredAt: user.support_offered_at, donatedAt }, now);
   // После первой сессии бот предлагает вопрос дня в чате — в фоне, чтобы не задерживать экран результатов
   c.executionCtx.waitUntil(offerDailyQuestion(c.env.DB, new Api(c.env.BOT_TOKEN), user));
-  const res: CompleteResponse = { current: s.current, best: s.best, extended: s.extended };
+  const res: CompleteResponse = { current: s.current, best: s.best, extended: s.extended, offerSupport };
   return c.json(res);
 });
 

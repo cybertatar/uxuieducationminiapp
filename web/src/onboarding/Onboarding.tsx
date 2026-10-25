@@ -34,6 +34,8 @@ const profile: Profile = {
   reviewDue: 0,
   weakTopics: [],
   lessonsRead: [],
+  lastTrack: null,
+  supporter: false,
   settings: {
     dailyEnabled: false,
     dailyTime: '10:00',
@@ -275,6 +277,7 @@ export function Onboarding() {
                 onSettings={() => {}}
                 onCalendar={() => {}}
                 onSuggest={() => {}}
+                onSupport={() => {}}
               />
             </div>
           </div>

@@ -30,6 +30,10 @@ export interface Profile {
   weakTopics: WeakTopic[];
   /** id прочитанных уроков «Учебника» */
   lessonsRead: string[];
+  /** Тема, по которой человек последний раз начинал тест, — для «Продолжить» на главной */
+  lastTrack: TrackId | null;
+  /** Человек уже поддерживал проект звёздами: вместо просьбы — спасибо */
+  supporter: boolean;
   settings: Settings;
 }
 
@@ -61,6 +65,8 @@ export interface CompleteResponse {
   current: number;
   best: number;
   extended: boolean;
+  /** Пора предложить поддержать проект: 'first' — впервые, 'again' — повторно; правило — в src/support.ts */
+  offerSupport: 'first' | 'again' | null;
 }
 
 export type SettingsPatch = Partial<Pick<Settings, 'dailyEnabled' | 'dailyTime' | 'reminderEnabled' | 'reminderTime'>> & {
@@ -131,6 +137,22 @@ export interface ReportRequest {
   comment?: string;
   answer?: ReportAnswer;
   context?: ReportContext;
+}
+
+/** Сколько звёзд Telegram можно отправить автору: выбор на экране «Поддержать проект» */
+export const DONATE_AMOUNTS = [50, 100, 250, 500] as const;
+
+/**
+ * Другие способы поддержать — картой или переводом: ссылки на страницы сервисов донатов.
+ * Видны на экране «Поддержать проект» и в /donate у бота. Пустой список — только звёзды.
+ */
+export const DONATE_LINKS: { title: string; hint: string; url: string }[] = [
+  { title: 'Картой через ЮMoney', hint: 'Перевод в кошелёк автора, сумму выбираешь сам', url: 'https://yoomoney.ru/to/4100119667605523' },
+];
+
+export interface DonateResponse {
+  /** Ссылка на счёт для WebApp.openInvoice */
+  url: string;
 }
 
 /** Ограничения формы «Предложить вопрос»: одни и те же в приложении и на сервере */
