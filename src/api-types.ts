@@ -149,7 +149,9 @@ export const SUPPORT_OFFER_AFTER = 3;
  * Другие способы поддержать — картой или переводом: ссылки на страницы сервисов донатов.
  * Видны на экране «Поддержать проект» и в /donate у бота. Пустой список — только звёзды.
  */
-export const DONATE_LINKS: { title: string; hint: string; url: string }[] = [];
+export const DONATE_LINKS: { title: string; hint: string; url: string }[] = [
+  { title: 'Картой через ЮMoney', hint: 'Перевод в кошелёк автора, сумму выбираешь сам', url: 'https://yoomoney.ru/to/4100119667605523' },
+];
 
 export interface DonateResponse {
   /** Ссылка на счёт для WebApp.openInvoice */

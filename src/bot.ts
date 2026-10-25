@@ -259,7 +259,7 @@ export function donationInvoice(api: Api, userId: number, amount: number): Promi
 function donateKeyboard(webApp: { url: string }) {
   const kb = new InlineKeyboard();
   for (const a of DONATE_AMOUNTS) kb.text(`${a} ⭐`, `d:${a}`);
-  for (const link of DONATE_LINKS) kb.row().url(link.title, link.url);
+  for (const link of DONATE_LINKS) kb.row().url(`💳 ${link.title}`, link.url);
   return kb.row().webApp('Открыть тренажёр', webApp);
 }
 
