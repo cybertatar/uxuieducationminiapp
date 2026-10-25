@@ -506,3 +506,14 @@ describe('предложение поддержать проект', () => {
     expect(shouldOfferSupport(state({ donatedAt: now - 90 * DAY, offeredAt: now - 5 * DAY }), now)).toBeNull();
   });
 });
+
+describe('типографика', () => {
+  it('склеивает короткие слова, тире и числа со следующим словом', async () => {
+    const { typo } = await import('../src/typography');
+    const n = ' ';
+    expect(typo('Тренажёр бесплатный и без рекламы — и таким останется.')).toBe(`Тренажёр бесплатный и${n}без${n}рекламы${n}— и${n}таким останется.`);
+    expect(typo('и в то же время')).toBe(`и${n}в${n}то${n}же время`);
+    expect(typo('Уже 3 теста позади!')).toBe(`Уже${n}3${n}теста позади!`);
+    expect(typo('Было бы здорово')).toBe(`Было${n}бы здорово`);
+  });
+});

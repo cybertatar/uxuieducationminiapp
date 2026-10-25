@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { readingMinutes, trackById, type Lesson as LessonData, type LessonBlock } from '../../../content';
+import { typo } from '../../../src/typography';
 import { BackButton, MainButton } from '../buttons';
 import { ExternalLink } from '../ExternalLink';
 import { plural } from '../format';
@@ -46,13 +47,16 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
   }, [lesson.id, read]);
 
   const count = lesson.practice.length;
+  const sections = sectionsOf(lesson.blocks);
+  const root = useRef<HTMLElement>(null);
 
   return (
-    <main className="screen lesson">
+    <main className="screen lesson" ref={root}>
       <BackButton onClick={onBack} />
-      <ReadingProgress end={takeaways} />
 
-      <header className="lesson__head">
+      {/* Шапка как у теста: сегменты — части урока и «Запомни главное», под ними тема и «Поделиться» */}
+      <div className="lesson__sticky">
+        <ReadingProgress root={root} parts={sections.length + 1} />
         <div className="lesson__top">
           <span className="chip">{track.title}</span>
           <ShareButton
@@ -60,6 +64,9 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
             card={{ kind: 'lesson', tag: `Учебник · ${track.title}`, title: lesson.title, description: lesson.description, meta: `${minutes} мин · по материалам ${origin}` }}
           />
         </div>
+      </div>
+
+      <header className="lesson__head">
         <h1 className="page-title">{lesson.title}</h1>
         <p className="hint">
           {minutes} мин · пересказ по материалам {origin}
@@ -68,7 +75,7 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
       </header>
 
       <article className="lesson__body">
-        {sectionsOf(lesson.blocks).map((section, i) => (
+        {sections.map((section, i) => (
           <section key={i} className="card lesson__section">
             {section.title && <h2 className="lesson__h">{section.title}</h2>}
             {section.blocks.map(renderBlock)}
@@ -100,22 +107,31 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
   );
 }
 
+/** Какую долю карточки человек уже прочитал: всё, что выше этой линии экрана */
+const READ_LINE = 0.8;
+
 /**
- * Полоса чтения у верхнего края: сразу видно, насколько урок длинный и сколько осталось.
- * 100% — когда «Запомни главное» целиком на экране; дальше идут только ссылки и кнопка.
+ * Прогресс чтения сегментами, как в тесте: сегмент на каждую карточку урока и на «Запомни главное».
+ * Прочитанные карточки закрашены, текущая заполняется по мере прокрутки.
  */
-function ReadingProgress({ end }: { end: RefObject<HTMLElement | null> }) {
-  const [progress, setProgress] = useState(0);
+function ReadingProgress({ root, parts }: { root: RefObject<HTMLElement | null>; parts: number }) {
+  const [fills, setFills] = useState<number[]>(() => Array(parts).fill(0));
 
   useEffect(() => {
     let frame = 0;
     const update = () => {
       frame = 0;
-      const el = end.current;
-      if (!el) return;
-      const bottom = el.getBoundingClientRect().bottom + window.scrollY;
-      const scrollable = bottom - window.innerHeight;
-      setProgress(scrollable <= 0 ? 1 : Math.min(1, Math.max(0, window.scrollY / scrollable)));
+      const cards = root.current?.querySelectorAll<HTMLElement>('.lesson__section, .lesson__takeaways');
+      if (!cards) return;
+      const line = window.innerHeight * READ_LINE;
+      // Долистали до конца страницы — значит, прочитано всё, даже если последняя карточка не дошла до линии
+      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      setFills(
+        [...cards].map((el) => {
+          const r = el.getBoundingClientRect();
+          return atEnd ? 1 : Math.min(1, Math.max(0, (line - r.top) / r.height));
+        }),
+      );
     };
     const schedule = () => {
       frame ||= requestAnimationFrame(update);
@@ -132,13 +148,17 @@ function ReadingProgress({ end }: { end: RefObject<HTMLElement | null> }) {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
     };
-  }, [end]);
+  }, [root]);
 
-  const pct = Math.round(progress * 100);
+  const done = fills.filter((f) => f >= 1).length;
   return (
-    <div className="reading-progress" role="progressbar" aria-label="Прочитано урока" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <span className="reading-progress__fill" style={{ transform: `scaleX(${progress})` }} />
-    </div>
+    <ol className="segments" aria-label={`Прочитано частей урока: ${done} из ${parts}`}>
+      {fills.map((f, i) => (
+        <li key={i} className="segments__item lesson__segment">
+          <span style={{ transform: `scaleX(${f})` }} />
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -202,7 +222,9 @@ function renderBlock(b: LessonBlock, i: number): ReactNode {
   }
 }
 
-/** **жирный** внутри строки урока */
+/** **жирный** внутри строки урока; предлоги и тире не висят на краю строки */
 function rich(text: string): ReactNode {
-  return text.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
+  return typo(text)
+    .split(/\*\*(.+?)\*\*/)
+    .map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
 }

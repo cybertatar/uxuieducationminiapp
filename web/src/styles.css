@@ -95,6 +95,17 @@ p {
   margin: 0;
 }
 
+/* Без одинокого слова в последней строке абзаца; заголовки — строками примерно равной длины */
+p,
+.hint {
+  text-wrap: pretty;
+}
+
+h1,
+h2 {
+  text-wrap: balance;
+}
+
 .screen {
   max-width: 560px;
   margin: 0 auto;
@@ -1160,32 +1171,27 @@ button.card:active:not(:disabled) {
 
 /* ---------- Урок ---------- */
 
-/* Полоса чтения: прилипает под шапкой Telegram, ширина — как у колонки контента */
-.reading-progress {
-  position: fixed;
-  top: calc(var(--safe-top) + 4px);
-  left: 50%;
-  z-index: 5;
-  width: min(560px, 100%);
-  padding: 0 var(--side);
-  transform: translateX(-50%);
-  pointer-events: none;
+/* Шапка урока прилипает, как шапка теста: сегменты чтения, под ними тема и «Поделиться» */
+.lesson__sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: calc(-1 * (var(--safe-top) + 12px)) calc(-1 * var(--side)) 0;
+  padding: calc(var(--safe-top) + 12px) var(--side) 8px;
+  background: var(--bg);
 }
 
-.reading-progress::before,
-.reading-progress__fill {
+.lesson__segment {
+  overflow: hidden;
+}
+
+.lesson__segment span {
   display: block;
-  height: 4px;
-  border-radius: 2px;
-}
-
-.reading-progress::before {
-  content: '';
-  background: color-mix(in srgb, var(--hint-raw) 22%, transparent);
-}
-
-.reading-progress__fill {
-  margin-top: -4px;
+  height: 100%;
+  border-radius: inherit;
   background: var(--accent);
   transform-origin: left;
   transition: transform 0.1s linear;
@@ -1421,14 +1427,19 @@ button.card:active:not(:disabled) {
 .support__hero {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  text-align: center;
+}
+
+.support__hero .page-title {
+  margin: 4px 0 0;
 }
 
 .support__text {
-  max-width: 360px;
-  color: var(--hint);
+  max-width: 440px;
+  font-size: 16px;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .support__amounts {
@@ -1502,27 +1513,36 @@ button.card:active:not(:disabled) {
   animation: sheet-fade 0.2s ease;
 }
 
+/* Текст в несколько строк выровнен влево: по центру рваный левый край читается хуже */
 .sheet {
   width: min(560px, 100%);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  padding: 20px var(--side) calc(var(--safe-bottom-device) + 16px);
+  padding: 20px 20px calc(var(--safe-bottom-device) + 16px);
   border-radius: 20px 20px 0 0;
   background: var(--surface);
-  text-align: center;
   animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .sheet__title {
-  font-size: 20px;
+  margin-top: 4px;
+  font-size: 22px;
   font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 .sheet__text {
-  max-width: 340px;
-  font-size: 15px;
+  font-size: 16px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.sheet__note {
+  font-size: 14px;
+  text-wrap: pretty;
 }
 
 .sheet__actions {
