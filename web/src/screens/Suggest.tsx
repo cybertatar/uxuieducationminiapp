@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { sections, trackById, type TrackId } from '../../../content';
 import { SUGGEST_LIMITS, type SuggestRequest } from '../../../src/api-types';
+import { normalizeSource } from '../../../src/suggestions';
 import { api, ApiError } from '../api';
 import { BackButton, MainButton } from '../buttons';
 import { Cat } from '../Cat';
@@ -62,6 +63,8 @@ export function Suggest({ track, onBack }: Props) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Ошибки полей показываем после первой попытки отправить, дальше они обновляются на ходу
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (!sent) saveDraft(draft);
@@ -77,7 +80,18 @@ export function Suggest({ track, onBack }: Props) {
   const wrong = draft.wrong.map((w) => w.trim()).filter(Boolean);
   const options = [draft.correct.trim(), ...wrong].map((o) => o.toLowerCase());
   const duplicate = new Set(options).size !== options.length;
-  const badSource = draft.source.trim() !== '' && !/^https?:\/\/\S+$/.test(draft.source.trim());
+  const source = normalizeSource(draft.source);
+  const badSource = draft.source.trim() !== '' && !source;
+  const tooShort = (s: string, min: number) => (len(s) < min ? `Нужно хотя бы ${min} символов, сейчас ${len(s)}.` : null);
+  // Повторы и неверная ссылка видны сразу, а пустые поля — только после попытки отправить: не ругаем форму, которую ещё заполняют
+  const problems = {
+    track: checked && draft.track === '' ? 'Выбери тему.' : null,
+    text: checked ? tooShort(draft.text, SUGGEST_LIMITS.text[0]) : null,
+    correct: checked && !len(draft.correct) ? 'Напиши правильный ответ.' : null,
+    wrong: duplicate ? 'Варианты не должны повторяться.' : checked && !wrong.length ? 'Добавь хотя бы один неправильный ответ.' : null,
+    explanation: checked ? tooShort(draft.explanation, SUGGEST_LIMITS.explanation[0]) : null,
+    source: badSource ? 'Это не похоже на ссылку. Скопируй адрес страницы из браузера.' : null,
+  };
   const valid =
     draft.track !== '' &&
     len(draft.text) >= SUGGEST_LIMITS.text[0] &&
@@ -87,8 +101,18 @@ export function Suggest({ track, onBack }: Props) {
     !badSource &&
     len(draft.explanation) >= SUGGEST_LIMITS.explanation[0];
 
+  // Кнопка не блокируется молча: по нажатию подсвечиваем, что не так, и ведём к первому такому полю
+  useEffect(() => {
+    if (checked) document.querySelector('.suggest .is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [checked]);
+
   const send = async () => {
-    if (!valid || draft.track === '') return;
+    if (!valid || draft.track === '') {
+      haptic.error();
+      if (checked) document.querySelector('.suggest .is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setChecked(true);
+      return;
+    }
     setSending(true);
     setError(null);
     const body: SuggestRequest = {
@@ -97,7 +121,7 @@ export function Suggest({ track, onBack }: Props) {
       correct: draft.correct,
       wrong,
       explanation: draft.explanation,
-      source: draft.source.trim() || undefined,
+      source: source ?? undefined,
       screen: draft.screen.trim() || undefined,
     };
     try {
@@ -142,31 +166,32 @@ export function Suggest({ track, onBack }: Props) {
       <h1 className="page-title">Предложить вопрос</h1>
       <p className="hint section-hint">Лучшие вопросы попадут в тренажёр с подписью «Автор вопроса: {authorName()}».</p>
 
-      <h2 className="section-title">Тема</h2>
-      <label className="cell suggest__track">
-        <span className="visually-hidden">Тема</span>
-        <select value={draft.track} onChange={(e) => set('track', e.target.value as TrackId)}>
-          <option value="" disabled>
-            Выбери тему
-          </option>
-          {sections.map((s) => (
-            <optgroup key={s.id} label={s.title}>
-              {s.tracks.map((t) => (
-                <option key={t} value={t}>
-                  {trackById.get(t)!.title}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <span className="chevron" aria-hidden>
-          ›
-        </span>
-      </label>
+      <Field label="Тема" id="suggest-track" error={problems.track}>
+        <div className="cell suggest__track">
+          <select id="suggest-track" aria-invalid={!!problems.track} value={draft.track} onChange={(e) => set('track', e.target.value as TrackId)}>
+            <option value="" disabled>
+              Выбери тему
+            </option>
+            {sections.map((s) => (
+              <optgroup key={s.id} label={s.title}>
+                {s.tracks.map((t) => (
+                  <option key={t} value={t}>
+                    {trackById.get(t)!.title}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <span className="chevron" aria-hidden>
+            ›
+          </span>
+        </div>
+      </Field>
 
-      <Field label="Вопрос" id="suggest-text">
+      <Field label="Вопрос" id="suggest-text" error={problems.text}>
         <textarea
           id="suggest-text"
+          aria-invalid={!!problems.text}
           className="suggest__input"
           rows={3}
           maxLength={SUGGEST_LIMITS.text[1]}
@@ -176,17 +201,18 @@ export function Suggest({ track, onBack }: Props) {
         />
       </Field>
 
-      <Field label="Правильный ответ" id="suggest-correct">
-        <input id="suggest-correct" className="suggest__input" maxLength={SUGGEST_LIMITS.option[1]} value={draft.correct} onChange={(e) => set('correct', e.target.value)} />
+      <Field label="Правильный ответ" id="suggest-correct" error={problems.correct}>
+        <input id="suggest-correct" aria-invalid={!!problems.correct} className="suggest__input" maxLength={SUGGEST_LIMITS.option[1]} value={draft.correct} onChange={(e) => set('correct', e.target.value)} />
       </Field>
 
-      <Field label="Неправильные ответы" hint={duplicate ? 'Варианты не должны повторяться.' : 'Хотя бы один, лучше три — правдоподобные, а не очевидно глупые.'} error={duplicate}>
+      <Field label="Неправильные ответы" hint="Хотя бы один, лучше три — правдоподобные, а не очевидно глупые." error={problems.wrong}>
         <div className="suggest__group">
           {draft.wrong.map((w, i) => (
             <input
               key={i}
               className="suggest__input"
               aria-label={`Неправильный ответ ${i + 1}`}
+              aria-invalid={!!problems.wrong}
               placeholder={i === 0 ? 'Неправильный ответ' : 'Ещё один (необязательно)'}
               maxLength={SUGGEST_LIMITS.option[1]}
               value={w}
@@ -196,9 +222,10 @@ export function Suggest({ track, onBack }: Props) {
         </div>
       </Field>
 
-      <Field label="Почему правильно так" id="suggest-explanation" hint="Это увидят после ответа: объясни своими словами, в чём суть.">
+      <Field label="Почему правильно так" id="suggest-explanation" hint="Это увидят после ответа: объясни своими словами, в чём суть." error={problems.explanation}>
         <textarea
           id="suggest-explanation"
+          aria-invalid={!!problems.explanation}
           className="suggest__input"
           rows={4}
           maxLength={SUGGEST_LIMITS.explanation[1]}
@@ -210,15 +237,16 @@ export function Suggest({ track, onBack }: Props) {
       <Field
         label="Источник"
         id="suggest-source"
-        hint={badSource ? 'Ссылка должна начинаться с https://' : 'Статья NN/g, гайдлайн, справка Figma — по ней автор проверит вопрос.'}
-        error={badSource}
+        hint="Статья NN/g, гайдлайн, справка Figma — по ней автор проверит вопрос."
+        error={problems.source}
       >
         <input
           id="suggest-source"
+          aria-invalid={!!problems.source}
           className="suggest__input"
           type="url"
           inputMode="url"
-          placeholder="https://… (необязательно)"
+          placeholder="nngroup.com/articles/… (необязательно)"
           maxLength={SUGGEST_LIMITS.source}
           value={draft.source}
           onChange={(e) => set('source', e.target.value)}
@@ -243,15 +271,18 @@ export function Suggest({ track, onBack }: Props) {
         </p>
       )}
 
-      <MainButton text="Отправить" onClick={send} disabled={!valid} loading={sending} />
+      <MainButton text="Отправить" onClick={send} loading={sending} />
     </main>
   );
 }
 
-/** Поле формы: подпись в стиле заголовков разделов. id связывает подпись с полем; у группы полей подписи свои */
-function Field({ label, id, hint, error = false, children }: { label: string; id?: string; hint?: string; error?: boolean; children: ReactNode }) {
+/**
+ * Поле формы: подпись в стиле заголовков разделов. id связывает подпись с полем; у группы полей подписи свои.
+ * error — что не так с полем: показывается вместо подсказки.
+ */
+function Field({ label, id, hint, error, children }: { label: string; id?: string; hint?: string; error?: string | null; children: ReactNode }) {
   return (
-    <div className="suggest__field">
+    <div className={`suggest__field ${error ? 'is-invalid' : ''}`}>
       {id ? (
         <label className="section-title" htmlFor={id}>
           {label}
@@ -260,7 +291,13 @@ function Field({ label, id, hint, error = false, children }: { label: string; id
         <h2 className="section-title">{label}</h2>
       )}
       {children}
-      {hint && <p className={`section-hint ${error ? 'suggest__error' : 'hint'}`}>{hint}</p>}
+      {error ? (
+        <p className="section-hint suggest__error" role="alert">
+          {error}
+        </p>
+      ) : (
+        hint && <p className="section-hint hint">{hint}</p>
+      )}
     </div>
   );
 }

@@ -26,12 +26,16 @@ export interface SuggestionRow {
 const clean = (s: unknown) => (typeof s === 'string' ? s.trim() : '');
 const fits = (s: string, [min, max]: readonly [number, number]) => s.length >= min && s.length <= max;
 
-function parseSource(s: unknown): string | null {
+/**
+ * Ссылка на источник: протокол можно не писать, «nngroup.com/articles/…» станет https://nngroup.com/articles/….
+ * Берём только http и https с доменом через точку. null — это не ссылка.
+ */
+export function normalizeSource(s: unknown): string | null {
   const raw = clean(s);
-  if (!raw || raw.length > SUGGEST_LIMITS.source) return null;
+  if (!raw || raw.length > SUGGEST_LIMITS.source || /\s/.test(raw)) return null;
   try {
-    const url = new URL(raw);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+    const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(raw) ? raw : `https://${raw}`);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && url.hostname.includes('.') ? url.href : null;
   } catch {
     return null;
   }
@@ -53,7 +57,7 @@ export function parseSuggestion(body: Partial<SuggestRequest>) {
   const all = [correct, ...wrong].map((o) => o.toLowerCase());
   if (new Set(all).size !== all.length) return null;
   const screen = clean(body.screen).slice(0, SUGGEST_LIMITS.screen);
-  return { track, text, correct, wrong, explanation, source: parseSource(body.source), screen: screen || null };
+  return { track, text, correct, wrong, explanation, source: normalizeSource(body.source), screen: screen || null };
 }
 
 /** Подпись автора в разборе: ник, а без ника — имя */
