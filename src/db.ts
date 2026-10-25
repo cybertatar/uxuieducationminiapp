@@ -201,20 +201,6 @@ export async function saveShareImage(db: D1Database, id: string, data: Uint8Arra
   await db.prepare('INSERT INTO share_images (id, data, created_at, client) VALUES (?, ?, ?, ?)').bind(id, data, now, client).run();
 }
 
-/** Записать, как картинку скачали: метод, Range и User-Agent. Не больше 4000 символов на картинку */
-export async function logShareImageFetch(db: D1Database, id: string, line: string): Promise<void> {
-  await db.prepare("UPDATE share_images SET fetches = substr(coalesce(fetches, '') || ?, 1, 4000) WHERE id = ?").bind(`${line}\n`, id).run();
-}
-
-/** Последние картинки для диагностики: размер, начало и конец файла, кто загрузил и как скачивали */
-export async function recentShareImages(db: D1Database, limit = 10) {
-  const { results } = await db
-    .prepare('SELECT id, length(data) AS bytes, hex(substr(data, 1, 4)) AS head, hex(substr(data, -2)) AS tail, created_at, client, fetches FROM share_images ORDER BY created_at DESC LIMIT ?')
-    .bind(limit)
-    .all();
-  return results;
-}
-
 export async function getShareImage(db: D1Database, id: string): Promise<Uint8Array | null> {
   const row = await db.prepare('SELECT data FROM share_images WHERE id = ?').bind(id).first<{ data: ArrayBuffer | number[] }>();
   // D1 отдаёт BLOB массивом чисел или ArrayBuffer — Uint8Array понимает оба
