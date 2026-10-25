@@ -191,7 +191,7 @@ api.post('/share', async (c) => {
     const custom = decodeShareImage(body.image);
     if (custom) {
       const id = crypto.randomUUID().replaceAll('-', '');
-      await saveShareImage(c.env.DB, id, custom, Date.now());
+      await saveShareImage(c.env.DB, id, custom, Date.now(), c.req.header('User-Agent') ?? null);
       image = `${c.env.WEBAPP_URL}/share-img/${id}.jpg`;
     }
     const prepared = await new Api(c.env.BOT_TOKEN).savePreparedInlineMessage(
