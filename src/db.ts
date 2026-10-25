@@ -1,5 +1,6 @@
 import type { AnswerState } from './review';
 import type { QuestionStats, ReportRow } from './reports';
+import type { SuggestionRow, SuggestionStatus } from './suggestions';
 
 export interface UserRow {
   id: number;
@@ -272,4 +273,44 @@ export async function resolveReport(db: D1Database, id: number, status: 'fixed' 
 /** Автор бота по нику: ему уходят сообщения о проблемах в вопросах. null — автор ещё не писал боту или заблокировал его. */
 export async function findMessageableUser(db: D1Database, username: string): Promise<UserRow | null> {
   return db.prepare('SELECT * FROM users WHERE lower(username) = ? AND can_message = 1').bind(username.toLowerCase()).first<UserRow>();
+}
+
+export async function addSuggestion(
+  db: D1Database,
+  userId: number,
+  s: { track: string; text: string; correct: string; wrong: string[]; explanation: string; source: string | null; screen: string | null },
+  now: number,
+): Promise<SuggestionRow> {
+  const row = await db
+    .prepare(
+      `INSERT INTO suggestions (user_id, track, text, correct, wrong, explanation, source, screen, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+    )
+    .bind(userId, s.track, s.text, s.correct, JSON.stringify(s.wrong), s.explanation, s.source, s.screen, now)
+    .first<SuggestionRow>();
+  return row!;
+}
+
+export async function getSuggestion(db: D1Database, id: number): Promise<SuggestionRow | null> {
+  return db.prepare('SELECT * FROM suggestions WHERE id = ?').bind(id).first<SuggestionRow>();
+}
+
+export async function suggestionsSince(db: D1Database, userId: number, since: number): Promise<number> {
+  const row = await db.prepare('SELECT COUNT(*) AS n FROM suggestions WHERE user_id = ? AND created_at >= ?').bind(userId, since).first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+/** Сколько вопросов человек предложил и сколько из них принято или уже опубликовано */
+export async function suggestionCounts(db: D1Database, userId: number): Promise<{ suggested: number; accepted: number }> {
+  const row = await db
+    .prepare("SELECT COUNT(*) AS suggested, COALESCE(SUM(status IN ('accepted', 'published')), 0) AS accepted FROM suggestions WHERE user_id = ?")
+    .bind(userId)
+    .first<{ suggested: number; accepted: number }>();
+  return row ?? { suggested: 0, accepted: 0 };
+}
+
+/** Переводит предложение в новый статус, только если оно сейчас в from: повторное нажатие кнопки ничего не делает */
+export async function moveSuggestion(db: D1Database, id: number, from: SuggestionStatus, to: SuggestionStatus, now: number): Promise<boolean> {
+  const res = await db.prepare('UPDATE suggestions SET status = ?, resolved_at = ? WHERE id = ? AND status = ?').bind(to, now, id, from).run();
+  return res.meta.changes > 0;
 }

@@ -9,6 +9,7 @@ import { Confetti } from '../quiz/Confetti';
 import { StudyLinks } from '../StudyLinks';
 import { notificationsOff, saveSettings } from '../notify';
 import { ShareButton } from '../share';
+import { SuggestCard } from '../SuggestCard';
 import { haptic } from '../tg';
 import type { QuizResult } from './Quiz';
 
@@ -25,6 +26,8 @@ interface Props {
   onAgain: () => void;
   /** Открыть урок учебника по теме ошибки */
   onLesson: (id: string) => void;
+  /** «Предложить вопрос» по только что пройденной теме; нет — после разминки и повторения, где темы вперемешку */
+  onSuggest?: () => void;
   /** Итог разминки: вместо «Ещё 10 вопросов» зовём в тему, где больше всего ошибок, или к выбору темы */
   warmup?: { track: TrackId | null; onTrack: (track: TrackId) => void; onTracks: () => void };
   /** Закрепление после урока: дальше — следующий урок, а после последнего — вопросы по всей теме */
@@ -65,7 +68,7 @@ function useCountUp(to: number, from: number, enabled: boolean) {
   return value;
 }
 
-export function Result({ result, session, profile, onProfile, onSettings, canRepeat, starting, onHome, onAgain, onLesson, warmup, lesson }: Props) {
+export function Result({ result, session, profile, onProfile, onSettings, canRepeat, starting, onHome, onAgain, onLesson, onSuggest, warmup, lesson }: Props) {
   const [streak, setStreak] = useState<CompleteResponse | null>(null);
   const ratio = result.correct / result.total;
   const { mood, text } = headline(ratio);
@@ -159,6 +162,8 @@ export function Result({ result, session, profile, onProfile, onSettings, canRep
           </div>
         </>
       )}
+
+      {onSuggest && <SuggestCard onClick={onSuggest} />}
 
       {lesson ? (
         lesson.next ? (

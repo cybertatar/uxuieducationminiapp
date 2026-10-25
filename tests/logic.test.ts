@@ -9,6 +9,7 @@ import { plural } from '../src/bot';
 import { questionById, questions, questionsByTrack, sections, warmupPool, type ChoiceQuestion, type OrderQuestion, type Question, type TrackId } from '../content';
 import { REPORT_COMMENT_MAX, REPORT_REASONS } from '../src/api-types';
 import { parseReport, reportText, type ReportRow } from '../src/reports';
+import { authorName, nextQuestionId, parseSuggestion, questionSnippet, suggestionText, type SuggestionRow } from '../src/suggestions';
 import { accuracy, trackHighlights, weakTopics } from '../src/stats';
 import { parseSource, type UserRow } from '../src/db';
 
@@ -385,10 +386,94 @@ describe('reports', () => {
     );
     expect(text).toContain('Тап: (12, 34) ❌');
     expect(text).toContain('Нужная зона');
-    expect(text).toContain('Этот человек: раньше не отвечал');
+    expect(text).toContain('Этот человек: ответов на вопрос ещё не было');
     expect(text).toContain('ответов ещё нет');
     expect(text).toContain('Исправлено');
     expect(text).toContain('От: (id 42)');
     expect(text).not.toContain('сообщений о вопросе');
+  });
+});
+
+describe('suggestions', () => {
+  const ok = {
+    track: 'heuristics' as const,
+    text: '  Что показать во время долгой загрузки?  ',
+    correct: 'Прогресс и оставшееся время',
+    wrong: ['Спиннер', '  ', 'Ничего'],
+    explanation: 'Так человек понимает, сколько ждать.',
+    source: 'https://www.nngroup.com/articles/progress-indicators/',
+  };
+  const row = (over: Partial<SuggestionRow> = {}): SuggestionRow => ({
+    id: 7,
+    user_id: 42,
+    track: 'heuristics',
+    text: "Что значит 'Hug'?",
+    correct: 'Размер по содержимому',
+    wrong: JSON.stringify(['Фиксированный размер']),
+    explanation: 'Строка\nс переносом',
+    source: 'https://help.figma.com',
+    screen: null,
+    status: 'new',
+    created_at: 0,
+    resolved_at: null,
+    ...over,
+  });
+
+  it('чистит форму: пробелы по краям, пустые неправильные варианты', () => {
+    expect(parseSuggestion(ok)).toEqual({
+      track: 'heuristics',
+      text: 'Что показать во время долгой загрузки?',
+      correct: 'Прогресс и оставшееся время',
+      wrong: ['Спиннер', 'Ничего'],
+      explanation: 'Так человек понимает, сколько ждать.',
+      source: 'https://www.nngroup.com/articles/progress-indicators/',
+      screen: null,
+    });
+  });
+
+  it('отклоняет неизвестную тему, короткие тексты и повторяющиеся варианты', () => {
+    expect(parseSuggestion({ ...ok, track: 'нет' as never })).toBeNull();
+    expect(parseSuggestion({ ...ok, text: 'Коротко' })).toBeNull();
+    expect(parseSuggestion({ ...ok, explanation: 'Мало' })).toBeNull();
+    expect(parseSuggestion({ ...ok, wrong: ['  '] })).toBeNull();
+    expect(parseSuggestion({ ...ok, wrong: ['a', 'b', 'c', 'd'] })).toBeNull();
+    expect(parseSuggestion({ ...ok, wrong: ['прогресс И оставшееся время'] })).toBeNull();
+  });
+
+  it('берёт только ссылки http и https', () => {
+    expect(parseSuggestion({ ...ok, source: 'javascript:alert(1)' })?.source).toBeNull();
+    expect(parseSuggestion({ ...ok, source: 'не ссылка' })?.source).toBeNull();
+  });
+
+  it('следующий id продолжает нумерацию трека', () => {
+    const ids = questionsByTrack('heuristics').map((q) => Number(/-(\d+)$/.exec(q.id)![1]));
+    expect(nextQuestionId('heuristics', questions)).toBe(`h-${String(Math.max(...ids) + 1).padStart(3, '0')}`);
+    expect(questionById.has(nextQuestionId('figma-props', questions))).toBe(false);
+  });
+
+  it('подпись автора — ник, а без ника имя', () => {
+    expect(authorName({ first_name: 'Аня', username: 'anya' })).toBe('@anya');
+    expect(authorName({ first_name: 'Аня', username: null })).toBe('Аня');
+  });
+
+  it('сообщение автору: вопрос, варианты, разбор, опыт и статус', () => {
+    const d = { from: { first_name: 'Аня', username: 'anya' }, track: { answered: 12, attempts: 20, correct: 15 }, suggested: 3, accepted: 1 };
+    const text = suggestionText(row(), d);
+    expect(text).toContain("<b>Что значит 'Hug'?</b>");
+    expect(text).toContain('✅ Размер по содержимому');
+    expect(text).toContain('❌ Фиксированный размер');
+    expect(text).toContain('вопросов темы 12, верно 75%');
+    expect(text).toContain('Предложено вопросов: 3, принято: 1');
+    expect(text).not.toContain('Принят');
+    expect(suggestionText(row({ status: 'accepted' }), { ...d, track: { answered: 0, attempts: 0, correct: 0 } })).toContain('в этой теме ответов нет');
+    expect(suggestionText(row({ status: 'published' }), d)).toContain('Опубликован');
+  });
+
+  it('заготовка для content: кавычки и переносы экранированы, автор подписан', () => {
+    const snippet = questionSnippet(row(), 'h-200', '@anya');
+    expect(snippet).toContain("text: 'Что значит \\'Hug\\'?',");
+    expect(snippet).toContain("options: ['Размер по содержимому', 'Фиксированный размер'],");
+    expect(snippet).toContain("explanation: 'Строка\\nс переносом',");
+    expect(snippet).toContain("author: '@anya',");
   });
 });

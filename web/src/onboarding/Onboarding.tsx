@@ -274,6 +274,7 @@ export function Onboarding() {
                 onLesson={() => {}}
                 onSettings={() => {}}
                 onCalendar={() => {}}
+                onSuggest={() => {}}
               />
             </div>
           </div>

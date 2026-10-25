@@ -1,5 +1,5 @@
 import { Api, Bot, GrammyError, InlineKeyboard, type Context } from 'grammy';
-import { isTextOnly, questionById, questions, sections, trackById, type ChoiceQuestion, type Question } from '../content';
+import { isTextOnly, questionById, questions, questionsByTrack, sections, trackById, type ChoiceQuestion, type Question } from '../content';
 import {
   deleteShareImagesBefore,
   findMessageableUser,
@@ -7,12 +7,15 @@ import {
   getAnswers,
   getConfig,
   getReport,
+  getSuggestion,
   getUser,
+  moveSuggestion,
   parseSource,
   questionStats,
   reportsForQuestion,
   resolveReport,
   setConfig,
+  suggestionCounts,
   upsertUser,
   updateUser,
   usersDue,
@@ -21,6 +24,7 @@ import {
 import type { Env } from './env';
 import { reportText, type ReportRow } from './reports';
 import { pickDailyQuestion } from './select';
+import { authorName, nextQuestionId, questionSnippet, suggestionText, type SuggestionRow, type SuggestionStatus } from './suggestions';
 import { isPaused, pauseUntil, recordActivity, recordAnswer, schedule, shouldOfferDaily, today, updateSettings } from './service';
 import { streakAtRisk } from './streak';
 import { ONBOARDING_VERSION } from './onboarding-version';
@@ -184,6 +188,53 @@ export async function notifyOwnerAboutReport(db: D1Database, api: Api, report: R
   } catch (err) {
     await handleSendError(db, owner, err);
   }
+}
+
+// ---------- Предложенные вопросы ----------
+
+/** Кнопки по статусу: новый можно принять или отклонить, принятый — отметить опубликованным */
+function suggestionKeyboard(r: SuggestionRow) {
+  if (r.status === 'new') return new InlineKeyboard().text('✅ Принять', `sg:ok:${r.id}`).text('🙅 Отклонить', `sg:no:${r.id}`);
+  if (r.status === 'accepted') return new InlineKeyboard().text('🎉 Опубликован', `sg:pub:${r.id}`);
+  return undefined;
+}
+
+/** Текст сообщения автору: к вопросу бот добавляет опыт человека в этой теме и сколько он уже предлагал */
+async function suggestionMessage(db: D1Database, r: SuggestionRow, from: Pick<UserRow, 'first_name' | 'username'>) {
+  const [answers, counts] = await Promise.all([getAnswers(db, r.user_id), suggestionCounts(db, r.user_id)]);
+  const states = questionsByTrack(r.track)
+    .map((q) => answers.get(q.id))
+    .filter((a) => a !== undefined);
+  const track = {
+    answered: states.length,
+    attempts: states.reduce((n, a) => n + a.attempts, 0),
+    correct: states.reduce((n, a) => n + a.correctTotal, 0),
+  };
+  return suggestionText(r, { from, track, ...counts });
+}
+
+/** Пересылает предложенный вопрос автору. Если автор ещё не писал боту, вопрос остаётся только в таблице suggestions. */
+export async function notifyOwnerAboutSuggestion(db: D1Database, api: Api, r: SuggestionRow, from: UserRow) {
+  const owner = await findMessageableUser(db, OWNER_USERNAME);
+  if (!owner) return;
+  try {
+    await api.sendMessage(owner.id, await suggestionMessage(db, r, from), {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      reply_markup: suggestionKeyboard(r),
+    });
+  } catch (err) {
+    await handleSendError(db, owner, err);
+  }
+}
+
+/** Что бот пишет тому, кто предложил вопрос, при каждом решении автора */
+function suggestionNews(status: SuggestionStatus, trackTitle: string, author: string): string {
+  if (status === 'accepted') {
+    return `Твой вопрос по теме «${escape(trackTitle)}» принят 🎉 Скоро он появится в тренажёре с подписью «Автор вопроса: ${escape(author)}».`;
+  }
+  if (status === 'published') return `Твой вопрос по теме «${escape(trackTitle)}» теперь в тренажёре 🐈 Спасибо, что помогаешь другим учиться!`;
+  return `Спасибо за вопрос по теме «${escape(trackTitle)}»! В этот раз он не вошёл в тренажёр, но присылай ещё: автор читает каждый.`;
 }
 
 // ---------- Бот ----------
@@ -411,6 +462,44 @@ export function getBot(env: Env): Bot {
       }
     }
     await ctx.answerCallbackQuery({ text: status === 'fixed' ? 'Отмечено как исправленное' : 'Отмечено: не ошибка' });
+  });
+
+  // Автор решил судьбу предложенного вопроса: обновляем сообщение и рассказываем тому, кто его прислал
+  bot.callbackQuery(/^sg:(ok|no|pub):(\d+)$/, async (ctx) => {
+    if (ctx.from.username?.toLowerCase() !== OWNER_USERNAME) return ctx.answerCallbackQuery();
+    const id = Number(ctx.match[2]);
+    const [from, to] = ({ ok: ['new', 'accepted'], no: ['new', 'rejected'], pub: ['accepted', 'published'] } as const)[ctx.match[1] as 'ok' | 'no' | 'pub'];
+    const changed = await moveSuggestion(db, id, from, to, Date.now());
+    const r = await getSuggestion(db, id);
+    if (!changed || !r) return ctx.answerCallbackQuery({ text: 'Уже разобрано' });
+
+    const sender = await getUser(db, r.user_id);
+    const who = sender ?? { first_name: null, username: null };
+    const author = authorName(who);
+    await ctx.editMessageText(await suggestionMessage(db, r, who), {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      reply_markup: suggestionKeyboard(r),
+    });
+    // Заготовка для content/*.ts — ответом на карточку, чтобы её было удобно скопировать
+    if (to === 'accepted') {
+      const snippet = questionSnippet(r, nextQuestionId(r.track, questions), author);
+      await ctx.reply(`<pre><code class="language-ts">${escape(snippet)}</code></pre>`, {
+        parse_mode: 'HTML',
+        reply_parameters: { message_id: ctx.callbackQuery.message!.message_id },
+      });
+    }
+    if (sender?.can_message) {
+      try {
+        await ctx.api.sendMessage(sender.id, suggestionNews(to, trackById.get(r.track)!.title, author), {
+          parse_mode: 'HTML',
+          reply_markup: new InlineKeyboard().webApp('Открыть тренажёр', webApp),
+        });
+      } catch (err) {
+        await handleSendError(db, sender, err);
+      }
+    }
+    await ctx.answerCallbackQuery({ text: { accepted: 'Принят', rejected: 'Отклонён', published: 'Опубликован' }[to as 'accepted' | 'rejected' | 'published'] });
   });
 
   // Всё, что не команда и не кнопка: подсказываем, где живёт тренажёр. Регистрируется последним.

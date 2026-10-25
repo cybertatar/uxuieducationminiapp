@@ -132,3 +132,24 @@ export interface ReportRequest {
   answer?: ReportAnswer;
   context?: ReportContext;
 }
+
+/** Ограничения формы «Предложить вопрос»: одни и те же в приложении и на сервере */
+export const SUGGEST_LIMITS = {
+  text: [10, 400],
+  option: [1, 200],
+  explanation: [10, 1000],
+  source: 300,
+  screen: 500,
+  wrong: 3,
+} as const;
+
+/** wrong — от 1 до 3 неправильных вариантов. source и screen необязательны. */
+export interface SuggestRequest {
+  track: TrackId;
+  text: string;
+  correct: string;
+  wrong: string[];
+  explanation: string;
+  source?: string;
+  screen?: string;
+}

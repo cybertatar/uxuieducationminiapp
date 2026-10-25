@@ -9,6 +9,7 @@ import type {
   SettingsPatch,
   ShareRequest,
   ShareResponse,
+  SuggestRequest,
 } from '../../src/api-types';
 import { tg } from './tg';
 
@@ -47,6 +48,7 @@ export const api = {
   lessonRead: (lessonId: string) => request<{ ok: true }>('POST', '/lessons/read', { lessonId }),
   complete: () => request<CompleteResponse>('POST', '/session/complete'),
   report: (body: ReportRequest) => request<{ ok: true }>('POST', '/report', body),
+  suggest: (body: SuggestRequest) => request<{ ok: true }>('POST', '/suggest', body),
   share: (body: ShareRequest) => request<ShareResponse>('POST', '/share', body),
   settings: (patch: SettingsPatch) => request<{ ok: true }>('PATCH', '/settings', patch),
 };

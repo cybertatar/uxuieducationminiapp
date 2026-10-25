@@ -2,13 +2,14 @@ import { Api, InlineKeyboard, InputFile } from 'grammy';
 import type { InlineQueryResult } from 'grammy/types';
 import { Hono } from 'hono';
 import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
-import type { CompleteResponse, HistoryResponse, Profile, ReportRequest, SessionRequest, SettingsPatch, ShareRequest, ShareResponse } from './api-types';
+import type { CompleteResponse, HistoryResponse, Profile, ReportRequest, SessionRequest, SettingsPatch, ShareRequest, ShareResponse, SuggestRequest } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
-import { notifyOwnerAboutReport, offerDailyQuestion } from './bot';
+import { notifyOwnerAboutReport, notifyOwnerAboutSuggestion, offerDailyQuestion } from './bot';
 import {
   activityCount,
   activityDates,
   addReport,
+  addSuggestion,
   getAnswers,
   history,
   lessonsRead,
@@ -17,12 +18,14 @@ import {
   parseSource,
   reportsSince,
   saveShareImage,
+  suggestionsSince,
   upsertUser,
   type UserRow,
 } from './db';
 import type { Env } from './env';
 import { parseReport, REPORTS_PER_DAY } from './reports';
 import { isDue } from './review';
+import { parseSuggestion, SUGGESTIONS_PER_DAY } from './suggestions';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
 import { decodeShareImage, shareCaption, shareContent, sharePlainText } from './share';
 import { weakTopics } from './stats';
@@ -170,6 +173,18 @@ api.post('/report', async (c) => {
   if ((await reportsSince(c.env.DB, user.id, now - 86_400_000)) >= REPORTS_PER_DAY) return c.json({ error: 'too many reports' }, 429);
   const row = await addReport(c.env.DB, user.id, report, now);
   c.executionCtx.waitUntil(notifyOwnerAboutReport(c.env.DB, new Api(c.env.BOT_TOKEN), row, user));
+  return c.json({ ok: true });
+});
+
+/** «Предложить вопрос»: сохраняем и в фоне пересылаем автору */
+api.post('/suggest', async (c) => {
+  const user = c.get('user');
+  const suggestion = parseSuggestion(await c.req.json<Partial<SuggestRequest>>());
+  if (!suggestion) return c.json({ error: 'bad suggestion' }, 400);
+  const now = Date.now();
+  if ((await suggestionsSince(c.env.DB, user.id, now - 86_400_000)) >= SUGGESTIONS_PER_DAY) return c.json({ error: 'too many suggestions' }, 429);
+  const row = await addSuggestion(c.env.DB, user.id, suggestion, now);
+  c.executionCtx.waitUntil(notifyOwnerAboutSuggestion(c.env.DB, new Api(c.env.BOT_TOKEN), row, user));
   return c.json({ ok: true });
 });
 

@@ -15,6 +15,8 @@ describe('контент', () => {
     expect(q.explanation.length).toBeGreaterThan(20);
     expect(q.links.length).toBeGreaterThan(0);
     for (const l of q.links) expect(l.url).toMatch(/^https:\/\//);
+    // Подпись под разбором: ник или имя того, кто предложил вопрос
+    if (q.author !== undefined) expect(q.author.trim()).toMatch(/^.{1,40}$/);
 
     const images = [q.fix, 'image' in q ? q.image : undefined].filter(Boolean) as string[];
     if (q.kind === 'image-choice' || (q.kind === 'multi' && q.images)) images.push(...q.options);

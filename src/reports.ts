@@ -187,7 +187,7 @@ export function reportText(r: ReportRow, q: Question, d: ReportDetails): string 
     '🤖 <b>Данные</b>',
     `Вопрос: ${quote(q.text)}`,
     ...answerLines(q, answer),
-    d.history ? `Этот человек: попыток ${d.history.attempts}, верных ${d.history.correctTotal}` : 'Этот человек: раньше не отвечал',
+    d.history ? `Этот человек: попыток ${d.history.attempts}, верных ${d.history.correctTotal}` : 'Этот человек: ответов на вопрос ещё не было',
     statsLine(q, d.stats),
     sessionLine(context),
     deviceLine(context),
