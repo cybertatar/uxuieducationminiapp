@@ -197,7 +197,7 @@ function Continue({ profile, track, starting, onStart }: TabProps & { track: Tra
       </span>
       <span className="continue__go" aria-hidden>
         <svg viewBox="0 0 24 24">
-          <path d="M8.5 6.2v11.6a1.2 1.2 0 0 0 1.82 1.03l9.3-5.8a1.2 1.2 0 0 0 0-2.06l-9.3-5.8A1.2 1.2 0 0 0 8.5 6.2z" />
+          <path d="M8.5 6.5v11L18 12z" />
         </svg>
       </span>
     </button>
