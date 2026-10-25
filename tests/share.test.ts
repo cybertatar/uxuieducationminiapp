@@ -60,3 +60,16 @@ describe('поделиться', () => {
     expect(decodeShareImage('A'.repeat(1_000_000))).toBeNull();
   });
 });
+
+describe('Range для картинки карточки', async () => {
+  const { byteRange } = await import('../src/range');
+  it('разбирает куски, как их просит Telegram', () => {
+    expect(byteRange(undefined, 1000)).toBeNull();
+    expect(byteRange('bytes=0-499', 1000)).toEqual([0, 499]);
+    expect(byteRange('bytes=500-', 1000)).toEqual([500, 999]);
+    expect(byteRange('bytes=-200', 1000)).toEqual([800, 999]);
+    expect(byteRange('bytes=900-5000', 1000)).toEqual([900, 999]);
+    expect(byteRange('bytes=1000-', 1000)).toBe('invalid');
+    expect(byteRange('bytes=0-1,5-9', 1000)).toBeNull();
+  });
+});

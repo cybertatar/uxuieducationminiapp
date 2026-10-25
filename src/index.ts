@@ -3,6 +3,7 @@ import { webhookCallback } from 'grammy';
 import { api } from './api';
 import { getBot, runScheduled } from './bot';
 import { getShareImage } from './db';
+import { byteRange } from './range';
 import type { Env } from './env';
 import { botDescription, botShortDescription } from './texts';
 
@@ -10,13 +11,30 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.route('/', api);
 
-/** Карточка «Поделиться», нарисованная в Mini App: отсюда её скачивает Telegram */
+/**
+ * Карточка «Поделиться», нарисованная в Mini App: отсюда её скачивает Telegram.
+ * Telegram качает фото по частям (Range), поэтому отдаём и куски: на целый файл в ответ на каждый кусок
+ * он собирал картинку из повторяющегося начала — она обрывалась серой полосой.
+ */
 app.get('/share-img/:file', async (c) => {
   const id = c.req.param('file').replace(/\.jpg$/, '');
   if (!/^[0-9a-f]{32}$/.test(id)) return c.notFound();
   const data = await getShareImage(c.env.DB, id);
   if (!data) return c.notFound();
-  return new Response(data, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=172800, immutable' } });
+  const headers: Record<string, string> = {
+    'Content-Type': 'image/jpeg',
+    'Cache-Control': 'public, max-age=172800, immutable',
+    'Accept-Ranges': 'bytes',
+    ETag: `"${id}"`,
+  };
+  const range = byteRange(c.req.header('Range'), data.length);
+  if (range === 'invalid') return new Response(null, { status: 416, headers: { ...headers, 'Content-Range': `bytes */${data.length}` } });
+  if (!range) return new Response(data, { headers: { ...headers, 'Content-Length': String(data.length) } });
+  const [start, end] = range;
+  return new Response(data.slice(start, end + 1), {
+    status: 206,
+    headers: { ...headers, 'Content-Range': `bytes ${start}-${end}/${data.length}`, 'Content-Length': String(end - start + 1) },
+  });
 });
 
 app.post('/bot/webhook', (c) =>
