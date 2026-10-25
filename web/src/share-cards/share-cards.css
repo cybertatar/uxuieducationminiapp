@@ -62,52 +62,6 @@
   color: var(--accent);
 }
 
-.share-card__dots {
-  list-style: none;
-  display: flex;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-}
-
-.share-card__dots li {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-}
-
-.share-card__dots .is-correct { background: var(--success); }
-.share-card__dots .is-wrong { background: var(--danger); }
-
-.share-card__week {
-  list-style: none;
-  display: flex;
-  gap: 14px;
-  margin: 0;
-  padding: 0;
-}
-
-.share-card__week li {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--hint);
-}
-
-.share-card__week span {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--flame);
-  color: #fff;
-  font-size: 26px;
-}
-
 .share-card__art {
   position: relative;
   flex: 1;
@@ -144,4 +98,13 @@
 .share-card__page svg {
   width: 100%;
   height: 100%;
+}
+
+.share-deck__title {
+  margin: 40px 0 0;
+  font-size: 32px;
+}
+
+.share-sample {
+  display: block;
 }

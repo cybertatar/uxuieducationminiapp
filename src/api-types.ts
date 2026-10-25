@@ -70,10 +70,14 @@ export type SettingsPatch = Partial<Pick<Settings, 'dailyEnabled' | 'dailyTime' 
 };
 
 /** Чем поделиться. Счёт результата приходит с клиента: человек делится своим же итогом, подделывать его незачем. */
-export type ShareRequest =
+export type ShareRequest = (
   | { kind: 'result'; session: SessionRequest; correct: number; total: number }
   | { kind: 'streak' }
-  | { kind: 'lesson'; lessonId: string };
+  | { kind: 'lesson'; lessonId: string }
+) & {
+  /** Карточка, нарисованная в Mini App, — JPEG в base64. Без неё уйдёт общая картинка. */
+  image?: string;
+};
 
 /** id — подготовленное сообщение для WebApp.shareMessage; null, если Telegram его не сохранил. text и url — для запасного t.me/share. */
 export interface ShareResponse {

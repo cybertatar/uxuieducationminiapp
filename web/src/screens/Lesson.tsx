@@ -54,7 +54,10 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
       <header className="lesson__head">
         <div className="lesson__top">
           <span className="chip">{track.title}</span>
-          <ShareButton request={{ kind: 'lesson', lessonId: lesson.id }} />
+          <ShareButton
+            request={{ kind: 'lesson', lessonId: lesson.id }}
+            card={{ kind: 'lesson', tag: `Учебник · ${track.title}`, title: lesson.title, description: lesson.description, meta: `${minutes} мин · по материалам ${origin}` }}
+          />
         </div>
         <h1 className="page-title">{lesson.title}</h1>
         <p className="hint">

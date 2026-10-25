@@ -40,7 +40,14 @@ export function Calendar({ profile, onBack, onSettings }: Props) {
       <BackButton onClick={onBack} />
       <h1 className="page-title">Календарь</h1>
       <StreakTiles profile={profile} />
-      {profile.streak.current > 0 && <ShareButton className="share-button--block" label="Поделиться стриком" request={{ kind: 'streak' }} />}
+      {profile.streak.current > 0 && (
+        <ShareButton
+          className="share-button--block"
+          label="Поделиться стриком"
+          request={{ kind: 'streak' }}
+          card={{ kind: 'streak', current: profile.streak.current, best: profile.streak.best, week: profile.streak.week.map((d, i) => ({ label: WEEKDAYS[i], active: d.active, isToday: d.isToday })) }}
+        />
+      )}
       {data ? (
         <>
           <MonthCard data={data} />

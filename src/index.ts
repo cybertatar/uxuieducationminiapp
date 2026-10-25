@@ -2,12 +2,22 @@ import { Hono } from 'hono';
 import { webhookCallback } from 'grammy';
 import { api } from './api';
 import { getBot, runScheduled } from './bot';
+import { getShareImage } from './db';
 import type { Env } from './env';
 import { botDescription, botShortDescription } from './texts';
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.route('/', api);
+
+/** Карточка «Поделиться», нарисованная в Mini App: отсюда её скачивает Telegram */
+app.get('/share-img/:file', async (c) => {
+  const id = c.req.param('file').replace(/\.jpg$/, '');
+  if (!/^[0-9a-f]{32}$/.test(id)) return c.notFound();
+  const data = await getShareImage(c.env.DB, id);
+  if (!data) return c.notFound();
+  return new Response(data, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=172800, immutable' } });
+});
 
 app.post('/bot/webhook', (c) =>
   webhookCallback(getBot(c.env), 'cloudflare-mod', { secretToken: c.env.WEBHOOK_SECRET })(c.req.raw),

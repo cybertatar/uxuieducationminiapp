@@ -47,7 +47,8 @@ const FACES: Record<CatMood, Patch> = {
   sleep: [[7, 7, 'EEE'], [7, 14, 'EEE'], ...NOSE, [9, 11, 'MM']],
 };
 
-function sprite(mood: CatMood): string[] {
+/** Спрайт с мордочкой настроения; его же рисует карточка «Поделиться» на canvas */
+export function sprite(mood: CatMood): string[] {
   const rows = BASE.map((r) => r.split(''));
   for (const [row, col, pixels] of FACES[mood]) {
     [...pixels].forEach((p, i) => {
@@ -112,7 +113,7 @@ const zzzRuns: Run[] = ZZZ.split('\n').flatMap((row, y) =>
 );
 
 /** Пиксельные искорки-плюсики вокруг празднующего кота */
-const SPARKS = [
+export const SPARKS = [
   [-3, 2],
   [23, 6],
   [-2, 13],

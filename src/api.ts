@@ -4,11 +4,11 @@ import { lessonById, questionById, questions, questionsByTrack, trackById, type 
 import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch, ShareRequest, ShareResponse } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
 import { offerDailyQuestion } from './bot';
-import { activityCount, activityDates, getAnswers, history, lessonsRead, markLessonRead, parseSource, upsertUser, type UserRow } from './db';
+import { activityCount, activityDates, getAnswers, history, lessonsRead, markLessonRead, parseSource, saveShareImage, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
-import { shareCaption, shareContent, sharePlainText } from './share';
+import { decodeShareImage, shareCaption, shareContent, sharePlainText } from './share';
 import { weakTopics } from './stats';
 import { pauseUntil, recordActivity, recordAnswer, today, updateSettings } from './service';
 import { visibleStreak } from './streak';
@@ -186,7 +186,14 @@ api.post('/share', async (c) => {
   const url = `https://t.me/${username}?startapp=${content.startParam}`;
   const res: ShareResponse = { id: null, text: sharePlainText(content), url };
   try {
-    const image = `${c.env.WEBAPP_URL}/share/${content.image}.jpg`;
+    // Своя карточка с цифрами человека, а если её нет — общая картинка без цифр
+    let image = `${c.env.WEBAPP_URL}/share/${content.image}.jpg`;
+    const custom = decodeShareImage(body.image);
+    if (custom) {
+      const id = crypto.randomUUID().replaceAll('-', '');
+      await saveShareImage(c.env.DB, id, custom, Date.now());
+      image = `${c.env.WEBAPP_URL}/share-img/${id}.jpg`;
+    }
     const prepared = await new Api(c.env.BOT_TOKEN).savePreparedInlineMessage(
       user.id,
       {

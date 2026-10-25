@@ -3,10 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Собранный Vite фронтенд. /api/* и /bot/* обрабатывает воркер.
+# Собранный Vite фронтенд. /api/*, /bot/* и /share-img/* обрабатывает воркер.
 [assets]
 directory = "./dist"
-run_worker_first = ["/api/*", "/bot/*"]
+run_worker_first = ["/api/*", "/bot/*", "/share-img/*"]
 
 [[d1_databases]]
 binding = "DB"
