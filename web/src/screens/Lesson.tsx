@@ -136,8 +136,10 @@ function ReadingProgress({ end }: { end: RefObject<HTMLElement | null> }) {
 
   const pct = Math.round(progress * 100);
   return (
-    <div className="reading-progress" role="progressbar" aria-label="Прочитано урока" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <span className="reading-progress__fill" style={{ transform: `scaleX(${progress})` }} />
+    <div className="reading-progress">
+      <div className="reading-progress__track" role="progressbar" aria-label="Прочитано урока" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+        <span className="reading-progress__fill" style={{ transform: `scaleX(${progress})` }} />
+      </div>
     </div>
   );
 }

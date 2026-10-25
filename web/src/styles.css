@@ -1160,35 +1160,42 @@ button.card:active:not(:disabled) {
 
 /* ---------- Урок ---------- */
 
-/* Полоса чтения: прилипает под шапкой Telegram, ширина — как у колонки контента */
+/*
+ * Полоса чтения — шапка урока: сплошная подложка цвета фона под кнопками Telegram, полоса у её нижнего края.
+ * Текст уезжает под шапку и плавно гаснет, как под нижней кнопкой, а не просвечивает над полосой.
+ */
 .reading-progress {
   position: fixed;
-  top: calc(var(--safe-top) + 4px);
-  left: 50%;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 5;
-  width: min(560px, 100%);
-  padding: 0 var(--side);
-  transform: translateX(-50%);
+  padding: calc(var(--safe-top) + 8px) var(--side) 14px;
+  background: linear-gradient(var(--bg) calc(100% - 14px), transparent);
   pointer-events: none;
 }
 
-.reading-progress::before,
+.reading-progress__track {
+  max-width: 528px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--hint-raw) 28%, var(--bg));
+}
+
 .reading-progress__fill {
   display: block;
-  height: 4px;
+  height: 100%;
   border-radius: 2px;
-}
-
-.reading-progress::before {
-  content: '';
-  background: color-mix(in srgb, var(--hint-raw) 22%, transparent);
-}
-
-.reading-progress__fill {
-  margin-top: -4px;
   background: var(--accent);
   transform-origin: left;
   transition: transform 0.1s linear;
+}
+
+/* Место под шапку с полосой: заголовок урока не должен прятаться под ней */
+.screen.lesson {
+  padding-top: calc(var(--safe-top) + 30px);
 }
 
 .lesson__head {
