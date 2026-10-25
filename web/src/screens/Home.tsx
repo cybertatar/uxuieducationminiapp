@@ -9,6 +9,7 @@ import { notificationsOff, notificationsSummary } from '../notify';
 import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { SectionPager } from '../SectionPager';
 import { StudyLinks } from '../StudyLinks';
+import { SuggestCard } from '../SuggestCard';
 import { APP_VERSION } from '../version';
 import { Wireframe } from '../Wireframe';
 
@@ -34,10 +35,11 @@ interface Props {
   onLesson: (id: string) => void;
   onSettings: () => void;
   onCalendar: () => void;
+  onSuggest: () => void;
 }
 
 /** Главная из трёх вкладок: прогресс с трекером занятий, список тем и учебник. */
-export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnSection, onLearnSection, onLearnTrack, onLesson, onSettings, onCalendar }: Props) {
+export function Home({ profile, starting, tab, onTab, section, onSection, onStart, learnSection, onLearnSection, onLearnTrack, onLesson, onSettings, onCalendar, onSuggest }: Props) {
   return (
     <>
       {!profile ? (
@@ -45,7 +47,7 @@ export function Home({ profile, starting, tab, onTab, section, onSection, onStar
       ) : tab === 'progress' ? (
         <ProgressTab profile={profile} starting={starting} onStart={onStart} onSettings={onSettings} onCalendar={onCalendar} onTab={onTab} onLesson={onLesson} />
       ) : tab === 'tracks' ? (
-        <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} />
+        <TracksTab profile={profile} starting={starting} onStart={onStart} section={section} onSection={onSection} onSuggest={onSuggest} />
       ) : (
         <LearnTab profile={profile} learnSection={learnSection} onLearnSection={onLearnSection} onLearnTrack={onLearnTrack} />
       )}
@@ -199,7 +201,7 @@ function FirstRun({ starting, onStart, onTab }: Pick<Props, 'starting' | 'onStar
 const FILTERS: { id: SectionFilter; title: string }[] = [{ id: 'all', title: 'Все' }, ...sections.map((s) => ({ id: s.id, title: s.title }))];
 
 /** Темы по разделам: пилюли сверху, разделы листаются свайпом */
-function TracksTab({ profile, starting, onStart, section, onSection }: TabProps & Pick<Props, 'section' | 'onSection'>) {
+function TracksTab({ profile, starting, onStart, section, onSection, onSuggest }: TabProps & Pick<Props, 'section' | 'onSection' | 'onSuggest'>) {
   const progress = new Map(profile.tracks.map((t) => [t.id, t]));
   return (
     <main className="screen screen--tracks" aria-busy={starting}>
@@ -231,6 +233,7 @@ function TracksTab({ profile, starting, onStart, section, onSection }: TabProps 
                   <TrackList key={s.id} ids={s.tracks} progress={progress} starting={starting} onStart={onStart} />
                 ),
               )}
+              <SuggestCard onClick={onSuggest} />
             </>
           );
         }}

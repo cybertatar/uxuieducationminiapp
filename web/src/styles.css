@@ -837,6 +837,12 @@ button.card:active:not(:disabled) {
   font-weight: 600;
 }
 
+/* «Предложить вопрос» — та же карточка, что «Повторение», но тоном акцента */
+.suggest-card__icon {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+}
+
 /* Разделы на вкладке «Темы»: ряд пилюль, активная — тоном акцента, как пункт таббара */
 .section-tabs {
   display: flex;
@@ -1708,6 +1714,74 @@ button.card:active:not(:disabled) {
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+}
+
+/* ---------- Предложить вопрос ---------- */
+
+.suggest__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.suggest__track select {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+}
+
+.suggest__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggest__input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea.suggest__input {
+  resize: vertical;
+}
+
+.suggest__input::placeholder {
+  color: var(--hint);
+}
+
+.suggest__error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.suggest-done {
+  align-items: center;
+  text-align: center;
+}
+
+.suggest-done__title {
+  font-size: 24px;
+}
+
+.suggest-done__text {
+  max-width: 300px;
+  font-size: 15px;
+}
+
+.feedback__author {
+  color: var(--hint);
+  font-size: 13px;
 }
 
 /* «По порядку» и «выбери все»: номер или галочка вместо кружка */

@@ -34,6 +34,8 @@ export function Feedback({ q, correct }: { q: Question; correct: boolean }) {
           <ExternalLink key={l.url} link={l} />
         ))}
       </div>
+
+      {q.author && <p className="feedback__author">Автор вопроса: {q.author}</p>}
     </section>
   );
 }

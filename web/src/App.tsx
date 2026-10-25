@@ -12,6 +12,7 @@ import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
+import { Suggest } from './screens/Suggest';
 import { tg } from './tg';
 
 export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
@@ -32,7 +33,9 @@ type Screen =
   | { name: 'learn-track'; track: TrackId }
   | { name: 'lesson'; id: string }
   | { name: 'settings' }
-  | { name: 'calendar' };
+  | { name: 'calendar' }
+  /** back — куда вернуться: на главную или к итогам сессии, не потеряв их */
+  | { name: 'suggest'; track?: TrackId; back: Screen };
 
 /**
  * Ссылка t.me/<бот>?startapp=<id урока> — из «Поделиться уроком»: сразу открываем этот урок.
@@ -106,6 +109,10 @@ export function App() {
   };
 
   const openLesson = (id: string) => setScreen({ name: 'lesson', id });
+  const openSuggest = (back: Screen, track?: TrackId) => {
+    setScreen({ name: 'suggest', track, back });
+    window.scrollTo({ top: 0 });
+  };
   // Тема учебника: сюда ведут «Назад» из урока и «Учебник» после закрепления
   const openLearnTrack = (track: TrackId) => {
     setTab('learn');
@@ -181,6 +188,13 @@ export function App() {
             onHome={goHome}
             onAgain={() => start(screen.session)}
             onLesson={openLesson}
+            onSuggest={
+              session.mode === 'track'
+                ? () => openSuggest(screen, session.track)
+                : session.mode === 'lesson'
+                  ? () => openSuggest(screen, lessonById.get(session.lesson)!.track)
+                  : undefined
+            }
             canRepeat={session.mode === 'track'}
             starting={starting}
             warmup={
@@ -213,6 +227,8 @@ export function App() {
         return profile && <LearnTrack track={screen.track} profile={profile} onBack={goHome} onLesson={openLesson} />;
       case 'calendar':
         return profile && <Calendar profile={profile} onBack={goHome} onSettings={() => setScreen({ name: 'settings' })} />;
+      case 'suggest':
+        return <Suggest track={screen.track} onBack={() => setScreen(screen.back)} />;
       case 'settings':
         return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
       default:
@@ -236,6 +252,7 @@ export function App() {
             onStart={start}
             onLesson={openLesson}
             onSettings={() => setScreen({ name: 'settings' })}
+            onSuggest={() => openSuggest({ name: 'home' })}
             onCalendar={() => {
               setScreen({ name: 'calendar' });
               window.scrollTo({ top: 0 });
