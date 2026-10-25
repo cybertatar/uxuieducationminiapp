@@ -1,13 +1,14 @@
-import { Api } from 'grammy';
+import { Api, InlineKeyboard } from 'grammy';
 import { Hono } from 'hono';
 import { lessonById, questionById, questions, questionsByTrack, trackById, type TrackId } from '../content';
-import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch } from './api-types';
+import type { CompleteResponse, HistoryResponse, Profile, SessionRequest, SettingsPatch, ShareRequest, ShareResponse } from './api-types';
 import { validateInitData, type TelegramUser } from './auth';
 import { offerDailyQuestion } from './bot';
 import { activityCount, activityDates, getAnswers, history, lessonsRead, markLessonRead, parseSource, upsertUser, type UserRow } from './db';
 import type { Env } from './env';
 import { isDue } from './review';
 import { pickReviewSession, pickTrackSession, pickWarmupSession } from './select';
+import { shareCaption, shareContent, sharePlainText } from './share';
 import { weakTopics } from './stats';
 import { pauseUntil, recordActivity, recordAnswer, today, updateSettings } from './service';
 import { visibleStreak } from './streak';
@@ -150,6 +151,59 @@ api.post('/session/complete', async (c) => {
   // После первой сессии бот предлагает вопрос дня в чате — в фоне, чтобы не задерживать экран результатов
   c.executionCtx.waitUntil(offerDailyQuestion(c.env.DB, new Api(c.env.BOT_TOKEN), user));
   const res: CompleteResponse = { current: s.current, best: s.best, extended: s.extended };
+  return c.json(res);
+});
+
+let botUsername: string | null = null;
+
+/** Имя бота для ссылок t.me/<бот>?startapp=…: спрашиваем у Telegram один раз на жизнь воркера */
+async function getBotUsername(env: Env): Promise<string> {
+  botUsername ??= (await new Api(env.BOT_TOKEN).getMe()).username;
+  return botUsername;
+}
+
+/**
+ * Поделиться: карточка с картинкой и кнопкой, которую Mini App отправит через WebApp.shareMessage.
+ * Если Telegram не сохранил сообщение (старый клиент, локальная разработка), отдаём текст и ссылку для t.me/share.
+ */
+api.post('/share', async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json<ShareRequest>();
+  const date = today(user, Date.now());
+  const streak = {
+    current: visibleStreak({ current: user.streak_current, best: user.streak_best, lastActiveDate: user.last_active_date }, date),
+    best: user.streak_best,
+  };
+  const content = shareContent(body, streak);
+  if (!content) return c.json({ error: 'nothing to share' }, 400);
+
+  let username = 'uxuitrainer_bot';
+  try {
+    username = await getBotUsername(c.env);
+  } catch (err) {
+    console.error('getMe failed', err);
+  }
+  const url = `https://t.me/${username}?startapp=${content.startParam}`;
+  const res: ShareResponse = { id: null, text: sharePlainText(content), url };
+  try {
+    const image = `${c.env.WEBAPP_URL}/share/${content.image}.jpg`;
+    const prepared = await new Api(c.env.BOT_TOKEN).savePreparedInlineMessage(
+      user.id,
+      {
+        type: 'photo',
+        id: `${content.image}-${Date.now()}`,
+        photo_url: image,
+        thumbnail_url: image,
+        caption: shareCaption(content),
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard().url(content.button, url),
+      },
+      { allow_user_chats: true, allow_group_chats: true, allow_channel_chats: true },
+    );
+    res.id = prepared.id;
+  } catch (err) {
+    console.error('savePreparedInlineMessage failed', err);
+  }
   return c.json(res);
 });
 

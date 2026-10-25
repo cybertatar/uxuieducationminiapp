@@ -11,6 +11,7 @@ import { Quiz, type QuizResult } from './screens/Quiz';
 import { Result } from './screens/Result';
 import { Calendar } from './screens/Calendar';
 import { Settings } from './screens/Settings';
+import { tg } from './tg';
 
 export type SessionMode = { mode: 'track'; track: TrackId } | { mode: 'review' } | { mode: 'warmup' } | { mode: 'lesson'; lesson: string };
 
@@ -31,6 +32,15 @@ type Screen =
   | { name: 'lesson'; id: string }
   | { name: 'settings' }
   | { name: 'calendar' };
+
+/**
+ * Ссылка t.me/<бот>?startapp=<id урока> — из «Поделиться уроком»: сразу открываем этот урок.
+ * Остальные метки (share_result, vc…) — только источник для статистики, их читает воркер.
+ */
+function initialScreen(): Screen {
+  const param = tg?.initDataUnsafe?.start_param;
+  return param && lessonById.has(param) ? { name: 'lesson', id: param } : { name: 'home' };
+}
 
 /** Последний открытый раздел тем и тему учебника помним на устройстве: кто учит Figma, не переключается каждый раз */
 const SECTION_KEY = 'tracks-section';
@@ -55,7 +65,7 @@ function savePref(key: string, value: string) {
 export function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState(false);
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [screen, setScreen] = useState<Screen>(initialScreen);
   const [starting, setStarting] = useState(false);
   const [tab, setTab] = useState<HomeTab>('progress');
   const [section, setSection] = useState<SectionFilter>(() => loadPref<SectionFilter>(SECTION_KEY, 'all'));
@@ -157,6 +167,10 @@ export function App() {
         return (
           <Result
             result={screen.result}
+            session={session}
+            profile={profile}
+            onProfile={setProfile}
+            onSettings={() => setScreen({ name: 'settings' })}
             onHome={goHome}
             onAgain={() => start(screen.session)}
             onLesson={openLesson}
@@ -191,7 +205,7 @@ export function App() {
       case 'learn-track':
         return profile && <LearnTrack track={screen.track} profile={profile} onBack={goHome} onLesson={openLesson} />;
       case 'calendar':
-        return profile && <Calendar profile={profile} onBack={goHome} />;
+        return profile && <Calendar profile={profile} onBack={goHome} onSettings={() => setScreen({ name: 'settings' })} />;
       case 'settings':
         return profile && <Settings profile={profile} onBack={goHome} onChange={setProfile} />;
       default:

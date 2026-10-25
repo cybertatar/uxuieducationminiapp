@@ -1,0 +1,147 @@
+/* Карточки 1280×720 в палитре карусели — как картинка для поста. */
+.share-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  padding: 40px;
+}
+
+.share-card {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  box-sizing: border-box;
+  padding: 72px 80px;
+  display: flex;
+  overflow: hidden;
+  background: radial-gradient(circle at 80% 72%, #cfe5f7 0, transparent 55%), var(--bg);
+  color: var(--text);
+}
+
+.share-card[data-name='streak'] {
+  background: radial-gradient(circle at 80% 72%, #ffe2bf 0, transparent 55%), var(--bg);
+}
+
+.share-card__text {
+  position: relative;
+  z-index: 1;
+  width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.share-card .tag {
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.share-card h1 {
+  margin: 0;
+  font-size: 88px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.share-card__lead {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.3;
+  color: var(--hint);
+}
+
+.share-card__link {
+  margin-top: auto;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.share-card__dots {
+  list-style: none;
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.share-card__dots li {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.share-card__dots .is-correct { background: var(--success); }
+.share-card__dots .is-wrong { background: var(--danger); }
+
+.share-card__week {
+  list-style: none;
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.share-card__week li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--hint);
+}
+
+.share-card__week span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--flame);
+  color: #fff;
+  font-size: 26px;
+}
+
+.share-card__art {
+  position: relative;
+  flex: 1;
+}
+
+.share-card__cat {
+  position: absolute;
+  right: -10px;
+  bottom: -20px;
+}
+
+.share-card__pages {
+  position: absolute;
+  top: -12px;
+  right: -20px;
+  width: 440px;
+  height: 380px;
+}
+
+.share-card__page {
+  position: absolute;
+  width: 290px;
+  height: 196px;
+  padding: 14px;
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 12px 40px rgba(23, 23, 28, 0.12);
+}
+
+.share-card__page:nth-child(1) { top: 0; right: 140px; transform: rotate(-6deg); }
+.share-card__page:nth-child(2) { top: 70px; right: 0; transform: rotate(5deg); }
+.share-card__page:nth-child(3) { top: 176px; right: 100px; transform: rotate(-2deg); }
+
+.share-card__page svg {
+  width: 100%;
+  height: 100%;
+}

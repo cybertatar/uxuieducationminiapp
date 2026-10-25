@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import type { Profile, Settings as SettingsT, SettingsPatch } from '../../../src/api-types';
-import { api } from '../api';
 import { BackButton } from '../buttons';
 import { shortDate, timeZoneLabel } from '../format';
-import { haptic, requestWriteAccess } from '../tg';
+import { dailyOn, reminderOn, saveSettings } from '../notify';
 
 const DAILY_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
 const REMINDER_TIMES = ['18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -16,28 +15,11 @@ interface Props {
 
 export function Settings({ profile, onBack, onChange }: Props) {
   const s = profile.settings;
+  // Тумблеры показывают, придут ли сообщения на деле: без разрешения писать они выключены, даже если в базе «вкл»
   const [denied, setDenied] = useState(false);
 
   const save = async (patch: SettingsPatch, optimistic: Partial<SettingsT>) => {
-    // Чтобы бот мог что-то присылать, пользователь должен разрешить ему писать
-    const turningOn = patch.dailyEnabled === true || patch.reminderEnabled === true;
-    if (turningOn && !s.canMessage) {
-      const ok = await requestWriteAccess();
-      if (!ok) {
-        setDenied(true);
-        return;
-      }
-      patch = { ...patch, allowMessages: true };
-      optimistic = { ...optimistic, canMessage: true };
-    }
-    setDenied(false);
-    haptic.tap();
-    onChange({ ...profile, settings: { ...s, ...optimistic } });
-    api
-      .settings(patch)
-      .then(() => api.me())
-      .then(onChange)
-      .catch(() => onChange(profile));
+    setDenied(!(await saveSettings(profile, patch, optimistic, onChange)));
   };
 
   const pausedUntil = s.pausedUntil;
@@ -52,11 +34,11 @@ export function Settings({ profile, onBack, onChange }: Props) {
         <label className="cell">
           <span>Присылать в чат с ботом</span>
           <Toggle
-            checked={s.dailyEnabled}
+            checked={dailyOn(s)}
             onChange={(v) => save({ dailyEnabled: v }, { dailyEnabled: v })}
           />
         </label>
-        {s.dailyEnabled && (
+        {dailyOn(s) && (
           <label className="cell">
             <span>Время</span>
             <TimeSelect value={s.dailyTime} options={DAILY_TIMES} onChange={(t) => save({ dailyTime: t }, { dailyTime: t })} />
@@ -70,11 +52,11 @@ export function Settings({ profile, onBack, onChange }: Props) {
         <label className="cell">
           <span>Напоминать</span>
           <Toggle
-            checked={s.reminderEnabled}
+            checked={reminderOn(s)}
             onChange={(v) => save({ reminderEnabled: v }, { reminderEnabled: v })}
           />
         </label>
-        {s.reminderEnabled && (
+        {reminderOn(s) && (
           <label className="cell">
             <span>Время</span>
             <TimeSelect

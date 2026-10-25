@@ -3,6 +3,7 @@ import { readingMinutes, trackById, type Lesson as LessonData, type LessonBlock 
 import { BackButton, MainButton } from '../buttons';
 import { ExternalLink } from '../ExternalLink';
 import { plural } from '../format';
+import { ShareButton } from '../share';
 import { Wireframe } from '../Wireframe';
 
 interface Props {
@@ -51,7 +52,10 @@ export function Lesson({ lesson, read, starting, onBack, onRead, onPractice }: P
       <BackButton onClick={onBack} />
 
       <header className="lesson__head">
-        <span className="chip">{track.title}</span>
+        <div className="lesson__top">
+          <span className="chip">{track.title}</span>
+          <ShareButton request={{ kind: 'lesson', lessonId: lesson.id }} />
+        </div>
         <h1 className="page-title">{lesson.title}</h1>
         <p className="hint">
           {minutes} мин · пересказ по материалам {origin}

@@ -2131,3 +2131,121 @@ button.card:active:not(:disabled) {
   word-break: break-word;
   user-select: text;
 }
+
+/* ---------- Поделиться ---------- */
+
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.share-button:disabled {
+  opacity: 0.6;
+}
+
+.share-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Под стриком в календаре — во всю ширину, как ячейка */
+.share-button--block {
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius);
+}
+
+.result__share {
+  margin-top: 14px;
+}
+
+.lesson__top {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ---------- Уведомления: колокольчик на главной и предложение на итогах ---------- */
+
+.bell {
+  position: relative;
+  align-self: flex-start;
+  flex: none;
+  display: grid;
+  place-items: center;
+  /* 44×44 — минимальная цель касания */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.bell svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bell__dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--flame);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.offer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: rise 0.3s ease-out;
+}
+
+.offer .link {
+  margin-top: 6px;
+}
+
+.offer__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.offer__actions .button {
+  min-height: 44px;
+}
+
+/* Карточка уже на surface — вторичной кнопке нужен фон экрана, иначе она сливается */
+.offer__actions .button--secondary {
+  background: var(--bg);
+}
+
+.calendar__notify {
+  margin-top: var(--gap);
+}

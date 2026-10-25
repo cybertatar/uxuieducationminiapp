@@ -6,6 +6,8 @@ import type {
   SessionRequest,
   SessionResponse,
   SettingsPatch,
+  ShareRequest,
+  ShareResponse,
 } from '../../src/api-types';
 import { tg } from './tg';
 
@@ -33,5 +35,6 @@ export const api = {
   answer: (questionId: string, option: number) => request<AnswerResponse>('POST', '/answer', { questionId, option }),
   lessonRead: (lessonId: string) => request<{ ok: true }>('POST', '/lessons/read', { lessonId }),
   complete: () => request<CompleteResponse>('POST', '/session/complete'),
+  share: (body: ShareRequest) => request<ShareResponse>('POST', '/share', body),
   settings: (patch: SettingsPatch) => request<{ ok: true }>('PATCH', '/settings', patch),
 };

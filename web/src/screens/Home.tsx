@@ -5,6 +5,7 @@ import { accuracy, trackHighlights } from '../../../src/stats';
 import type { SessionMode } from '../App';
 import { Cat, CAT_NAME, type CatMood } from '../Cat';
 import { days, plural, questionsWord, WEEKDAYS } from '../format';
+import { notificationsOff, notificationsSummary } from '../notify';
 import { AUTHOR_URL, openTelegramLink } from '../tg';
 import { SectionPager } from '../SectionPager';
 import { StudyLinks } from '../StudyLinks';
@@ -68,6 +69,7 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
       <section className="hello">
         <Cat mood={mood} size={76} />
         <p className="hello__bubble">{phrase}</p>
+        <BellButton settings={profile.settings} onClick={onSettings} />
       </section>
 
       {firstRun && <FirstRun starting={starting} onStart={onStart} onTab={onTab} />}
@@ -131,13 +133,6 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
 
       {profile.weakTopics.length > 0 && <Reading topics={profile.weakTopics} onLesson={onLesson} />}
 
-      <button className="cell" onClick={onSettings}>
-        <span>🔔 Уведомления</span>
-        <span className="cell__value">
-          {profile.settings.dailyEnabled ? `Вопрос дня в ${profile.settings.dailyTime}` : 'Выключены'} ›
-        </span>
-      </button>
-
       <footer className="author">
         Автор —{' '}
         <button className="link" onClick={() => openTelegramLink(AUTHOR_URL)}>
@@ -148,6 +143,23 @@ function ProgressTab({ profile, starting, onStart, onSettings, onCalendar, onTab
         </div>
       </footer>
     </main>
+  );
+}
+
+/**
+ * Уведомления — в шапке, а не в конце ленты: под статистикой и «Что почитать» их не находили.
+ * Пока всё выключено, на колокольчике точка — так он зовёт настроить.
+ */
+function BellButton({ settings, onClick }: { settings: Profile['settings']; onClick: () => void }) {
+  const off = notificationsOff(settings) || !!settings.pausedUntil;
+  return (
+    <button className="bell" onClick={onClick} aria-label={`Уведомления: ${notificationsSummary(settings).toLowerCase()}`}>
+      <svg viewBox="0 0 24 24" aria-hidden>
+        <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+        <path d="M10 21h4" />
+      </svg>
+      {off && <span className="bell__dot" />}
+    </button>
   );
 }
 
