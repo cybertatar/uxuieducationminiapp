@@ -81,15 +81,19 @@ interface FieldOpts {
   placeholder?: string;
   state?: 'error' | 'focus' | 'success';
   hint?: string;
+  /** Курсор в начале пустого поля: видно, что сейчас печатают именно сюда */
+  caret?: boolean;
 }
 
-export function field(x: number, y: number, w: number, h = 26, { label, value, placeholder, state, hint }: FieldOpts = {}) {
+export function field(x: number, y: number, w: number, h = 26, { label, value, placeholder, state, hint, caret }: FieldOpts = {}) {
   let out = '';
   if (label) out += text(x, y - 5, label, { size: 9 });
   const cls = state === 'error' ? 'field-error' : state === 'focus' ? 'field-focus' : state === 'success' ? 'field-success' : 'field';
   out += rect(x, y, w, h, cls, 6);
-  if (value) out += text(x + 8, y + h / 2 + 4, value, { size: 11, cls: 'ink' });
-  else if (placeholder) out += text(x + 8, y + h / 2 + 4, placeholder, { size: 11, cls: 'muted' });
+  const tx = caret ? x + 12 : x + 8;
+  if (caret) out += rect(x + 8, y + h / 2 - 7, 1.5, 14, 'accent', 0.75);
+  if (value) out += text(tx, y + h / 2 + 4, value, { size: 11, cls: 'ink' });
+  else if (placeholder) out += text(tx, y + h / 2 + 4, placeholder, { size: 11, cls: 'muted' });
   if (hint) out += text(x, y + h + 11, hint, { size: 9, cls: state === 'error' ? 'danger' : 'text' });
   return out;
 }
