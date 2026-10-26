@@ -7,6 +7,7 @@ const L = {
   lineSpacing: { title: 'Butterick: Line spacing', url: 'https://practicaltypography.com/line-spacing.html' },
   allCaps: { title: 'Butterick: All caps', url: 'https://practicaltypography.com/all-caps.html' },
   letterspacing: { title: 'Butterick: Letterspacing', url: 'https://practicaltypography.com/letterspacing.html' },
+  kerning: { title: 'Butterick: Kerning', url: 'https://practicaltypography.com/kerning.html' },
   underlining: { title: 'Butterick: Underlining', url: 'https://practicaltypography.com/underlining.html' },
   boldItalic: { title: 'Butterick: Bold or italic', url: 'https://practicaltypography.com/bold-or-italic.html' },
   headings: { title: 'Butterick: Headings', url: 'https://practicaltypography.com/headings.html' },
@@ -148,8 +149,8 @@ export const visualDesignQuestions: Question[] = [
     correct: [0, 1, 2],
     summary: 'Минимум выделений, капс только для коротких фраз, кернинг включён.',
     explanation:
-      'Подчёркивание Баттерик называет пережитком печатной машинки, где не было жирного и курсива. Центрировать он советует только короткие заголовки: у абзаца по центру неровны оба края. И если выделено всё, не выделено ничего.',
-    links: [L.keyRules, L.underlining],
+      'Кернинг — поправки расстояний между отдельными парами букв вроде AV, To или Ty, которые заложил в шрифт его автор. Без кернинга в таких парах видны дыры, а включить его ничего не стоит: в CSS это font-kerning: normal. Подчёркивание Баттерик называет пережитком печатной машинки, где не было жирного и курсива. Центрировать он советует только короткие заголовки: у абзаца по центру неровны оба края. И если выделено всё, не выделено ничего.',
+    links: [L.keyRules, L.kerning, L.underlining],
   },
   {
     id: 'vd-009',
@@ -534,7 +535,7 @@ export const visualDesignQuestions: Question[] = [
     id: 'vd-036',
     track: 'visual-design',
     topic: T.layout,
-    text: 'Какое впечатление обычно создаёт плотная раскладка по сравнению с просторной?',
+    text: 'Какое впечатление обычно создаёт экран с маленькими отступами между элементами по сравнению с экраном, где много воздуха?',
     options: ['Серьёзное и сосредоточенное', 'Спокойное и открытое', 'Детское', 'Никакой разницы'],
     correct: 0,
     summary: 'Плотность — характер: плотно — деловито, просторно — спокойно.',
